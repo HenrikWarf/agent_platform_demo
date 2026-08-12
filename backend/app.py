@@ -164,6 +164,31 @@ def process_chat(req: ChatRequest):
     result["model_armor"] = armor_res
     return result
 
+@app.post("/api/stream_reasoning_engine")
+@app.post("/api/query_reasoning_engine")
+def stream_reasoning_engine(request: Dict[str, Any]):
+    """Vertex AI Agent Engine Reasoning Engine streaming endpoint."""
+    input_data = request.get("input", {})
+    prompt = input_data.get("prompt") or request.get("prompt", "Analyze customer segment performance")
+    segment = input_data.get("target_segment") or request.get("target_segment", "All Cohorts (Full Dataset)")
+    
+    # Check Model Armor
+    armor_res = gateway.inspect_and_sanitize(prompt)
+    if not armor_res["passed"]:
+        return {
+            "status": "BLOCKED_BY_MODEL_ARMOR",
+            "model_armor": armor_res,
+            "summary": f"Security Alert: Request blocked by Model Armor. Reason: {armor_res['filter_reason']}",
+            "a2a_trace": []
+        }
+
+    result = orchestrator.process_user_request(
+        user_prompt=armor_res["sanitized_prompt"],
+        target_segment=segment
+    )
+    result["model_armor"] = armor_res
+    return result
+
 @app.get("/api/simulator/status")
 def get_simulator_status():
     return simulator_state

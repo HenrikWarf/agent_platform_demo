@@ -38,7 +38,14 @@ export default function ChatInterface() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: sendPrompt, target_segment: segment })
     })
-      .then(res => res.json())
+      .then(async res => {
+        const contentType = res.headers.get('content-type') || '';
+        if (!res.ok || !contentType.includes('application/json')) {
+          const text = await res.text();
+          throw new Error(`Server returned status ${res.status}: ${text.substring(0, 100)}`);
+        }
+        return res.json();
+      })
       .then(data => {
         setLoading(false);
         setCurrentTrace(data.a2a_trace || []);
@@ -55,7 +62,7 @@ export default function ChatInterface() {
       })
       .catch(err => {
         setLoading(false);
-        setMessages(prev => [...prev, { role: 'assistant', content: 'Error communicating with Agent Gateway: ' + err.message }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Agent Gateway Notification: ' + err.message }]);
       });
   };
 

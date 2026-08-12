@@ -76,16 +76,28 @@ def publish_all():
         
         cli_success = run_command(cli_cmd)
         
-        # 2. Fallback to gcloud alpha agent-registry if needed
-        registry_cmd = [
-            "gcloud", "alpha", "agent-registry", "services", "update", skill_name,
+        # 2. Register via gcloud alpha agent-registry (requires hyphenated service_id)
+        registry_service_id = skill_name.replace("_", "-")
+        create_cmd = [
+            "gcloud", "alpha", "agent-registry", "services", "create", registry_service_id,
             "--display-name", skill["display_name"],
             "--description", skill["description"],
+            "--interfaces", "url=https://agent-platform-backend-q5c3bhebga-uc.a.run.app/api/chat,protocolBinding=HTTP_JSON",
             "--project", PROJECT_ID,
             "--location", REGION,
             "--quiet"
         ]
-        registry_success = run_command(registry_cmd)
+        registry_success = run_command(create_cmd)
+        if not registry_success:
+            update_cmd = [
+                "gcloud", "alpha", "agent-registry", "services", "update", registry_service_id,
+                "--display-name", skill["display_name"],
+                "--description", skill["description"],
+                "--project", PROJECT_ID,
+                "--location", REGION,
+                "--quiet"
+            ]
+            registry_success = run_command(update_cmd)
         
         results[skill_name] = {
             "agent": skill["agent"],
