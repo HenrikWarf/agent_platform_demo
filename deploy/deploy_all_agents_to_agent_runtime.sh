@@ -6,7 +6,7 @@ set -e
 
 PROJECT_ID=${GCP_PROJECT_ID:-"agent-demo-09"}
 REGION=${GCP_REGION:-"us-central1"}
-AGENTS_CLI="./venv/bin/agents-cli"
+AGENTS_CLI=${AGENTS_CLI:-"agents-cli"}
 
 echo "======================================================================"
 echo "🚀 Deploying 4 Standalone Agent Instances to Agent Runtime..."

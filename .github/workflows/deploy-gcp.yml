@@ -161,15 +161,11 @@ jobs:
         run: |
           pip install uv google-agents-cli
           gcloud components install alpha --quiet || true
-          gcloud services enable discoveryengine.googleapis.com cloudapiregistry.googleapis.com --project=${{ env.GCP_PROJECT_ID }} || true
+          gcloud services enable discoveryengine.googleapis.com cloudapiregistry.googleapis.com agentregistry.googleapis.com --project=${{ env.GCP_PROJECT_ID }} || true
 
-      - name: Deploy Agents to Vertex AI Agent Runtime
+      - name: Deploy 4 Standalone Agents to Vertex AI Agent Runtime
         run: |
-          agents-cli deploy \
-            --deployment-target agent_runtime \
-            --project ${{ env.GCP_PROJECT_ID }} \
-            --region ${{ env.GCP_REGION }} \
-            --no-confirm-project || echo "Agent Runtime deployment complete or scheduled server-side."
+          bash deploy/deploy_all_agents_to_agent_runtime.sh
 
       - name: Register Skills in Agent Registry
         run: |
