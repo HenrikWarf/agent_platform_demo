@@ -82,6 +82,7 @@ def publish_all():
             "gcloud", "alpha", "agent-registry", "services", "create", registry_service_id,
             "--display-name", skill["display_name"],
             "--description", skill["description"],
+            "--agent-spec-type", "no-spec",
             "--interfaces", "url=https://agent-platform-backend-q5c3bhebga-uc.a.run.app/api/chat,protocolBinding=HTTP_JSON",
             "--project", PROJECT_ID,
             "--location", REGION,
