@@ -30,12 +30,36 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
-      - name: Authenticate to GCP
+      - name: Resolve GCP Auth Strategy
+        id: auth_check
+        env:
+          SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          WIF_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+        run: |
+          if [ -n "$SA_KEY" ]; then
+            echo "AUTH_MODE=sa_key" >> $GITHUB_ENV
+          elif [ -n "$WIF_PROVIDER" ]; then
+            echo "AUTH_MODE=wif" >> $GITHUB_ENV
+          else
+            echo "AUTH_MODE=none" >> $GITHUB_ENV
+            echo "⚠️ No GCP_SA_KEY or WORKLOAD_IDENTITY_PROVIDER found in GitHub Secrets."
+          fi
+
+      - name: Authenticate to GCP (Service Account Key)
+        if: env.AUTH_MODE == 'sa_key'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      - name: Authenticate to GCP (Workload Identity Federation)
+        if: env.AUTH_MODE == 'wif'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
       - name: Set up Google Cloud SDK
+        if: env.AUTH_MODE != 'none'
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
@@ -56,10 +80,34 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
+      - name: Resolve GCP Auth Strategy
+        id: auth_check
+        env:
+          SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          WIF_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+        run: |
+          if [ -n "$SA_KEY" ]; then
+            echo "AUTH_MODE=sa_key" >> $GITHUB_ENV
+          elif [ -n "$WIF_PROVIDER" ]; then
+            echo "AUTH_MODE=wif" >> $GITHUB_ENV
+          else
+            echo "AUTH_MODE=none" >> $GITHUB_ENV
+            echo "❌ Cannot deploy to GCP without credentials. Please add GCP_SA_KEY to GitHub Repository Secrets."
+            exit 1
+          fi
+
+      - name: Authenticate to GCP (Service Account Key)
+        if: env.AUTH_MODE == 'sa_key'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate to GCP (Workload Identity Federation)
+        if: env.AUTH_MODE == 'wif'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
