@@ -157,9 +157,10 @@ jobs:
             --platform managed \
             --allow-unauthenticated
 
-      - name: Install google-agents-cli
+      - name: Install uv and google-agents-cli
         run: |
-          pip install google-agents-cli
+          pip install uv google-agents-cli
+          gcloud components install alpha --quiet || true
 
       - name: Deploy Agents to Vertex AI Agent Runtime
         run: |

@@ -82,7 +82,8 @@ def publish_all():
             "--display-name", skill["display_name"],
             "--description", skill["description"],
             "--project", PROJECT_ID,
-            "--location", REGION
+            "--location", REGION,
+            "--quiet"
         ]
         registry_success = run_command(registry_cmd)
         
