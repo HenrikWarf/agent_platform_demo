@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   GCP_PROJECT_ID: agent-demo-09
   GCP_REGION: us-central1
@@ -92,7 +96,7 @@ jobs:
             echo "AUTH_MODE=wif" >> $GITHUB_ENV
           else
             echo "AUTH_MODE=none" >> $GITHUB_ENV
-            echo "❌ Cannot deploy to GCP without credentials. Please add GCP_SA_KEY to GitHub Repository Secrets."
+            echo "❌ Cannot deploy to GCP without credentials. Please add GCP_SA_KEY or WORKLOAD_IDENTITY_PROVIDER to GitHub Repository Secrets."
             exit 1
           fi
 
