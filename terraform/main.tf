@@ -20,6 +20,17 @@ locals {
   services = [
     "cloudresourcemanager.googleapis.com",
     "aiplatform.googleapis.com",
+    "agentregistry.googleapis.com",
+    "cloudapiregistry.googleapis.com",
+    "networkservices.googleapis.com",
+    "networksecurity.googleapis.com",
+    "discoveryengine.googleapis.com",
+    "modelarmor.googleapis.com",
+    "iap.googleapis.com",
+    "apptopology.googleapis.com",
+    "observability.googleapis.com",
+    "telemetry.googleapis.com",
+    "monitoring.googleapis.com",
     "bigquery.googleapis.com",
     "run.googleapis.com",
     "apigateway.googleapis.com",
@@ -217,7 +228,9 @@ locals {
     "roles/bigquery.dataViewer",
     "roles/bigquery.jobUser",
     "roles/cloudtrace.agent",
-    "roles/logging.logWriter"
+    "roles/logging.logWriter",
+    "roles/storage.admin",
+    "roles/agentregistry.editor"
   ]
 }
 
