@@ -1,0 +1,11 @@
+.git
+.gitignore
+venv/
+.venv/
+node_modules/
+terraform/.terraform/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+agent_engine_manifest.json

@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy codebase
+COPY agents /app/agents
+COPY skills /app/skills
+COPY backend /app/backend
+COPY eval /app/eval
+COPY cli /app/cli
+
+ENV PYTHONPATH=/app
+ENV PORT=8080
+
+EXPOSE 8080
+
+CMD ["python", "backend/app.py"]

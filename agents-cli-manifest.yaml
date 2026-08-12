@@ -1,0 +1,4 @@
+name: agent-platform-demo
+deployment_target: agent_runtime
+project_id: agent-demo-09
+region: us-central1

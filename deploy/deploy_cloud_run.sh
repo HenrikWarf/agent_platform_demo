@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Build & Deploy Google Cloud Agent Platform Backend & Frontend to Cloud Run
+# ==============================================================================
+set -e
+
+PROJECT_ID=${GCP_PROJECT_ID:-"agent-demo-09"}
+REGION=${GCP_REGION:-"us-central1"}
+SERVICE_NAME="agent-platform-backend"
+IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/agent-platform/backend:latest"
+
+echo "======================================================================"
+echo "🚀 Building Container & Deploying to Cloud Run"
+echo "======================================================================"
+
+# 1. Build Container Image using Cloud Build
+echo "📦 Building container image via Cloud Build..."
+gcloud builds submit --config=<(cat <<EOF
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '${IMAGE_TAG}', '-f', 'deploy/Dockerfile.backend', '.']
+images:
+- '${IMAGE_TAG}'
+EOF
+) .
+
+# 2. Deploy Cloud Run Services (Backend, Frontend, Simulator)
+SERVICES=("agent-platform-backend" "agent-platform-frontend" "agent-platform-simulator")
+
+for SERVICE in "${SERVICES[@]}"; do
+  echo "🚀 Deploying Cloud Run service: [${SERVICE}]..."
+  gcloud run deploy "${SERVICE}" \
+    --image="${IMAGE_TAG}" \
+    --region="${REGION}" \
+    --platform=managed \
+    --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},GCP_REGION=${REGION},USE_GCP_CLOUD=true" \
+    --service-account="agent-platform-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+done
+
+echo "✅ Cloud Run Services (Backend, Frontend, Simulator) Deployed Successfully!"
