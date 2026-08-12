@@ -157,11 +157,11 @@ jobs:
             --platform managed \
             --allow-unauthenticated
 
-      - name: Install uv, google-agents-cli, and Enable Network Services & Security APIs
+      - name: Install uv, google-agents-cli, and Enable GCP APIs
         run: |
           pip install uv google-agents-cli
           gcloud components install alpha --quiet || true
-          gcloud services enable networkservices.googleapis.com networksecurity.googleapis.com discoveryengine.googleapis.com cloudapiregistry.googleapis.com agentregistry.googleapis.com --project=${{ env.GCP_PROJECT_ID }} || true
+          gcloud services enable modelarmor.googleapis.com networkservices.googleapis.com networksecurity.googleapis.com discoveryengine.googleapis.com cloudapiregistry.googleapis.com agentregistry.googleapis.com --project=${{ env.GCP_PROJECT_ID }} || true
 
       - name: Provision Agent Gateway (Network Services)
         run: |
