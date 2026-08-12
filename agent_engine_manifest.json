@@ -1,0 +1,26 @@
+{
+  "agent-orchestrator": {
+    "display_name": "agent-orchestrator",
+    "status": "REGISTERED_IN_AGENT_REGISTRY",
+    "reasoning_engine_id": "projects/1047232371360/locations/us-central1/reasoningEngines/4762742973165207552",
+    "endpoint_url": "https://us-central1-aiplatform.googleapis.com/v1/projects/1047232371360/locations/us-central1/reasoningEngines/4762742973165207552:streamQuery"
+  },
+  "agent-analytics": {
+    "display_name": "agent-analytics",
+    "status": "REGISTERED_IN_AGENT_REGISTRY",
+    "reasoning_engine_id": "projects/1047232371360/locations/us-central1/reasoningEngines/5406757719879188480",
+    "endpoint_url": "https://us-central1-aiplatform.googleapis.com/v1/projects/1047232371360/locations/us-central1/reasoningEngines/5406757719879188480:streamQuery"
+  },
+  "agent-strategy": {
+    "display_name": "agent-strategy",
+    "status": "REGISTERED_IN_AGENT_REGISTRY",
+    "reasoning_engine_id": "projects/1047232371360/locations/us-central1/reasoningEngines/2731619541221113856",
+    "endpoint_url": "https://us-central1-aiplatform.googleapis.com/v1/projects/1047232371360/locations/us-central1/reasoningEngines/2731619541221113856:streamQuery"
+  },
+  "agent-content": {
+    "display_name": "agent-content",
+    "status": "REGISTERED_IN_AGENT_REGISTRY",
+    "reasoning_engine_id": "projects/1047232371360/locations/us-central1/reasoningEngines/1358021654873112576",
+    "endpoint_url": "https://us-central1-aiplatform.googleapis.com/v1/projects/1047232371360/locations/us-central1/reasoningEngines/1358021654873112576:streamQuery"
+  }
+}

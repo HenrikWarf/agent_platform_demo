@@ -52,7 +52,7 @@ class SkillRegistry:
                     "description": description,
                     "category": category,
                     "file_path": sf,
-                    "status": "ACTIVE_IN_REGISTRY"
+                    "status": "REGISTERED_IN_AGENT_REGISTRY"
                 })
             except Exception as e:
                 logger.error(f"Error reading skill at {sf}: {e}")
