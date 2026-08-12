@@ -46,7 +46,8 @@ jobs:
             echo "AUTH_MODE=wif" >> $GITHUB_ENV
           else
             echo "AUTH_MODE=none" >> $GITHUB_ENV
-            echo "⚠️ No GCP_SA_KEY or WORKLOAD_IDENTITY_PROVIDER found in GitHub Secrets."
+            echo "❌ No GCP_SA_KEY or WORKLOAD_IDENTITY_PROVIDER found in GitHub Secrets. Cannot authenticate with Vertex AI."
+            exit 1
           fi
 
       - name: Authenticate to GCP (Service Account Key)
@@ -63,15 +64,14 @@ jobs:
           service_account: ${{ secrets.GCP_SA_EMAIL }}
 
       - name: Set up Google Cloud SDK
-        if: env.AUTH_MODE != 'none'
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
       - name: Run Golden Marketing Benchmark Eval
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
+          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
           GEMINI_LOCATION: global
         run: |
           PYTHONPATH=. python eval/run_eval.py
