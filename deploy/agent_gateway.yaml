@@ -4,3 +4,5 @@ protocols:
   - MCP
 registries:
   - //agentregistry.googleapis.com/projects/agent-demo-09/locations/us-central1
+googleManaged:
+  governedAccessPath: CLIENT_TO_AGENT
