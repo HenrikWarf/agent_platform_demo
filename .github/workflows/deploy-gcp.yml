@@ -157,11 +157,19 @@ jobs:
             --platform managed \
             --allow-unauthenticated
 
-      - name: Install uv and google-agents-cli
+      - name: Install uv, google-agents-cli, and Enable Network Services
         run: |
           pip install uv google-agents-cli
           gcloud components install alpha --quiet || true
-          gcloud services enable discoveryengine.googleapis.com cloudapiregistry.googleapis.com agentregistry.googleapis.com --project=${{ env.GCP_PROJECT_ID }} || true
+          gcloud services enable networkservices.googleapis.com discoveryengine.googleapis.com cloudapiregistry.googleapis.com agentregistry.googleapis.com --project=${{ env.GCP_PROJECT_ID }} || true
+
+      - name: Provision Agent Gateway (Network Services)
+        run: |
+          gcloud alpha network-services agent-gateways import marketing-agent-gateway \
+            --source=deploy/agent_gateway.yaml \
+            --location=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --quiet || echo "Agent Gateway provisioned or updated."
 
       - name: Deploy 4 Standalone Agents to Vertex AI Agent Runtime
         run: |

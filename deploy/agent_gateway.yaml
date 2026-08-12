@@ -1,0 +1,6 @@
+name: projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway
+description: Enterprise Agent Gateway enforcing Model Armor security policies and governed routing for multi-agent instances.
+protocols:
+  - MCP
+registries:
+  - //agentregistry.googleapis.com/projects/agent-demo-09/locations/us-central1
