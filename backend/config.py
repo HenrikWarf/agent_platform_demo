@@ -23,7 +23,7 @@ class Config:
     
     # Agent Engine & Agent Gateway
     AGENT_RUNTIME_ID: str = os.getenv("AGENT_RUNTIME_ID", "")
-    AGENT_GATEWAY_URL: str = os.getenv("AGENT_GATEWAY_URL", "")
+    AGENT_GATEWAY_URL: str = os.getenv("AGENT_GATEWAY_URL", "projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway")
     GEMINI_ENTERPRISE_APP_ID: str = os.getenv("GEMINI_ENTERPRISE_APP_ID", "projects/agent-demo-09/locations/global/collections/default_collection/engines/marketing-app")
     
     # Model Armor configuration

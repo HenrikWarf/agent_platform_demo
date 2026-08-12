@@ -12,10 +12,11 @@ logger = logging.getLogger("agent_gateway")
 class AgentGateway:
     def __init__(self):
         self.floor_id = Config.MODEL_ARMOR_FLOOR_ID
+        self.gateway_url = Config.AGENT_GATEWAY_URL or "projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway"
 
     def inspect_and_sanitize(self, prompt: str) -> Dict[str, Any]:
         """
-        Executes Model Armor inspection policies on prompt input.
+        Executes Model Armor inspection policies on prompt input at the Agent Gateway level.
         Verifies prompt against malicious injection patterns, script tags, and PII exposure.
         """
         lower = prompt.lower()
@@ -35,11 +36,12 @@ class AgentGateway:
                 detected_threats.append(pattern)
 
         if detected_threats:
-            logger.warning(f"Model Armor Triggered: Detected threats {detected_threats} in floor {self.floor_id}")
+            logger.warning(f"Agent Gateway & Model Armor Triggered: Threat detected {detected_threats} at Gateway '{self.gateway_url}'")
             return {
                 "passed": False,
                 "floor_id": self.floor_id,
-                "filter_reason": f"Model Armor Security Block: Threat Detected ({', '.join(detected_threats)})",
+                "gateway_url": self.gateway_url,
+                "filter_reason": f"Agent Gateway Model Armor Block: Threat Detected ({', '.join(detected_threats)})",
                 "sanitized_prompt": None,
                 "pii_masked": False
             }
@@ -56,6 +58,7 @@ class AgentGateway:
         return {
             "passed": True,
             "floor_id": self.floor_id,
+            "gateway_url": self.gateway_url,
             "filter_reason": "Clean",
             "sanitized_prompt": sanitized,
             "pii_masked": pii_masked
