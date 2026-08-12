@@ -161,6 +161,7 @@ jobs:
         run: |
           pip install uv google-agents-cli
           gcloud components install alpha --quiet || true
+          gcloud services enable discoveryengine.googleapis.com cloudapiregistry.googleapis.com --project=${{ env.GCP_PROJECT_ID }} || true
 
       - name: Deploy Agents to Vertex AI Agent Runtime
         run: |
