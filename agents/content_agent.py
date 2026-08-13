@@ -4,6 +4,13 @@ Generates high-converting marketing copy, email sequences, social posts, and ad 
 """
 from typing import Dict, Any
 import logging
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None
+    types = None
+
 from .base_agent import BaseAgent
 from .a2a_protocol import A2AMessage, A2AMessageType
 

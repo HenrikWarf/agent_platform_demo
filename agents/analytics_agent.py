@@ -6,6 +6,13 @@ from typing import Dict, Any, List
 import logging
 import json
 import re
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None
+    types = None
+
 from .base_agent import BaseAgent
 from .a2a_protocol import A2AMessage, A2AMessageType
 
