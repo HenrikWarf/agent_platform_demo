@@ -145,6 +145,7 @@ jobs:
             --image "$IMAGE_URI" \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
+            --port 8080 \
             --allow-unauthenticated \
             --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }},BIGQUERY_DATASET=${{ env.BIGQUERY_DATASET }},GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace,OTEL_METRICS_EXPORTER=google_cloud_monitoring,OTEL_LOGS_EXPORTER=google_cloud_logging,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT
 

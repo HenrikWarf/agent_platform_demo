@@ -22,17 +22,17 @@ class BigQueryClient:
     def __init__(self, project_id: str = Config.GCP_PROJECT_ID, dataset_id: str = Config.BIGQUERY_DATASET):
         self.project_id = project_id
         self.dataset_id = dataset_id
-        self.client = None
+        self._client = None
 
-        if HAS_BIGQUERY_SDK:
+    @property
+    def client(self):
+        if self._client is None and HAS_BIGQUERY_SDK:
             try:
-                self.client = bigquery.Client(project=self.project_id)
+                self._client = bigquery.Client(project=self.project_id)
                 logger.info(f"BigQuery Client initialized for project '{self.project_id}'")
             except Exception as e:
                 logger.error(f"Failed to initialize GCP BigQuery SDK client for project '{self.project_id}': {e}")
-                raise RuntimeError(f"BigQuery client initialization error: {e}")
-        else:
-            raise RuntimeError("google-cloud-bigquery SDK package is not installed.")
+        return self._client
 
     def get_rfm_segments(self, segment_filter: str = "At-Risk Premium") -> Dict[str, Any]:
         """Queries customer dataset for RFM segmentation metrics."""
