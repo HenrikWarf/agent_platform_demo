@@ -5,6 +5,7 @@ Exposes Agent Gateway, Agent Engine, Agent Registry Skills, BigQuery, and Evalua
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Dict, Any, Optional, List
 import logging
 import os
 import sys
