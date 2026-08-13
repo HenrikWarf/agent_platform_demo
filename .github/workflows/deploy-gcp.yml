@@ -227,7 +227,8 @@ jobs:
         if: needs.changes.outputs.agents == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt uv google-agents-cli
+          pip install "google-cloud-aiplatform[agent_engines]>=1.45.0" cloudpickle uv google-agents-cli
+          pip install -r backend/requirements.txt
           bash deploy/deploy_all_agents_to_agent_runtime.sh
 
       # --- 5. Agent Registry Skill Publishing ---
