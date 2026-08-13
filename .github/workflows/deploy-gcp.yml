@@ -248,3 +248,9 @@ jobs:
             --description "Multi-agent marketing platform: BigQuery analytics, omnichannel strategy, and creative content generation" \
             --registration-type adk
 
+      # --- 6. Register Skills in Agent Registry ---
+      - name: Register Skills in Agent Registry
+        if: needs.changes.outputs.skills == 'true'
+        run: |
+          gcloud components install alpha --quiet || true
+          python3 deploy/register_skills.py

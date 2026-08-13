@@ -1,5 +1,5 @@
 ---
-name: campaign_framework
+name: campaign-framework
 description: "Framework for designing multi-touch, omnichannel marketing strategy plans, target cohort mapping, channel allocation, budget split, and KPI measurement models."
 version: 1.0.0
 category: marketing_strategy

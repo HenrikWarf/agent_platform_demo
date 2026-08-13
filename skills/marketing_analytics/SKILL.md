@@ -1,5 +1,5 @@
 ---
-name: bigquery_customer_analytics
+name: bigquery-customer-analytics
 description: "Executes BigQuery SQL queries on customer datasets (RFM summary, Demographics 360, Transactions) to extract cohort metrics, customer counts, average monetary spend, and revenue-at-risk."
 version: 1.1.0
 category: marketing_analytics

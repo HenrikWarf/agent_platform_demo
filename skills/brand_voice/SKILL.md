@@ -1,5 +1,5 @@
 ---
-name: brand_voice_craft
+name: brand-voice-craft
 description: "Guidelines and rules for producing consistent, high-converting marketing copy across email, social media, SMS, and ad channels adhering to enterprise brand standards."
 version: 1.0.0
 category: copywriting
