@@ -78,12 +78,13 @@ def publish_all():
         
         # 2. Register via gcloud alpha agent-registry (requires hyphenated service_id)
         registry_service_id = skill_name.replace("_", "-")
+        skill_url = f"https://agent-platform-backend-q5c3bhebga-uc.a.run.app/api/skills/{skill_name}"
         create_cmd = [
             "gcloud", "alpha", "agent-registry", "services", "create", registry_service_id,
             "--display-name", skill["display_name"],
             "--description", skill["description"],
             "--agent-spec-type", "no-spec",
-            "--interfaces", "url=https://agent-platform-backend-q5c3bhebga-uc.a.run.app/api/chat,protocolBinding=HTTP_JSON",
+            "--interfaces", f"url={skill_url},protocolBinding=HTTP_JSON",
             "--project", PROJECT_ID,
             "--location", REGION,
             "--quiet"
