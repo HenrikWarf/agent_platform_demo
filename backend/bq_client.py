@@ -5,7 +5,10 @@ Executes analytical queries directly against Google Cloud BigQuery customer data
 import textwrap
 from typing import Dict, Any, List
 import logging
-from .config import Config
+try:
+    from .config import Config
+except ImportError:
+    from backend.config import Config
 
 logger = logging.getLogger("bq_client")
 

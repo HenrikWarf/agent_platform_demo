@@ -5,15 +5,25 @@ Exposes Agent Gateway, Agent Engine, Agent Registry Skills, BigQuery, and Evalua
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Any, Optional, List
 import logging
 import os
+import sys
 
-from agents.orchestrator_agent import OrchestratorAgent
-from backend.config import Config
-from backend.bq_client import BigQueryClient
-from backend.gateway import AgentGateway
-from backend.skill_registry import SkillRegistry
+# Ensure project root directory is in Python path for direct or package execution
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from agents.orchestrator_agent import OrchestratorAgent
+    from backend.config import Config
+    from backend.bq_client import BigQueryClient
+    from backend.gateway import AgentGateway
+    from backend.skill_registry import SkillRegistry
+except ImportError:
+    from agents.orchestrator_agent import OrchestratorAgent
+    from config import Config
+    from bq_client import BigQueryClient
+    from gateway import AgentGateway
+    from skill_registry import SkillRegistry
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

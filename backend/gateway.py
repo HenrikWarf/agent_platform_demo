@@ -4,8 +4,10 @@ Protects agent routes, performs prompt injection defense, PII masking, and rate 
 """
 from typing import Dict, Any
 import logging
-import re
-from .config import Config
+try:
+    from .config import Config
+except ImportError:
+    from backend.config import Config
 
 logger = logging.getLogger("agent_gateway")
 
