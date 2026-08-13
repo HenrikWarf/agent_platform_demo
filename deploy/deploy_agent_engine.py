@@ -30,17 +30,18 @@ def init_vertex_sdk():
 
 def deploy_agent_instances():
     """
-    Deploys 4 distinct Agent Engine instances:
-    1. Orchestrator / Supervisor Agent (agent-orchestrator)
-    2. Customer Insights & Analytics Agent (agent-analytics)
-    3. Marketing Strategy Agent (agent-strategy)
-    4. Content & Creative Agent (agent-content)
+    Deploys new revisions in-place to the 4 canonical Google ADK Agent Runtime instances:
+    1. agent-orchestrator (projects/1047232371360/locations/us-central1/reasoningEngines/4762742973165207552)
+    2. agent-analytics    (projects/1047232371360/locations/us-central1/reasoningEngines/5406757719879188480)
+    3. agent-strategy     (projects/1047232371360/locations/us-central1/reasoningEngines/2731619541221113856)
+    4. agent-content      (projects/1047232371360/locations/us-central1/reasoningEngines/1358021654873112576)
     """
     init_vertex_sdk()
 
-    agents_to_deploy = [
+    canonical_agents = [
         {
             "display_name": "agent-analytics",
+            "resource_id": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/5406757719879188480",
             "description": "Vertex AI Agent Engine: Customer Insights & Analytics Agent",
             "class_name": "AnalyticsAgent",
             "module": "agents.analytics_agent",
@@ -48,6 +49,7 @@ def deploy_agent_instances():
         },
         {
             "display_name": "agent-strategy",
+            "resource_id": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/2731619541221113856",
             "description": "Vertex AI Agent Engine: Marketing Strategy Agent",
             "class_name": "StrategyAgent",
             "module": "agents.strategy_agent",
@@ -55,6 +57,7 @@ def deploy_agent_instances():
         },
         {
             "display_name": "agent-content",
+            "resource_id": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/1358021654873112576",
             "description": "Vertex AI Agent Engine: Content & Creative Copywriting Agent",
             "class_name": "ContentAgent",
             "module": "agents.content_agent",
@@ -62,6 +65,7 @@ def deploy_agent_instances():
         },
         {
             "display_name": "agent-orchestrator",
+            "resource_id": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/4762742973165207552",
             "description": "Vertex AI Agent Engine: Supervisor Orchestrator Agent",
             "class_name": "OrchestratorAgent",
             "module": "agents.orchestrator_agent",
@@ -70,20 +74,27 @@ def deploy_agent_instances():
     ]
 
     deployed_manifest = {}
-    print("\n🚀 Deploying Standalone Agents to Vertex AI Agent Engine...")
+    print("\n🚀 Deploying Revisions to Canonical Google ADK Agent Runtime Instances...")
     print("======================================================================")
 
-    # Fetch existing deployed ReasoningEngine instances to prevent creating duplicate orphaned resources
-    try:
-        from vertexai.preview import reasoning_engines
-        existing_engine_map = {e.display_name: e for e in reasoning_engines.ReasoningEngine.list()}
-    except Exception as list_err:
-        logger.warning(f"Could not fetch existing Reasoning Engines: {list_err}")
-        existing_engine_map = {}
+    from vertexai.preview import reasoning_engines
 
-    for agent_spec in agents_to_deploy:
+    common_requirements = [
+        "google-cloud-aiplatform[agent_engines]>=1.45.0",
+        "google-cloud-bigquery>=3.18.0",
+        "google-genai>=1.0.0",
+        "opentelemetry-api>=1.23.0",
+        "opentelemetry-sdk>=1.23.0",
+        "opentelemetry-exporter-gcp-trace>=1.6.0",
+        "pydantic>=2.6.0",
+        "requests>=2.31.0",
+        "cloudpickle>=3.0.0"
+    ]
+
+    for agent_spec in canonical_agents:
         name = agent_spec["display_name"]
-        print(f"📦 Deploying Agent Engine Instance: [{name}]...")
+        resource_id = agent_spec["resource_id"]
+        print(f"📦 Deploying Revision to Canonical Agent: [{name}] ({resource_id})...")
 
         try:
             # Dynamically load class
@@ -91,30 +102,29 @@ def deploy_agent_instances():
             agent_cls = getattr(module, agent_spec["class_name"])
             instance = agent_cls()
 
-            common_requirements = [
-                "google-cloud-aiplatform[agent_engines]>=1.45.0",
-                "google-cloud-bigquery>=3.18.0",
-                "google-genai>=1.0.0",
-                "opentelemetry-api>=1.23.0",
-                "opentelemetry-sdk>=1.23.0",
-                "opentelemetry-exporter-gcp-trace>=1.6.0",
-                "pydantic>=2.6.0",
-                "requests>=2.31.0",
-                "cloudpickle>=3.0.0"
-            ]
+            # Retrieve canonical ADK instance
+            try:
+                engine = reasoning_engines.ReasoningEngine(resource_id)
+            except Exception:
+                # Fallback list search if exact ID lookup fails
+                engine = None
+                for e in reasoning_engines.ReasoningEngine.list():
+                    if e.display_name == name:
+                        engine = e
+                        break
 
-            if name in existing_engine_map:
-                existing_engine = existing_engine_map[name]
-                print(f"🔄 Found existing Agent Engine instance [{name}] ({existing_engine.resource_name}). Deploying new revision...")
-                remote_agent = existing_engine.update(
+            if engine:
+                logger.info(f"🔄 Deploying new revision to canonical instance [{name}] ({engine.resource_name})...")
+                remote_agent = engine.update(
                     reasoning_engine=instance,
                     requirements=common_requirements,
                     extra_packages=["agents"],
                     display_name=name,
                     description=agent_spec["description"]
                 )
-                logger.info(f"✅ Updated existing instance [{name}] -> {remote_agent.resource_name}")
+                res_name = remote_agent.resource_name
             else:
+                logger.info(f"✨ Initializing canonical ADK instance [{name}]...")
                 remote_agent = reasoning_engines.ReasoningEngine.create(
                     reasoning_engine=instance,
                     requirements=common_requirements,
@@ -122,21 +132,20 @@ def deploy_agent_instances():
                     display_name=name,
                     description=agent_spec["description"]
                 )
-                logger.info(f"✅ Created new instance [{name}] -> {remote_agent.resource_name}")
+                res_name = remote_agent.resource_name
 
-            resource_name = remote_agent.resource_name
             deployed_manifest[name] = {
-                "resource_name": resource_name,
+                "resource_name": res_name,
                 "display_name": name,
                 "skills": agent_spec["skills"],
                 "status": "ACTIVE"
             }
-            logger.info(f"✅ Deployed [{name}] -> {resource_name}")
+            logger.info(f"✅ Revision Deployed [{name}] -> {res_name}")
 
         except Exception as e:
-            logger.error(f"⚠️ Cloud Agent Engine deploy skipped for [{name}] (using local instance fallback): {e}")
+            logger.error(f"⚠️ Cloud Agent Engine revision deploy failed for [{name}]: {e}")
             deployed_manifest[name] = {
-                "resource_name": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/mock-{name}",
+                "resource_name": resource_id,
                 "display_name": name,
                 "skills": agent_spec["skills"],
                 "status": "LOCAL_FALLBACK"
