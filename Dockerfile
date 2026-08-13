@@ -1,15 +1,22 @@
-FROM python:3.11-slim
+# ADK Agent Runtime Container
+# This Dockerfile is used by `agents-cli deploy` for Agent Runtime deployment.
+# Agent Engine builds the container image from this file.
+FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY backend/requirements.txt requirements.txt
+# Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app
+# Copy application code
+COPY app/ app/
+COPY fast_api_app.py .
+COPY skills/ skills/
 
 ENV PYTHONPATH=/app
 ENV PORT=8080
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["uvicorn", "fast_api_app:app", "--host", "0.0.0.0", "--port", "8080"]

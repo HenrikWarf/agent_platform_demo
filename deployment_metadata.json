@@ -1,22 +1,5 @@
 {
-  "project_id": "agent-demo-09",
-  "region": "us-central1",
-  "gemini_enterprise_app_id": "projects/agent-demo-09/locations/global/collections/default_collection/engines/marketing-app",
-  "published_skills": {
-    "bigquery_customer_analytics": {
-      "agent": "AnalyticsAgent",
-      "published": true,
-      "status": "REGISTERED"
-    },
-    "omnichannel_strategy": {
-      "agent": "StrategyAgent",
-      "published": true,
-      "status": "REGISTERED"
-    },
-    "brand_voice": {
-      "agent": "ContentAgent",
-      "published": true,
-      "status": "REGISTERED"
-    }
-  }
+  "deployment_target": "agent_runtime",
+  "is_a2a": false,
+  "agent_directory": "app"
 }

@@ -1,0 +1,4 @@
+# ADK Agent Runtime Dependencies
+google-adk[otel-gcp]>=2.6.0
+google-cloud-bigquery>=3.18.0
+google-genai>=1.0.0
