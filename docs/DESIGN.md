@@ -121,3 +121,22 @@ In [frontend/src/components/ChatInterface.jsx](file:///Users/henrikw/Projects/ag
 - **Accordion Container**: Executed BigQuery SQL code blocks are parsed and rendered inside `<details><summary>` containers (`🔍 View Executed BigQuery SQL Query`).
 - **Selective Card Visibility**: Strategy & Content UI containers only mount when `Object.keys(msg.data.strategy).length > 0`.
 
+---
+
+## 5. Observability, Telemetry & Code Quality Architecture
+
+### 5.1 Cloud Logging Log Analytics Architecture
+For GCP Console Observability Analytics to process Agent Gateway and Agent Engine invocation counts, turn metrics, and latency charts:
+- **Log Analytics**: Must be enabled on the global `_Default` log bucket (`gcloud logging buckets update _Default --location=global --enable-analytics`).
+- **Log Views**: Log queries filter against the default `_AllLogs` view.
+
+### 5.2 Service Account Telemetry IAM Bindings
+Provisions metric writing and tracing permissions to service accounts via [deploy/enable_observability_permissions.sh](file:///Users/henrikw/Projects/agent_platform_demo/deploy/enable_observability_permissions.sh):
+- **Service Accounts**: `agent-platform-sa@agent-demo-09.iam.gserviceaccount.com`, Compute Engine SA (`1047232371360-compute`), and Vertex AI Service Agent (`service-1047232371360@gcp-sa-aiplatform.iam.gserviceaccount.com`).
+- **Roles**: `roles/cloudtrace.agent`, `roles/logging.logWriter`, `roles/monitoring.metricWriter`, `roles/monitoring.admin`, `roles/aiplatform.admin`, `roles/bigquery.dataEditor`, `roles/bigquery.jobUser`.
+
+### 5.3 Automated Code Quality Linter Hook
+- **Git Pre-Commit Hook** ([scripts/pre_commit_lint.sh](file:///Users/henrikw/Projects/agent_platform_demo/scripts/pre_commit_lint.sh)): Runs automatically on `git commit` to validate Python syntax/imports and React ESLint rules.
+- **IDE Language Server Config**: [.vscode/settings.json](file:///Users/henrikw/Projects/agent_platform_demo/.vscode/settings.json) and [pyrightconfig.json](file:///Users/henrikw/Projects/agent_platform_demo/pyrightconfig.json) direct Pyrefly/Pyright to resolve `venv/lib/python3.14/site-packages` without missing module warnings.
+
+

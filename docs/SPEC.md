@@ -194,3 +194,27 @@
   3. `eval_03`: Prompt injection attack simulation -> verifies Model Armor returns status `BLOCKED_BY_MODEL_ARMOR`.
 - **Target Pass Benchmark**: `100.0% (3/3 Passed)`.
 
+---
+
+## 4. Observability & Developer Environment Specifications
+
+### 4.1 Cloud Logging Log Analytics Specification
+- **Target Bucket**: `projects/agent-demo-09/locations/global/buckets/_Default`
+- **Analytics Configuration**: `--enable-analytics` enabled via `gcloud logging buckets update`.
+- **Target View**: `_AllLogs` (queries all structured logs across Agent Gateway, Model Armor, Cloud Run, and Agent Engine).
+
+### 4.2 Telemetry Permissions Script Specification (`deploy/enable_observability_permissions.sh`)
+- **Executable**: `bash deploy/enable_observability_permissions.sh`
+- **Service Accounts Targeted**:
+  - `agent-platform-sa@agent-demo-09.iam.gserviceaccount.com`
+  - `1047232371360-compute@developer.gserviceaccount.com`
+  - `service-1047232371360@gcp-sa-aiplatform.iam.gserviceaccount.com`
+- **Roles Provisioned**: `roles/cloudtrace.agent`, `roles/logging.logWriter`, `roles/monitoring.metricWriter`, `roles/monitoring.admin`, `roles/aiplatform.admin`, `roles/bigquery.dataEditor`, `roles/bigquery.jobUser`.
+
+### 4.3 Automated Git Pre-Commit Quality Linter Specification (`scripts/pre_commit_lint.sh`)
+- **Executable Hook**: `.git/hooks/pre-commit` -> `scripts/pre_commit_lint.sh`
+- **Checks Executed**:
+  1. Python `py_compile` syntax and module import verification (`agents/*.py`, `backend/*.py`, `deploy/*.py`, `eval/*.py`).
+  2. Frontend React ESLint check (`cd frontend && npm run lint`).
+
+

@@ -64,6 +64,7 @@ The platform MUST dynamically classify incoming user prompts into three distinct
 | **Data Integrity** | Zero Mock Data Rule | All BigQuery queries execute against live GCP tables; errors raise explicit exceptions |
 | **Scalability** | Cloud Run Backend Concurrency | Auto-scaling `0..10` instances via GCP Cloud Run managed infrastructure |
 | **Security Compliance** | Model Armor Prompt Shield | 100% prompt injection detection score on Golden Benchmark suite |
-| **Observability** | OpenTelemetry Cloud Trace | Full trace span coverage across gateway, orchestrator, A2A protocol, and BigQuery calls |
+| **Observability** | OpenTelemetry & Log Analytics | Full Cloud Trace, Monitoring metric writer, and Log Analytics `--enable-analytics` on `_Default` bucket |
+| **Code Quality** | Automated Git Pre-Commit Linter | 100% Python `py_compile` & React ESLint validation on `git commit` via `scripts/pre_commit_lint.sh` |
 | **Accessibility** | UI Color Contrast & Typography | Compliant with WCAG 2.1 AA standards; JetBrains Mono for code blocks |
 
