@@ -86,38 +86,43 @@ def deploy_agent_instances():
         print(f"📦 Deploying Agent Engine Instance: [{name}]...")
 
         try:
-            # Delete old duplicate instance if present to avoid spawning duplicate resources
-            if name in existing_engine_map:
-                old_engine = existing_engine_map[name]
-                print(f"🔄 Found existing Agent Engine instance [{name}] ({old_engine.resource_name}). Replacing with updated container...")
-                try:
-                    old_engine.delete()
-                    logger.info(f"🗑️ Cleanly deleted old instance [{old_engine.resource_name}]")
-                except Exception as del_err:
-                    logger.warning(f"Could not delete old instance {old_engine.resource_name}: {del_err}")
-
             # Dynamically load class
             module = __import__(agent_spec["module"], fromlist=[agent_spec["class_name"]])
             agent_cls = getattr(module, agent_spec["class_name"])
             instance = agent_cls()
 
-            remote_agent = reasoning_engines.ReasoningEngine.create(
-                reasoning_engine=instance,
-                requirements=[
-                    "google-cloud-aiplatform[agent_engines]>=1.45.0",
-                    "google-cloud-bigquery>=3.18.0",
-                    "google-genai>=1.0.0",
-                    "opentelemetry-api>=1.23.0",
-                    "opentelemetry-sdk>=1.23.0",
-                    "opentelemetry-exporter-gcp-trace>=1.6.0",
-                    "pydantic>=2.6.0",
-                    "requests>=2.31.0",
-                    "cloudpickle>=3.0.0"
-                ],
-                extra_packages=["agents"],
-                display_name=name,
-                description=agent_spec["description"]
-            )
+            common_requirements = [
+                "google-cloud-aiplatform[agent_engines]>=1.45.0",
+                "google-cloud-bigquery>=3.18.0",
+                "google-genai>=1.0.0",
+                "opentelemetry-api>=1.23.0",
+                "opentelemetry-sdk>=1.23.0",
+                "opentelemetry-exporter-gcp-trace>=1.6.0",
+                "pydantic>=2.6.0",
+                "requests>=2.31.0",
+                "cloudpickle>=3.0.0"
+            ]
+
+            if name in existing_engine_map:
+                existing_engine = existing_engine_map[name]
+                print(f"🔄 Found existing Agent Engine instance [{name}] ({existing_engine.resource_name}). Deploying new revision...")
+                remote_agent = existing_engine.update(
+                    reasoning_engine=instance,
+                    requirements=common_requirements,
+                    extra_packages=["agents"],
+                    display_name=name,
+                    description=agent_spec["description"]
+                )
+                logger.info(f"✅ Updated existing instance [{name}] -> {remote_agent.resource_name}")
+            else:
+                remote_agent = reasoning_engines.ReasoningEngine.create(
+                    reasoning_engine=instance,
+                    requirements=common_requirements,
+                    extra_packages=["agents"],
+                    display_name=name,
+                    description=agent_spec["description"]
+                )
+                logger.info(f"✅ Created new instance [{name}] -> {remote_agent.resource_name}")
 
             resource_name = remote_agent.resource_name
             deployed_manifest[name] = {
