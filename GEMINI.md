@@ -95,13 +95,16 @@ cd frontend && npm run dev
 ./start_local.sh
 ```
 
-### Seeding & Skill Publishing
+### Seeding & Agent Publishing
 ```bash
 # Seed 200 aligned rows to BigQuery
 PYTHONPATH=. ./venv/bin/python deploy/seed_bigquery_data.py
 
-# Register application skills in Agent Registry
-PYTHONPATH=. ./venv/bin/python deploy/publish_skills.py
+# Deploy ADK agent to Agent Runtime
+agents-cli deploy --project agent-demo-09 --region us-central1 --no-confirm-project
+
+# Publish agent to Gemini Enterprise
+python deploy/publish_agent.py
 ```
 
 ### Deployed GCP Endpoints & CI/CD Pipeline
@@ -125,4 +128,8 @@ PYTHONPATH=. ./venv/bin/python deploy/publish_skills.py
 10. **Dual Environment Versioning**: Added `APP_VERSION` (`v1.2.0`), `ENVIRONMENT`, `/api/health`, and `/api/version` endpoints in `Config` and `app.py`.
 11. **Skill Store Registration**: Created `deploy/publish_skills.py` to register marketing skills in Agent Registry.
 12. **GitHub Actions CI/CD Workflow**: Created `.github/workflows/deploy-gcp.yml` for automated eval, building container images, deploying to Cloud Run & Agent Engine Runtime, and publishing skills.
+13. **ADK Agent Refactor**: Migrated from custom `BaseAgent` with `cloudpickle` to `google.adk.agents.Agent` in `app/` directory. Enables `google-adk` framework tag, Cloud Trace telemetry, and `agents-cli deploy`.
+14. **Agent Registry Fix**: Replaced per-skill registration (`publish_skills.py`) with single-agent `agents-cli publish gemini-enterprise`. Agent Runtime auto-registers in Agent Registry.
+15. **Agent Gateway Clarification**: Renamed `backend/gateway.py` to `backend/safety.py` (`PromptSafetyGuard`). The real Agent Gateway is a managed GCP infra resource provisioned in `deploy/agent_gateway.yaml`.
+16. **CI/CD Pipeline Update**: Steps 4-5 now use `agents-cli deploy` + `agents-cli publish` instead of legacy `deploy_agent_engine.py`.
 

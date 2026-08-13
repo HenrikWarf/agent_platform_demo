@@ -12,7 +12,6 @@ COPY skills /app/skills
 COPY backend /app/backend
 COPY eval /app/eval
 COPY cli /app/cli
-COPY agent_engine_manifest.json /app/agent_engine_manifest.json
 COPY deployment_metadata.json /app/deployment_metadata.json
 
 ENV PYTHONPATH=/app

@@ -55,13 +55,14 @@ jobs:
               - 'deploy/deploy_frontend.sh'
               - '.github/workflows/**'
             agents:
-              - 'agents/**'
-              - 'deploy/deploy_agent_engine.py'
-              - 'deploy/deploy_all_agents_to_agent_runtime.sh'
+              - 'app/**'
+              - 'fast_api_app.py'
+              - 'requirements.txt'
+              - 'pyproject.toml'
+              - 'Dockerfile'
               - '.github/workflows/**'
             skills:
               - 'skills/**'
-              - 'deploy/publish_skills.py'
               - '.github/workflows/**'
             infra:
               - 'deploy/agent_gateway.yaml'
@@ -180,7 +181,7 @@ jobs:
         run: |
           IMAGE_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/backend:${{ github.sha }}"
           LATEST_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/backend:latest"
-          docker build -t "$IMAGE_URI" -t "$LATEST_URI" .
+          docker build -t "$IMAGE_URI" -t "$LATEST_URI" -f deploy/Dockerfile.backend .
           docker push "$IMAGE_URI"
           docker push "$LATEST_URI"
           gcloud run deploy agent-platform-backend \
@@ -222,17 +223,28 @@ jobs:
             --project=${{ env.GCP_PROJECT_ID }} \
             --quiet || echo "Agent Gateway provisioned or updated."
 
-      # --- 4. Vertex AI Agent Engine Deployment ---
-      - name: Deploy Standalone Agents to Vertex AI Agent Runtime
+      # --- 4. ADK Agent Runtime Deployment ---
+      - name: Deploy ADK Agent to Agent Runtime
         if: needs.changes.outputs.agents == 'true'
+        env:
+          GEMINI_ENTERPRISE_APP_ID: projects/${{ env.GCP_PROJECT_ID }}/locations/global/collections/default_collection/engines/marketing-app
         run: |
           python -m pip install --upgrade pip
-          pip install "google-cloud-aiplatform[agent_engines]>=1.45.0" cloudpickle uv google-agents-cli
-          pip install -r backend/requirements.txt
-          bash deploy/deploy_all_agents_to_agent_runtime.sh
+          pip install google-agents-cli
+          agents-cli deploy \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --region ${{ env.GCP_REGION }} \
+            --no-confirm-project
 
-      # --- 5. Agent Registry Skill Publishing ---
-      - name: Register Skills in Agent Registry
-        if: needs.changes.outputs.skills == 'true'
+      # --- 5. Publish Agent to Gemini Enterprise ---
+      - name: Publish Agent to Gemini Enterprise
+        if: needs.changes.outputs.agents == 'true'
+        env:
+          GEMINI_ENTERPRISE_APP_ID: projects/${{ env.GCP_PROJECT_ID }}/locations/global/collections/default_collection/engines/marketing-app
         run: |
-          PYTHONPATH=. python deploy/publish_skills.py
+          agents-cli publish gemini-enterprise \
+            --gemini-enterprise-app-id "$GEMINI_ENTERPRISE_APP_ID" \
+            --display-name "Marketing Campaign Orchestrator" \
+            --description "Multi-agent marketing platform: BigQuery analytics, omnichannel strategy, and creative content generation" \
+            --registration-type adk
+

@@ -1,6 +1,6 @@
 """
 Google Cloud Agent Platform Demo - FastAPI Server
-Exposes Agent Gateway, Agent Engine, Agent Registry Skills, BigQuery, and Evaluation endpoints.
+Exposes Model Armor safety, Agent Engine, Agent Registry Skills, BigQuery, and Evaluation endpoints.
 """
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,13 +17,13 @@ try:
     from agents.orchestrator_agent import OrchestratorAgent
     from backend.config import Config
     from backend.bq_client import BigQueryClient
-    from backend.gateway import AgentGateway
+    from backend.safety import PromptSafetyGuard as AgentGateway
     from backend.skill_registry import SkillRegistry
 except ImportError:
     from agents.orchestrator_agent import OrchestratorAgent
     from config import Config
     from bq_client import BigQueryClient
-    from gateway import AgentGateway
+    from safety import PromptSafetyGuard as AgentGateway
     from skill_registry import SkillRegistry
 
 # Setup logging
