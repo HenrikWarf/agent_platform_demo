@@ -32,6 +32,24 @@ class AnalyticsAgent(BaseAgent):
         )
         self.bq_client = bq_client
 
+    def set_up(self) -> None:
+        """Vertex AI Agent Engine lifecycle hook — initializes BigQuery client after deserialization."""
+        super().set_up()
+        if self.bq_client is None:
+            try:
+                from google.cloud import bigquery
+                import os
+                project_id = os.environ.get("GCP_PROJECT_ID", "agent-demo-09")
+                self.bq_client = type('BQClient', (), {
+                    '_client': bigquery.Client(project=project_id),
+                    'project_id': project_id,
+                    'dataset_id': os.environ.get("BIGQUERY_DATASET", "marketing_analytics"),
+                    'run_query': lambda self, sql: [dict(row) for row in self._client.query(sql).result()],
+                })()
+                logger.info(f"BigQuery client initialized in Agent Engine for project '{project_id}'")
+            except Exception as e:
+                logger.warning(f"Could not initialize BigQuery client in Agent Engine: {e}")
+
     def handle_a2a_message(self, message: A2AMessage) -> A2AMessage:
         intent = message.intent
         payload = message.payload

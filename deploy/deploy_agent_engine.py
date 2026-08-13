@@ -105,25 +105,9 @@ def deploy_agent_instances():
             # Dynamically load class
             module = __import__(agent_spec["module"], fromlist=[agent_spec["class_name"]])
             agent_cls = getattr(module, agent_spec["class_name"])
-            # OrchestratorAgent requires a BigQuery client for analytics queries
-            if agent_spec["class_name"] == "OrchestratorAgent":
-                try:
-                    from backend.bq_client import BigQueryClient
-                    bq_client = BigQueryClient(project_id=PROJECT_ID)
-                    instance = agent_cls(bq_client=bq_client)
-                except Exception as bq_err:
-                    logger.warning(f"Could not initialize BigQuery client for OrchestratorAgent: {bq_err}")
-                    instance = agent_cls()
-            elif agent_spec["class_name"] == "AnalyticsAgent":
-                try:
-                    from backend.bq_client import BigQueryClient
-                    bq_client = BigQueryClient(project_id=PROJECT_ID)
-                    instance = agent_cls(bq_client=bq_client)
-                except Exception as bq_err:
-                    logger.warning(f"Could not initialize BigQuery client for AnalyticsAgent: {bq_err}")
-                    instance = agent_cls()
-            else:
-                instance = agent_cls()
+            # Instantiate without bq_client — the 'backend' module is not packaged
+            # for Agent Engine. BigQuery client is lazy-initialized in set_up().
+            instance = agent_cls()
 
             # Retrieve canonical ADK instance
             try:

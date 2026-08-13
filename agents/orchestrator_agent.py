@@ -31,6 +31,14 @@ class OrchestratorAgent(BaseAgent):
         self.strategy_agent = StrategyAgent()
         self.content_agent = ContentAgent()
 
+    def set_up(self) -> None:
+        """Vertex AI Agent Engine lifecycle hook — propagates init to sub-agents."""
+        super().set_up()
+        # Initialize sub-agents (BigQuery client, skills, telemetry)
+        self.analytics_agent.set_up()
+        self.strategy_agent.set_up()
+        self.content_agent.set_up()
+
     def handle_a2a_message(self, message: A2AMessage) -> A2AMessage:
         # Supervisors handle root user tasks directly in process_user_request
         return A2AMessage(
