@@ -146,7 +146,7 @@ jobs:
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }},BIGQUERY_DATASET=${{ env.BIGQUERY_DATASET }}
+            --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }},BIGQUERY_DATASET=${{ env.BIGQUERY_DATASET }},GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace,OTEL_METRICS_EXPORTER=google_cloud_monitoring,OTEL_LOGS_EXPORTER=google_cloud_logging,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT
 
       - name: Deploy Frontend to Cloud Run
         run: |
@@ -157,11 +157,11 @@ jobs:
             --platform managed \
             --allow-unauthenticated
 
-      - name: Install uv, google-agents-cli, and Enable GCP APIs
+      - name: Install uv, google-agents-cli, and Enable GCP APIs & Observability Roles
         run: |
           pip install uv google-agents-cli
           gcloud components install alpha --quiet || true
-          gcloud services enable apptopology.googleapis.com observability.googleapis.com telemetry.googleapis.com monitoring.googleapis.com cloudtrace.googleapis.com iap.googleapis.com modelarmor.googleapis.com networkservices.googleapis.com networksecurity.googleapis.com discoveryengine.googleapis.com cloudapiregistry.googleapis.com agentregistry.googleapis.com --project=${{ env.GCP_PROJECT_ID }} || true
+          bash deploy/enable_observability_permissions.sh
 
       - name: Provision Agent Gateway (Network Services)
         run: |
