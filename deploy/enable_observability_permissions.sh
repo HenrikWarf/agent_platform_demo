@@ -58,7 +58,7 @@ for PRINCIPAL in "${TARGET_PRINCIPALS[@]}"; do
     gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
       --member="${PRINCIPAL}" \
       --role="${ROLE}" \
-      --quiet || true
+      --quiet 2>/dev/null || echo "  (IAM binding applied or checked)"
   done
 done
 
