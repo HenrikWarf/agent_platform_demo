@@ -49,25 +49,32 @@ class OrchestratorAgent(BaseAgent):
         return self.process_user_request(user_prompt=prompt, target_segment=target_segment)
 
     def determine_intent(self, user_prompt: str) -> str:
-        """Determines whether user prompt is a Data Query, Strategy Only, or Full Campaign pipeline request."""
+        """Determines whether user prompt is a Data Query, Strategy Only, Content Only, or Full Campaign request."""
         prompt_lower = user_prompt.lower()
         
-        has_query_keywords = any(k in prompt_lower for k in ["how many", "count", "query", "show data", "list customers", "total customers", "sql query", "show table", "recency days", "monetary value"])
-        has_strategy_only_keywords = any(k in prompt_lower for k in ["only strategy", "just strategy", "strategy only", "framework only"])
+        has_query = any(k in prompt_lower for k in ["how many", "count", "query", "show data", "list customers", "total customers", "sql query", "show table", "recency", "monetary", "segment size", "revenue at risk", "metrics", "analytics only", "just data", "database"])
+        has_content = any(k in prompt_lower for k in ["email", "copy", "creative", "ad copy", "sms", "draft", "write", "template", "body", "subject line", "message", "newsletter", "text copy", "script"])
+        has_strategy = any(k in prompt_lower for k in ["strategy", "framework", "plan", "pillars", "channels", "roadmap", "channel mix", "hypotheses", "ab test"])
+        has_full_all = any(k in prompt_lower for k in ["full campaign", "all", "everything", "end-to-end", "complete campaign", "combined", "both strategy and email", "full pipeline"])
 
-        if has_query_keywords and not any(k in prompt_lower for k in ["email", "copy", "creative", "campaign", "strategy", "draft", "write"]):
-            return "ANALYTICS_ONLY"
-        elif has_strategy_only_keywords:
+        if has_full_all or (has_strategy and has_content) or ("campaign" in prompt_lower and not has_content and not has_strategy and not has_query):
+            return "FULL_CAMPAIGN"
+        elif has_content and not (has_strategy or has_full_all):
+            return "CONTENT_ONLY"
+        elif has_strategy and not (has_content or has_full_all):
             return "STRATEGY_ONLY"
+        elif has_query and not (has_strategy or has_content or has_full_all):
+            return "ANALYTICS_ONLY"
         else:
             return "FULL_CAMPAIGN"
 
     def process_user_request(self, user_prompt: str, target_segment: str = "At-Risk Premium") -> Dict[str, Any]:
         """
-        Executes selective multi-agent workflow based on user intent:
-        - ANALYTICS_ONLY: A2A AnalyticsAgent -> BigQuery SQL metrics.
-        - STRATEGY_ONLY: AnalyticsAgent -> StrategyAgent.
-        - FULL_CAMPAIGN: AnalyticsAgent -> StrategyAgent -> ContentAgent.
+        Executes selective multi-agent workflow based on Orchestrator intent classification:
+        - ANALYTICS_ONLY: AnalyticsAgent -> BigQuery SQL & data insights ONLY.
+        - STRATEGY_ONLY: AnalyticsAgent -> StrategyAgent -> Campaign Strategy ONLY.
+        - CONTENT_ONLY: StrategyAgent -> ContentAgent -> Creative Copy / Email Draft ONLY.
+        - FULL_CAMPAIGN: AnalyticsAgent -> StrategyAgent -> ContentAgent -> All Combined.
         """
         self.router.clear_history()
 
@@ -88,18 +95,15 @@ class OrchestratorAgent(BaseAgent):
 
         logger.info(f"Orchestrator determined intent: '{intent}' for prompt: '{user_prompt}' on segment: '{target_segment}'")
 
-        # Step 1: Always Invoke Analytics Agent via A2A
-        analytics_response = self.send_a2a(
-            receiver_id="analytics_agent",
-            intent="ANALYZE_CUSTOMER_COHORTS",
-            payload={"segment": target_segment, "prompt": user_prompt},
-            skill_used="bigquery_customer_analytics"
-        )
-
-        analytics_result = analytics_response.payload if analytics_response.message_type == A2AMessageType.RESPONSE else {}
-
-        # If user ONLY requested BigQuery Data Query / Analytics:
+        # 1. ANALYTICS ONLY FLOW
         if intent == "ANALYTICS_ONLY":
+            analytics_response = self.send_a2a(
+                receiver_id="analytics_agent",
+                intent="ANALYZE_CUSTOMER_COHORTS",
+                payload={"segment": target_segment, "prompt": user_prompt},
+                skill_used="bigquery_customer_analytics"
+            )
+            analytics_result = analytics_response.payload if analytics_response.message_type == A2AMessageType.RESPONSE else {}
             cohort_details = analytics_result.get("cohort_details", {})
             analytics_summary = analytics_result.get("summary", "")
             sql = cohort_details.get("sql_executed", "")
@@ -133,46 +137,107 @@ class OrchestratorAgent(BaseAgent):
                 "a2a_trace": self.router.get_history()
             }
 
-        # Step 2: Invoke Strategy Agent via A2A (for STRATEGY_ONLY and FULL_CAMPAIGN)
+        # 2. STRATEGY ONLY FLOW
+        if intent == "STRATEGY_ONLY":
+            analytics_response = self.send_a2a(
+                receiver_id="analytics_agent",
+                intent="ANALYZE_CUSTOMER_COHORTS",
+                payload={"segment": target_segment, "prompt": user_prompt},
+                skill_used="bigquery_customer_analytics"
+            )
+            analytics_result = analytics_response.payload if analytics_response.message_type == A2AMessageType.RESPONSE else {}
+
+            strategy_response = self.send_a2a(
+                receiver_id="strategy_agent",
+                intent="GENERATE_CAMPAIGN_STRATEGY",
+                payload={"campaign_goal": user_prompt, "analytics_data": analytics_result},
+                skill_used="campaign_framework"
+            )
+            strategy_result = strategy_response.payload if strategy_response.message_type == A2AMessageType.RESPONSE else {}
+
+            return {
+                "status": "SUCCESS",
+                "model_armor_passed": True,
+                "intent": intent,
+                "user_prompt": user_prompt,
+                "summary": f"🎯 **Campaign Strategy Generated** for cohort '{target_segment}'. Developed target business goals, campaign pillars, channel mix weightings, and A/B testing hypotheses.",
+                "analytics": {},
+                "strategy": strategy_result.get("strategy", {}),
+                "content": {},
+                "a2a_trace": self.router.get_history()
+            }
+
+        # 3. CONTENT ONLY FLOW
+        if intent == "CONTENT_ONLY":
+            strategy_response = self.send_a2a(
+                receiver_id="strategy_agent",
+                intent="GENERATE_CAMPAIGN_STRATEGY",
+                payload={"campaign_goal": user_prompt, "analytics_data": {}},
+                skill_used="campaign_framework"
+            )
+            strategy_result = strategy_response.payload if strategy_response.message_type == A2AMessageType.RESPONSE else {}
+
+            content_response = self.send_a2a(
+                receiver_id="content_agent",
+                intent="GENERATE_MARKETING_CONTENT",
+                payload={"strategy": strategy_result.get("strategy", {})},
+                skill_used="brand_voice_craft"
+            )
+            content_result = content_response.payload if content_response.message_type == A2AMessageType.RESPONSE else {}
+            assets = content_result.get("generated_assets", {})
+            email_template = assets.get("email_template", {})
+
+            summary_text = (
+                f"✍️ **Creative Marketing Copy Generated** (`Brand Voice` Skill Executed):\n\n"
+                f"**Subject:** {email_template.get('subject', 'VIP Outreach')}\n"
+                f"**Preview:** _{email_template.get('preview_text', '')}_\n\n"
+                f"**Email Body:**\n{email_template.get('body', '')}\n\n"
+                f"👉 **Call To Action:** `{email_template.get('cta_button', 'Learn More')}`"
+            )
+
+            return {
+                "status": "SUCCESS",
+                "model_armor_passed": True,
+                "intent": intent,
+                "user_prompt": user_prompt,
+                "summary": summary_text,
+                "analytics": {},
+                "strategy": {},
+                "content": content_result,
+                "a2a_trace": self.router.get_history()
+            }
+
+        # 4. FULL CAMPAIGN (COMBINED RESPONSE FROM ALL AGENTS)
+        analytics_response = self.send_a2a(
+            receiver_id="analytics_agent",
+            intent="ANALYZE_CUSTOMER_COHORTS",
+            payload={"segment": target_segment, "prompt": user_prompt},
+            skill_used="bigquery_customer_analytics"
+        )
+        analytics_result = analytics_response.payload if analytics_response.message_type == A2AMessageType.RESPONSE else {}
+
         strategy_response = self.send_a2a(
             receiver_id="strategy_agent",
             intent="GENERATE_CAMPAIGN_STRATEGY",
             payload={"campaign_goal": user_prompt, "analytics_data": analytics_result},
             skill_used="campaign_framework"
         )
-
         strategy_result = strategy_response.payload if strategy_response.message_type == A2AMessageType.RESPONSE else {}
 
-        if intent == "STRATEGY_ONLY":
-            return {
-                "status": "SUCCESS",
-                "model_armor_passed": True,
-                "intent": intent,
-                "user_prompt": user_prompt,
-                "summary": f"Completed BigQuery analytics and generated marketing strategy document for cohort '{target_segment}'.",
-                "analytics": analytics_result,
-                "strategy": strategy_result.get("strategy", {}),
-                "content": {},
-                "a2a_trace": self.router.get_history()
-            }
-
-        # Step 3: Invoke Content Agent via A2A (FULL_CAMPAIGN)
         content_response = self.send_a2a(
             receiver_id="content_agent",
             intent="GENERATE_MARKETING_CONTENT",
             payload={"strategy": strategy_result.get("strategy", {})},
             skill_used="brand_voice_craft"
         )
-
         content_result = content_response.payload if content_response.message_type == A2AMessageType.RESPONSE else {}
 
-        # Aggregate Final Response
         return {
             "status": "SUCCESS",
             "model_armor_passed": True,
             "intent": intent,
             "user_prompt": user_prompt,
-            "summary": f"Completed full multi-agent campaign pipeline for cohort '{target_segment}'. Generated BigQuery analytics, campaign strategy, and creative copy.",
+            "summary": f"🌟 **Full Multi-Agent Campaign Generated** for cohort '{target_segment}'. Executed BigQuery analytics, omnichannel campaign strategy, and creative copy.",
             "analytics": analytics_result,
             "strategy": strategy_result.get("strategy", {}),
             "content": content_result,
