@@ -92,6 +92,10 @@ def deploy_agent_instances():
         "cloudpickle>=3.0.0"
     ]
 
+    # Signal to BaseAgent.__init__ to skip telemetry init during cloudpickle serialization
+    # (BatchSpanProcessor creates threads that cannot be pickled)
+    os.environ["AGENT_ENGINE_DEPLOY_MODE"] = "true"
+
     for agent_spec in canonical_agents:
         name = agent_spec["display_name"]
         resource_id = agent_spec["resource_id"]

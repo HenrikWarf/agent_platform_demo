@@ -32,7 +32,10 @@ class BaseAgent:
         self._load_skills()
         self._router = A2ARouter()
         self._router.register_agent(self.agent_id, self)
-        self._init_telemetry()
+        # Only init telemetry when running locally/Cloud Run (not during Agent Engine deploy serialization)
+        # Agent Engine calls set_up() after deserialization which handles telemetry init
+        if not os.environ.get("AGENT_ENGINE_DEPLOY_MODE"):
+            self._init_telemetry()
 
     def _load_skills(self):
         """Loads SKILL.md contents from the local skills directory if available."""
@@ -118,7 +121,21 @@ class BaseAgent:
     def set_up(self) -> None:
         """Vertex AI Reasoning Engine lifecycle initialization hook."""
         self._load_skills()
+        self._router = A2ARouter()
+        self._router.register_agent(self.agent_id, self)
         self._init_telemetry()
+
+    def __getstate__(self):
+        """Custom pickling: exclude non-serializable router from cloudpickle."""
+        state = self.__dict__.copy()
+        state.pop('_router', None)
+        return state
+
+    def __setstate__(self, state):
+        """Custom unpickling: restore router after deserialization."""
+        self.__dict__.update(state)
+        self._router = A2ARouter()
+        self._router.register_agent(self.agent_id, self)
 
     @property
     def router(self):
