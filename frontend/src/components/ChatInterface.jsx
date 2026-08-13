@@ -164,31 +164,38 @@ export default function ChatInterface() {
                     )}
 
                     {/* Campaign Pillars */}
-                    {msg.data.strategy.campaign_pillars && (
+                    {Array.isArray(msg.data.strategy.campaign_pillars) && msg.data.strategy.campaign_pillars.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>Campaign Pillars:</span>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
-                          {msg.data.strategy.campaign_pillars.map((pil, pIdx) => (
-                            <div key={pIdx} style={{ background: 'var(--code-bg)', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-                              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>{pil.pillar}</div>
-                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.2rem 0' }}>{pil.description}</div>
-                              {pil.channels && (
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.3rem' }}>
-                                  {pil.channels.map((ch, cIdx) => (
-                                    <span key={cIdx} style={{ fontSize: '0.65rem', background: 'rgba(66,133,244,0.15)', color: 'var(--color-primary)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
-                                      {ch}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                          {msg.data.strategy.campaign_pillars.map((pil, pIdx) => {
+                            const channelsList = Array.isArray(pil.channels)
+                              ? pil.channels
+                              : typeof pil.channels === 'string'
+                                ? pil.channels.split(',').map(c => c.trim())
+                                : [];
+                            return (
+                              <div key={pIdx} style={{ background: 'var(--code-bg)', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>{pil.pillar}</div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.2rem 0' }}>{pil.description}</div>
+                                {channelsList.length > 0 && (
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.3rem' }}>
+                                    {channelsList.map((ch, cIdx) => (
+                                      <span key={cIdx} style={{ fontSize: '0.65rem', background: 'rgba(66,133,244,0.15)', color: 'var(--color-primary)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+                                        {ch}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
 
                     {/* A/B Hypotheses */}
-                    {msg.data.strategy.ab_testing_hypotheses && (
+                    {Array.isArray(msg.data.strategy.ab_testing_hypotheses) && msg.data.strategy.ab_testing_hypotheses.length > 0 && (
                       <div style={{ marginTop: '0.5rem' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>A/B Testing Hypotheses:</span>
                         <ul style={{ margin: '0.2rem 0 0 1rem', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
@@ -249,7 +256,7 @@ export default function ChatInterface() {
                     )}
 
                     {/* Social Media Posts */}
-                    {msg.data.content.generated_assets.social_posts && (
+                    {Array.isArray(msg.data.content.generated_assets.social_posts) && msg.data.content.generated_assets.social_posts.length > 0 && (
                       <div style={{ marginTop: '0.6rem' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.3rem' }}>
                           <Share2 size={13} color="var(--color-primary)" /> Social Media Copy (LinkedIn & X)
