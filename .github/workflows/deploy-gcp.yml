@@ -5,6 +5,18 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      service:
+        description: 'Select Service(s) to Deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - backend_only
+          - frontend_only
+          - agents_only
+          - skills_only
 
 permissions:
   contents: read
@@ -17,6 +29,45 @@ env:
   BIGQUERY_DATASET: marketing_analytics
 
 jobs:
+  changes:
+    name: Detect Changed Components
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'backend_only')) }}
+      frontend: ${{ steps.filter.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'frontend_only')) }}
+      agents: ${{ steps.filter.outputs.agents == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }}
+      skills: ${{ steps.filter.outputs.skills == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'skills_only')) }}
+      infra: ${{ steps.filter.outputs.infra == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.service == 'all') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'Dockerfile'
+              - 'deploy/Dockerfile.backend'
+              - 'deploy/deploy_backend.sh'
+              - '.github/workflows/**'
+            frontend:
+              - 'frontend/**'
+              - 'deploy/deploy_frontend.sh'
+              - '.github/workflows/**'
+            agents:
+              - 'agents/**'
+              - 'deploy/deploy_agent_engine.py'
+              - 'deploy/deploy_all_agents_to_agent_runtime.sh'
+              - '.github/workflows/**'
+            skills:
+              - 'skills/**'
+              - 'deploy/publish_skills.py'
+              - '.github/workflows/**'
+            infra:
+              - 'deploy/agent_gateway.yaml'
+              - 'deploy/enable_observability_permissions.sh'
+              - '.github/workflows/**'
+
   eval-and-test:
     name: Run Quality Evaluation Suite
     runs-on: ubuntu-latest
@@ -77,8 +128,8 @@ jobs:
           PYTHONPATH=. python eval/run_eval.py
 
   deploy-to-gcp:
-    name: Deploy to GCP Cloud Run & Agent Engine Runtime
-    needs: eval-and-test
+    name: Selective Service Deployment to GCP
+    needs: [changes, eval-and-test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -119,28 +170,19 @@ jobs:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
       - name: Configure Docker for GCP Artifact Registry
+        if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
         run: |
           gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
-      - name: Build & Push Backend Container Image
+      # --- 1. FastAPI Backend Deployment ---
+      - name: Build & Deploy Backend (Cloud Run)
+        if: needs.changes.outputs.backend == 'true'
         run: |
           IMAGE_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/backend:${{ github.sha }}"
           LATEST_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/backend:latest"
           docker build -t "$IMAGE_URI" -t "$LATEST_URI" .
           docker push "$IMAGE_URI"
           docker push "$LATEST_URI"
-
-      - name: Build & Push Frontend Container Image
-        run: |
-          IMAGE_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/frontend:${{ github.sha }}"
-          LATEST_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/frontend:latest"
-          docker build -t "$IMAGE_URI" -t "$LATEST_URI" ./frontend
-          docker push "$IMAGE_URI"
-          docker push "$LATEST_URI"
-
-      - name: Deploy Backend to Cloud Run
-        run: |
-          IMAGE_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/backend:${{ github.sha }}"
           gcloud run deploy agent-platform-backend \
             --image "$IMAGE_URI" \
             --region ${{ env.GCP_REGION }} \
@@ -149,22 +191,30 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }},BIGQUERY_DATASET=${{ env.BIGQUERY_DATASET }},GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace,OTEL_METRICS_EXPORTER=google_cloud_monitoring,OTEL_LOGS_EXPORTER=google_cloud_logging,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT
 
-      - name: Deploy Frontend to Cloud Run
+      # --- 2. React Frontend Deployment ---
+      - name: Build & Deploy Frontend (Cloud Run)
+        if: needs.changes.outputs.frontend == 'true'
         run: |
           IMAGE_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/frontend:${{ github.sha }}"
+          LATEST_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/frontend:latest"
+          docker build -t "$IMAGE_URI" -t "$LATEST_URI" ./frontend
+          docker push "$IMAGE_URI"
+          docker push "$LATEST_URI"
           gcloud run deploy agent-platform-frontend \
             --image "$IMAGE_URI" \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated
 
-      - name: Install uv, google-agents-cli, and Enable GCP APIs & Observability Roles
+      # --- 3. Observability & Agent Gateway Infra ---
+      - name: Install Telemetry & Enable Permissions
+        if: needs.changes.outputs.infra == 'true'
         run: |
-          pip install uv google-agents-cli
           gcloud components install alpha --quiet || true
           bash deploy/enable_observability_permissions.sh
 
       - name: Provision Agent Gateway (Network Services)
+        if: needs.changes.outputs.infra == 'true'
         run: |
           gcloud alpha network-services agent-gateways import marketing-agent-gateway \
             --source=deploy/agent_gateway.yaml \
@@ -172,10 +222,15 @@ jobs:
             --project=${{ env.GCP_PROJECT_ID }} \
             --quiet || echo "Agent Gateway provisioned or updated."
 
-      - name: Deploy 4 Standalone Agents to Vertex AI Agent Runtime
+      # --- 4. Vertex AI Agent Engine Deployment ---
+      - name: Deploy Standalone Agents to Vertex AI Agent Runtime
+        if: needs.changes.outputs.agents == 'true'
         run: |
+          pip install uv google-agents-cli
           bash deploy/deploy_all_agents_to_agent_runtime.sh
 
+      # --- 5. Agent Registry Skill Publishing ---
       - name: Register Skills in Agent Registry
+        if: needs.changes.outputs.skills == 'true'
         run: |
           PYTHONPATH=. python deploy/publish_skills.py
