@@ -27,6 +27,12 @@ gcloud services enable \
   --project="${PROJECT_ID}" || true
 
 echo "======================================================================"
+echo "📊 Enabling Log Analytics on Cloud Logging _Default Bucket..."
+echo "======================================================================"
+gcloud logging buckets update _Default --location=global --project="${PROJECT_ID}" --enable-analytics || true
+
+
+echo "======================================================================"
 echo "🔐 Granting Observability & Metric Writer IAM Roles to Service Accounts..."
 echo "======================================================================"
 
