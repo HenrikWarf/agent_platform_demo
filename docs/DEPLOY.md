@@ -1,6 +1,9 @@
 # Deployment & Operations Guide (DEPLOY.md)
 ## GCP Multi-Agent Marketing Platform
 
+> [!TIP]
+> For fast single-service updates (e.g. backend or frontend only), see the [Individual GCP Service Deployment Guide](file:///Users/henrikw/Projects/agent_platform_demo/docs/INDIVIDUAL_SERVICE_DEPLOYMENT.md).
+
 ---
 
 ## 1. Environment Specifications & Parameters
