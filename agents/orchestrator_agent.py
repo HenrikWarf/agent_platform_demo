@@ -94,20 +94,25 @@ class OrchestratorAgent(BaseAgent):
         # If user ONLY requested BigQuery Data Query / Analytics:
         if intent == "ANALYTICS_ONLY":
             cohort_details = analytics_result.get("cohort_details", {})
-            count = cohort_details.get("count_in_segment", "N/A")
-            avg_recency = cohort_details.get("avg_recency_days", "N/A")
-            avg_monetary = cohort_details.get("avg_monetary_val", 0.0)
-            total_at_risk = cohort_details.get("total_segment_revenue_at_risk", 0.0)
+            analytics_summary = analytics_result.get("summary", "")
             sql = cohort_details.get("sql_executed", "")
 
-            summary_text = (
-                f"📊 **BigQuery Cohort Data Query Result for '{target_segment}'**:\n\n"
-                f"• **Customer Count:** `{count}`\n"
-                f"• **Average Recency:** `{avg_recency}` days\n"
-                f"• **Average Monetary Spend:** `${avg_monetary:,.2f}`\n"
-                f"• **Total Revenue at Risk:** `${total_at_risk:,.2f}`\n\n"
-                f"**BigQuery SQL Executed:**\n```sql\n{sql}\n```"
-            )
+            if analytics_summary and ("•" in analytics_summary or "Executed" in analytics_summary or len(analytics_summary) > 20):
+                summary_text = f"📊 **BigQuery Data Query Result**:\n\n{analytics_summary}\n\n**BigQuery SQL Executed:**\n```sql\n{sql}\n```"
+            else:
+                count = cohort_details.get("count_in_segment", "N/A")
+                avg_recency = cohort_details.get("avg_recency_days", "N/A")
+                avg_monetary = cohort_details.get("avg_monetary_val", 0.0)
+                total_at_risk = cohort_details.get("total_segment_revenue_at_risk", 0.0)
+
+                summary_text = (
+                    f"📊 **BigQuery Cohort Data Query Result for '{target_segment}'**:\n\n"
+                    f"• **Customer Count:** `{count}`\n"
+                    f"• **Average Recency:** `{avg_recency}` days\n"
+                    f"• **Average Monetary Spend:** `${avg_monetary:,.2f}`\n"
+                    f"• **Total Revenue at Risk:** `${total_at_risk:,.2f}`\n\n"
+                    f"**BigQuery SQL Executed:**\n```sql\n{sql}\n```"
+                )
 
             return {
                 "status": "SUCCESS",

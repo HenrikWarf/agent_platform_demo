@@ -144,3 +144,28 @@ class BigQueryClient:
             {"customer_id": "CUST_002", "rfm_segment": "Champions", "recency_days": 12, "frequency": 25, "monetary_value": 12500.0},
             {"customer_id": "CUST_003", "rfm_segment": "Loyal Customers", "recency_days": 45, "frequency": 14, "monetary_value": 6200.0}
         ]
+
+    def execute_custom_sql(self, sql_query: str) -> List[Dict[str, Any]]:
+        """Executes a custom SQL query against the BigQuery dataset and returns dict rows."""
+        if self.use_cloud and self.client:
+            try:
+                import decimal, datetime
+                query_job = self.client.query(sql_query)
+                results = list(query_job.result())
+                rows = []
+                for row in results:
+                    row_dict = {}
+                    for key, val in dict(row).items():
+                        if isinstance(val, decimal.Decimal):
+                            row_dict[key] = float(val)
+                        elif isinstance(val, (datetime.datetime, datetime.date)):
+                            row_dict[key] = val.isoformat()
+                        else:
+                            row_dict[key] = val
+                    rows.append(row_dict)
+                return rows
+            except Exception as e:
+                logger.error(f"Error executing custom BigQuery SQL '{sql_query}': {e}")
+                raise e
+        return []
+
