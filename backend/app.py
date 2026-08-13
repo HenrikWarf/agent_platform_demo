@@ -25,7 +25,6 @@ try:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
     from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
-    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
     tracer_provider = TracerProvider()
     cloud_exporter = CloudTraceSpanExporter(project_id=Config.GCP_PROJECT_ID)
