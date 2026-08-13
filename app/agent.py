@@ -7,9 +7,20 @@ The orchestrator routes user requests to specialized sub-agents:
 - Strategy Agent: Omnichannel campaign strategy generation
 - Content Agent: Marketing creative content generation
 """
+import os
+
+import google.auth
 from google.adk.agents import Agent
+from google.adk.apps import App
+from google.genai import types
 
 from . import tools
+
+# Ensure Vertex AI is configured
+_, project_id = google.auth.default()
+os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id or "agent-demo-09")
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
+os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
 # ─── Sub-Agents ────────────────────────────────────────────────────────────────
 
@@ -99,4 +110,11 @@ Safety:
 Always provide a clear summary of the results from each agent in the workflow.
 """,
     sub_agents=[analytics_agent, strategy_agent, content_agent],
+)
+
+# ─── ADK App (required by agents-cli and Agent Runtime) ───────────────────────
+
+app = App(
+    root_agent=root_agent,
+    name="app",
 )
