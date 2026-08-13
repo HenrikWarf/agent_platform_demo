@@ -5,7 +5,7 @@
 
 ## 1. High-Level Architecture Topology
 
-The application follows a decoupled multi-agent topology powered by FastAPI, React, BigQuery, and Google Agent Development Kit (ADK) using Agent-to-Agent (A2A) protocol.
+The application follows a microservice multi-agent topology powered by FastAPI, React (Vite), Google BigQuery, Model Armor, Agent Gateway, Agent Registry, and Vertex AI Agent Engine using Agent-to-Agent (A2A) protocol.
 
 ```
 +-------------------------------------------------------------------------+
@@ -21,47 +21,78 @@ The application follows a decoupled multi-agent topology powered by FastAPI, Rea
                                      |
                                      v
 +-------------------------------------------------------------------------+
+|                         AGENT GATEWAY & MODEL ARMOR                     |
+|      governedAccessPath: CLIENT_TO_AGENT | Prompt Shield Inspection     |
++------------------------------------+------------------------------------+
+                                     |
+                                     v
++-------------------------------------------------------------------------+
 |                        ORCHESTRATOR SUPERVISOR                          |
-|         Model Armor Protection | Dynamic Intent Classifier             |
+|                  Selective Intent Classification Engine                 |
 +-----+------------------------------+------------------------------+-----+
       |                              |                              |
       | (A2A Protocol)               | (A2A Protocol)               | (A2A Protocol)
       v                              v                              v
 +------------------+         +------------------+         +------------------+
 | Analytics Agent  |         |  Strategy Agent  |         |  Content Agent   |
-| (bq_analytics)   |         | (omnichannel_str)|         |  (brand_voice)   |
+|  (NL2SQL Engine) |         | (omnichannel_str)|         |  (brand_voice)   |
 +--------+---------+         +------------------+         +------------------+
          |
          v
 +-------------------------------------------------------------------------+
 |                             GOOGLE BIGQUERY                             |
-|                     (agent-demo-09:marketing_analytics)                 |
+|               (agent-demo-09:marketing_analytics.tables)                |
 +-------------------------------------------------------------------------+
 ```
 
 ---
 
-## 2. Multi-Agent Design & A2A Protocol
+## 2. Agent Gateway & Model Armor Governance Architecture
 
-### 2.1 Supervisor & Intent Classifier
-The **Orchestrator Agent** ([agents/orchestrator_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/orchestrator_agent.py)) intercepts all incoming requests:
-1. **Security Inspection**: Invokes `validate_prompt(user_prompt)` through Model Armor.
-2. **Intent Classification**: Evaluates user prompt semantics against 3 rules:
-   - `ANALYTICS_ONLY`: Intent patterns asking for counts, totals, segment summaries, or raw data queries.
-   - `STRATEGY_ONLY`: Prompts requesting strategy, channel allocation, or ROI without copy assets.
-   - `FULL_CAMPAIGN`: General marketing campaign goals requiring end-to-end strategy and content generation.
+### 2.1 Agent Gateway (`marketing-agent-gateway`)
+- **Resource Identifier**: `projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway`
+- **Governed Access Path**: `googleManaged.governedAccessPath: CLIENT_TO_AGENT`
+- **Bound Registries**: `//agentregistry.googleapis.com/projects/agent-demo-09/locations/us-central1`
+- **Protocols Supported**: `MCP`, `HTTP_JSON`
 
-### 2.2 Subagent Responsibilities
-- **Analytics Agent** ([agents/analytics_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/analytics_agent.py)): Queries BigQuery tables `customer_rfm_summary` and `customer_demographics_360` via `BigQueryClient`.
-- **Strategy Agent** ([agents/strategy_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/strategy_agent.py)): Constructs campaign frameworks, target messaging matrix, and ROI projections.
-- **Content Agent** ([agents/content_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/content_agent.py)): Drafts subject lines, email templates, and ad copy aligned with brand voice.
+### 2.2 Model Armor Security Policy
+- **Floor Metadata**: `projects/agent-demo-09/locations/us-central1/floors/marketing-floor`
+- **Prompt Shield Template**: `projects/agent-demo-09/locations/us-central1/templates/marketing-prompt-shield`
+- **Active Safety Filters**:
+  - Prompt Injection Defense (detects system override & malicious SQL manipulation).
+  - Jailbreak Detection & Redirection.
+  - Harmful Content & Data Exfiltration Prevention.
 
 ---
 
-## 3. UI/UX Design System & Theme Engine
+## 3. Multi-Agent Design & A2A Protocol Routing
 
-### 3.1 Design System Tokens (`index.css`)
-The UI utilizes CSS custom properties for instant light/dark theme switching without Tailwind compilation overhead.
+### 3.1 Supervisor & Intent Classifier Engine
+The **Orchestrator Agent** ([agents/orchestrator_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/orchestrator_agent.py)) intercepts all incoming requests:
+1. **Security Validation**: Passes prompt to Model Armor gateway inspection.
+2. **Intent Classification**:
+   - `ANALYTICS_ONLY`: Data queries, segment counts, averages, and row listings. Executes `AnalyticsAgent` ONLY.
+   - `STRATEGY_ONLY`: Framework and channel allocation prompts without copy assets. Executes `AnalyticsAgent` -> `StrategyAgent`.
+   - `FULL_CAMPAIGN`: Creative copywriting and end-to-end campaign prompts. Executes `AnalyticsAgent` -> `StrategyAgent` -> `ContentAgent`.
+
+### 3.2 Subagent Architecture & Responsibilities
+- **Analytics Agent** ([agents/analytics_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/analytics_agent.py)):
+  - Bound Skill: `bigquery_customer_analytics` ([skills/marketing_analytics/SKILL.md](file:///Users/henrikw/Projects/agent_platform_demo/skills/marketing_analytics/SKILL.md)).
+  - Natural Language to SQL (NL2SQL) engine powered by Vertex AI Gemini (`gemini-3.6-flash`).
+  - Executes live SQL against BigQuery tables (`customer_rfm_summary`, `customer_demographics_360`, `customer_transactions`). Zero dummy fallbacks.
+- **Strategy Agent** ([agents/strategy_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/strategy_agent.py)):
+  - Bound Skill: `omnichannel_strategy` ([skills/omnichannel_strategy/SKILL.md](file:///Users/henrikw/Projects/agent_platform_demo/skills/omnichannel_strategy/SKILL.md)).
+  - Generates campaign title, business goals, channel weights, and ROI projections.
+- **Content Agent** ([agents/content_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/content_agent.py)):
+  - Bound Skill: `brand_voice` ([skills/brand_voice/SKILL.md](file:///Users/henrikw/Projects/agent_platform_demo/skills/brand_voice/SKILL.md)).
+  - Generates subject lines, email templates, and LinkedIn ad copy.
+
+---
+
+## 4. UI/UX Design System & Theme Engine
+
+### 4.1 Design System Tokens (`frontend/src/index.css`)
+The UI utilizes CSS custom properties for instant light/dark theme switching without compilation overhead.
 
 ```css
 :root, [data-theme="light"] {
@@ -85,18 +116,8 @@ The UI utilizes CSS custom properties for instant light/dark theme switching wit
 }
 ```
 
-### 3.2 Formatting Engine & Collapsible SQL Accordion
+### 4.2 Formatting Engine & Collapsible SQL Accordion
 In [frontend/src/components/ChatInterface.jsx](file:///Users/henrikw/Projects/agent_platform_demo/frontend/src/components/ChatInterface.jsx), markdown responses pass through `formatMarkdownText()` and `dedentCode()`:
+- **Accordion Container**: Executed BigQuery SQL code blocks are parsed and rendered inside `<details><summary>` containers (`🔍 View Executed BigQuery SQL Query`).
+- **Selective Card Visibility**: Strategy & Content UI containers only mount when `Object.keys(msg.data.strategy).length > 0`.
 
-- **Triple Backtick Code Blocks**: Parsed and wrapped inside an HTML5 `<details><summary>` element.
-- **Accordion Summary**: `🔍 View Executed BigQuery SQL Query` (styled with `var(--color-primary)` and `var(--chip-bg)`).
-- **Code Block Styling**: Left-aligned, `var(--font-mono)`, `var(--code-bg)` container with horizontal scroll handling.
-
-### 3.3 Selective Container Rendering
-Response cards for Strategy and Content assets only render when their data payload contains valid entries:
-```jsx
-{msg.data?.strategy && Object.keys(msg.data.strategy).length > 0 && (
-  <StrategyCard data={msg.data.strategy} />
-)}
-```
-This guarantees data-only queries render cleanly without empty or placeholder card containers.
