@@ -4,6 +4,7 @@ Protects agent routes, performs prompt injection defense, PII masking, and rate 
 """
 from typing import Dict, Any
 import logging
+import re
 try:
     from .config import Config
 except ImportError:

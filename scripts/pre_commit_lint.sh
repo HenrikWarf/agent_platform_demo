@@ -17,7 +17,7 @@ else
 fi
 
 find agents backend deploy eval -name "*.py" -exec $PYTHON_BIN -m py_compile {} +
-PYTHONPATH=. $PYTHON_BIN -c "from backend.app import app; from agents.orchestrator_agent import OrchestratorAgent; print('✅ Backend Python modules compiled cleanly.')"
+PYTHONPATH=. $PYTHON_BIN -c "from backend.app import app; from backend.gateway import AgentGateway; g = AgentGateway(); res = g.inspect_and_sanitize('test'); print('✅ Backend Python modules & Agent Gateway compiled cleanly.')"
 
 # 2. Frontend React / ESLint Validation
 echo "⚛️  [2/2] Checking Frontend JavaScript & React Components..."
