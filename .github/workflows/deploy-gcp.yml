@@ -226,7 +226,8 @@ jobs:
       - name: Deploy Standalone Agents to Vertex AI Agent Runtime
         if: needs.changes.outputs.agents == 'true'
         run: |
-          pip install uv google-agents-cli
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt uv google-agents-cli
           bash deploy/deploy_all_agents_to_agent_runtime.sh
 
       # --- 5. Agent Registry Skill Publishing ---
