@@ -157,13 +157,33 @@ class AnalyticsAgent(BaseAgent):
                             }
                         }
             except Exception as e:
-                logger.warning(f"Live Gemini SQL generation failed: {e}. Falling back to default cohort analysis.")
+                logger.error(f"Live Gemini BigQuery SQL generation/execution failed: {e}")
+                return {
+                    "status": "ERROR",
+                    "skill_executed": "bigquery_customer_analytics",
+                    "summary": f"❌ **BigQuery Execution Error**: {e}",
+                    "cohort_details": {
+                        "error": str(e),
+                        "sql_executed": custom_sql if 'custom_sql' in locals() else "N/A"
+                    }
+                }
 
-        raw_data = self.bq_client.get_rfm_segments(segment_filter)
-        return {
-            "status": "SUCCESS",
-            "skill_executed": "bigquery_customer_analytics",
-            "summary": f"Identified {raw_data.get('count_in_segment', 0)} customers in cohort '{segment_filter}' with total potential revenue at risk of ${raw_data.get('total_segment_revenue_at_risk', 0):,.2f}.",
-            "cohort_details": raw_data
-        }
+        try:
+            raw_data = self.bq_client.get_rfm_segments(segment_filter)
+            return {
+                "status": "SUCCESS",
+                "skill_executed": "bigquery_customer_analytics",
+                "summary": f"Identified {raw_data.get('count_in_segment', 0)} customers in cohort '{segment_filter}' with total potential revenue at risk of ${raw_data.get('total_segment_revenue_at_risk', 0):,.2f}.",
+                "cohort_details": raw_data
+            }
+        except Exception as e:
+            logger.error(f"BigQuery cohort query failed: {e}")
+            return {
+                "status": "ERROR",
+                "skill_executed": "bigquery_customer_analytics",
+                "summary": f"❌ **BigQuery Cohort Query Error**: {e}",
+                "cohort_details": {
+                    "error": str(e)
+                }
+            }
 
