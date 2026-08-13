@@ -52,12 +52,12 @@ class OrchestratorAgent(BaseAgent):
         """Determines whether user prompt is a Data Query, Strategy Only, or Full Campaign pipeline request."""
         prompt_lower = user_prompt.lower()
         
-        has_campaign_keywords = any(k in prompt_lower for k in ["strategy", "campaign", "win-back", "email", "copy", "creative", "retention", "ad copy", "outreach"])
-        has_query_keywords = any(k in prompt_lower for k in ["how many", "count", "query", "show", "data", "list", "total", "metrics", "sql", "table", "revenue", "avg", "average", "what is", "recency"])
+        has_query_keywords = any(k in prompt_lower for k in ["how many", "count", "query", "show data", "list customers", "total customers", "sql query", "show table", "recency days", "monetary value"])
+        has_strategy_only_keywords = any(k in prompt_lower for k in ["only strategy", "just strategy", "strategy only", "framework only"])
 
-        if has_query_keywords and not has_campaign_keywords:
+        if has_query_keywords and not any(k in prompt_lower for k in ["email", "copy", "creative", "campaign", "strategy", "draft", "write"]):
             return "ANALYTICS_ONLY"
-        elif "strategy" in prompt_lower and not any(k in prompt_lower for k in ["email", "copy", "creative", "ad copy", "sms"]):
+        elif has_strategy_only_keywords:
             return "STRATEGY_ONLY"
         else:
             return "FULL_CAMPAIGN"
@@ -65,7 +65,7 @@ class OrchestratorAgent(BaseAgent):
     def process_user_request(self, user_prompt: str, target_segment: str = "At-Risk Premium") -> Dict[str, Any]:
         """
         Executes selective multi-agent workflow based on user intent:
-        - ANALYTE_ONLY: A2A AnalyticsAgent -> BigQuery SQL metrics.
+        - ANALYTICS_ONLY: A2A AnalyticsAgent -> BigQuery SQL metrics.
         - STRATEGY_ONLY: AnalyticsAgent -> StrategyAgent.
         - FULL_CAMPAIGN: AnalyticsAgent -> StrategyAgent -> ContentAgent.
         """
@@ -175,6 +175,6 @@ class OrchestratorAgent(BaseAgent):
             "summary": f"Completed full multi-agent campaign pipeline for cohort '{target_segment}'. Generated BigQuery analytics, campaign strategy, and creative copy.",
             "analytics": analytics_result,
             "strategy": strategy_result.get("strategy", {}),
-            "content": content_result.get("generated_assets", {}),
+            "content": content_result,
             "a2a_trace": self.router.get_history()
         }
