@@ -115,14 +115,34 @@ def deploy_agent_instances():
 
             if engine:
                 logger.info(f"🔄 Deploying new revision to canonical instance [{name}] ({engine.resource_name})...")
-                remote_agent = engine.update(
-                    reasoning_engine=instance,
-                    requirements=common_requirements,
-                    extra_packages=["agents"],
-                    display_name=name,
-                    description=agent_spec["description"]
-                )
-                res_name = remote_agent.resource_name
+                try:
+                    remote_agent = engine.update(
+                        reasoning_engine=instance,
+                        requirements=common_requirements,
+                        extra_packages=["agents"],
+                        display_name=name,
+                        description=agent_spec["description"]
+                    )
+                    res_name = remote_agent.resource_name
+                except Exception as update_err:
+                    err_str = str(update_err)
+                    if "deployment_source" in err_str or "package_spec" in err_str or "400" in err_str:
+                        logger.warning(f"Engine [{name}] was built with deployment_source. Cleanly recreating as package_spec Reasoning Engine...")
+                        try:
+                            engine.delete()
+                        except Exception as del_err:
+                            logger.warning(f"Could not delete old deployment_source engine: {del_err}")
+                        
+                        remote_agent = reasoning_engines.ReasoningEngine.create(
+                            reasoning_engine=instance,
+                            requirements=common_requirements,
+                            extra_packages=["agents"],
+                            display_name=name,
+                            description=agent_spec["description"]
+                        )
+                        res_name = remote_agent.resource_name
+                    else:
+                        raise update_err
             else:
                 logger.info(f"✨ Initializing canonical ADK instance [{name}]...")
                 remote_agent = reasoning_engines.ReasoningEngine.create(
