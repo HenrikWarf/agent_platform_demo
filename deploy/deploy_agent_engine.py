@@ -88,10 +88,14 @@ def deploy_agent_instances():
             remote_agent = reasoning_engines.ReasoningEngine.create(
                 reasoning_engine=instance,
                 requirements=[
-                    "google-cloud-aiplatform>=1.45.0",
+                    "google-cloud-aiplatform[agent_engines]>=1.45.0",
+                    "google-cloud-bigquery>=3.18.0",
+                    "google-genai>=1.0.0",
                     "pydantic>=2.6.0",
-                    "requests>=2.31.0"
+                    "requests>=2.31.0",
+                    "cloudpickle>=3.0.0"
                 ],
+                extra_packages=["agents"],
                 display_name=name,
                 description=agent_spec["description"]
             )
