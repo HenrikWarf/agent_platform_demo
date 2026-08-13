@@ -21,7 +21,7 @@ gcloud run deploy agent-platform-frontend \
   --image "${IMAGE_TAG}" \
   --region "${REGION}" \
   --platform managed \
-  --port 80 \
+  --port 8080 \
   --allow-unauthenticated \
   --set-env-vars "VITE_BACKEND_URL=${BACKEND_URL}"
 

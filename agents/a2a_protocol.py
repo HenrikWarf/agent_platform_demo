@@ -27,7 +27,7 @@ class A2AMessage:
     intent: str = ""
     payload: Dict[str, Any] = field(default_factory=dict)
     skill_used: Optional[str] = None
-    timestamp: str = field(default_factory=lambda: datetime.datetime.utcnow().isoformat() + "Z")
+    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
     parent_message_id: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:

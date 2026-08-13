@@ -7,6 +7,9 @@ google-cloud-trace>=1.13.0
 opentelemetry-api>=1.23.0
 opentelemetry-sdk>=1.23.0
 opentelemetry-exporter-gcp-trace>=1.6.0
+# Note: opentelemetry-instrumentation-fastapi requires Python <=3.13 (not yet available for 3.14)
+# On production Python 3.11 containers (Dockerfile), this will install correctly.
+opentelemetry-instrumentation-fastapi>=0.44b0; python_version < "3.14"
 pytest>=8.0.0
 google-cloud-aiplatform[agent_engines]>=1.45.0
 cloudpickle>=3.0.0

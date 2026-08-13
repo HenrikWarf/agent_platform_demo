@@ -9,3 +9,6 @@ __pycache__/
 .DS_Store
 agent_engine_manifest.json
 .env
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfvars

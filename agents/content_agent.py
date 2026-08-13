@@ -55,7 +55,7 @@ class ContentAgent(BaseAgent):
                 message_type=A2AMessageType.RESPONSE,
                 intent="MARKETING_CONTENT_RESULT",
                 payload=result,
-                skill_used="brand_voice_craft",
+                skill_used="brand_voice",
                 parent_message_id=message.message_id
             )
         else:
@@ -111,7 +111,7 @@ Generate a JSON object containing high-converting marketing creative assets with
 
             return {
                 "status": "SUCCESS",
-                "skill_executed": "brand_voice_craft",
+                "skill_executed": "brand_voice",
                 "campaign_title": campaign_title,
                 "generated_assets": generated_assets
             }
@@ -139,7 +139,7 @@ Generate a JSON object containing high-converting marketing creative assets with
             }
             return {
                 "status": "SUCCESS",
-                "skill_executed": "brand_voice_craft",
+                "skill_executed": "brand_voice",
                 "campaign_title": campaign_title,
                 "generated_assets": generated_assets
             }

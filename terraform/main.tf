@@ -229,6 +229,8 @@ locals {
     "roles/bigquery.jobUser",
     "roles/cloudtrace.agent",
     "roles/logging.logWriter",
+    "roles/monitoring.metricWriter",
+    "roles/monitoring.admin",
     "roles/storage.admin",
     "roles/agentregistry.editor"
   ]
@@ -300,6 +302,34 @@ resource "google_cloud_run_v2_service" "agent_backend" {
       env {
         name  = "MODEL_ARMOR_FLOOR_ID"
         value = "projects/${var.project_id}/locations/${var.region}/floors/marketing-floor"
+      }
+      env {
+        name  = "ENVIRONMENT"
+        value = "gcp_cloud"
+      }
+      env {
+        name  = "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY"
+        value = "true"
+      }
+      env {
+        name  = "OTEL_TRACES_EXPORTER"
+        value = "google_cloud_trace"
+      }
+      env {
+        name  = "OTEL_METRICS_EXPORTER"
+        value = "google_cloud_monitoring"
+      }
+      env {
+        name  = "OTEL_LOGS_EXPORTER"
+        value = "google_cloud_logging"
+      }
+      env {
+        name  = "ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS"
+        value = "true"
+      }
+      env {
+        name  = "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+        value = "SPAN_AND_EVENT"
       }
 
       resources {

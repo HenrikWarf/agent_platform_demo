@@ -16,6 +16,7 @@ logger = logging.getLogger("agent_engine_deployer")
 
 # Load environment variables
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "agent-demo-09")
+PROJECT_NUMBER = os.environ.get("GCP_PROJECT_NUMBER", "1047232371360")
 REGION = os.environ.get("GCP_REGION", "us-central1")
 STAGING_BUCKET = os.environ.get("GCP_STAGING_BUCKET", f"gs://{PROJECT_ID}-agent-engine-staging")
 
@@ -41,7 +42,7 @@ def deploy_agent_instances():
     canonical_agents = [
         {
             "display_name": "agent-analytics",
-            "resource_id": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/5406757719879188480",
+            "resource_id": f"projects/{PROJECT_NUMBER}/locations/{REGION}/reasoningEngines/5406757719879188480",
             "description": "Vertex AI Agent Engine: Customer Insights & Analytics Agent",
             "class_name": "AnalyticsAgent",
             "module": "agents.analytics_agent",
@@ -49,7 +50,7 @@ def deploy_agent_instances():
         },
         {
             "display_name": "agent-strategy",
-            "resource_id": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/2731619541221113856",
+            "resource_id": f"projects/{PROJECT_NUMBER}/locations/{REGION}/reasoningEngines/2731619541221113856",
             "description": "Vertex AI Agent Engine: Marketing Strategy Agent",
             "class_name": "StrategyAgent",
             "module": "agents.strategy_agent",
@@ -57,7 +58,7 @@ def deploy_agent_instances():
         },
         {
             "display_name": "agent-content",
-            "resource_id": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/1358021654873112576",
+            "resource_id": f"projects/{PROJECT_NUMBER}/locations/{REGION}/reasoningEngines/1358021654873112576",
             "description": "Vertex AI Agent Engine: Content & Creative Copywriting Agent",
             "class_name": "ContentAgent",
             "module": "agents.content_agent",
@@ -65,7 +66,7 @@ def deploy_agent_instances():
         },
         {
             "display_name": "agent-orchestrator",
-            "resource_id": f"projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/4762742973165207552",
+            "resource_id": f"projects/{PROJECT_NUMBER}/locations/{REGION}/reasoningEngines/4762742973165207552",
             "description": "Vertex AI Agent Engine: Supervisor Orchestrator Agent",
             "class_name": "OrchestratorAgent",
             "module": "agents.orchestrator_agent",
@@ -100,7 +101,25 @@ def deploy_agent_instances():
             # Dynamically load class
             module = __import__(agent_spec["module"], fromlist=[agent_spec["class_name"]])
             agent_cls = getattr(module, agent_spec["class_name"])
-            instance = agent_cls()
+            # OrchestratorAgent requires a BigQuery client for analytics queries
+            if agent_spec["class_name"] == "OrchestratorAgent":
+                try:
+                    from backend.bq_client import BigQueryClient
+                    bq_client = BigQueryClient(project_id=PROJECT_ID)
+                    instance = agent_cls(bq_client=bq_client)
+                except Exception as bq_err:
+                    logger.warning(f"Could not initialize BigQuery client for OrchestratorAgent: {bq_err}")
+                    instance = agent_cls()
+            elif agent_spec["class_name"] == "AnalyticsAgent":
+                try:
+                    from backend.bq_client import BigQueryClient
+                    bq_client = BigQueryClient(project_id=PROJECT_ID)
+                    instance = agent_cls(bq_client=bq_client)
+                except Exception as bq_err:
+                    logger.warning(f"Could not initialize BigQuery client for AnalyticsAgent: {bq_err}")
+                    instance = agent_cls()
+            else:
+                instance = agent_cls()
 
             # Retrieve canonical ADK instance
             try:

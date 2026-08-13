@@ -20,8 +20,6 @@ gcloud services enable \
   cloudtrace.googleapis.com \
   monitoring.googleapis.com \
   logging.googleapis.com \
-  telemetry.googleapis.com \
-  observability.googleapis.com \
   clouderrorreporting.googleapis.com \
   apptopology.googleapis.com \
   --project="${PROJECT_ID}" || true

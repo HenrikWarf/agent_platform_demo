@@ -151,7 +151,7 @@ class OrchestratorAgent(BaseAgent):
                 receiver_id="strategy_agent",
                 intent="GENERATE_CAMPAIGN_STRATEGY",
                 payload={"campaign_goal": user_prompt, "analytics_data": analytics_result},
-                skill_used="campaign_framework"
+                skill_used="omnichannel_strategy"
             )
             strategy_result = strategy_response.payload if strategy_response.message_type == A2AMessageType.RESPONSE else {}
 
@@ -173,7 +173,7 @@ class OrchestratorAgent(BaseAgent):
                 receiver_id="strategy_agent",
                 intent="GENERATE_CAMPAIGN_STRATEGY",
                 payload={"campaign_goal": user_prompt, "analytics_data": {}},
-                skill_used="campaign_framework"
+                skill_used="omnichannel_strategy"
             )
             strategy_result = strategy_response.payload if strategy_response.message_type == A2AMessageType.RESPONSE else {}
 
@@ -181,7 +181,7 @@ class OrchestratorAgent(BaseAgent):
                 receiver_id="content_agent",
                 intent="GENERATE_MARKETING_CONTENT",
                 payload={"strategy": strategy_result.get("strategy", {})},
-                skill_used="brand_voice_craft"
+                skill_used="brand_voice"
             )
             content_result = content_response.payload if content_response.message_type == A2AMessageType.RESPONSE else {}
             assets = content_result.get("generated_assets", {})
@@ -220,7 +220,7 @@ class OrchestratorAgent(BaseAgent):
             receiver_id="strategy_agent",
             intent="GENERATE_CAMPAIGN_STRATEGY",
             payload={"campaign_goal": user_prompt, "analytics_data": analytics_result},
-            skill_used="campaign_framework"
+            skill_used="omnichannel_strategy"
         )
         strategy_result = strategy_response.payload if strategy_response.message_type == A2AMessageType.RESPONSE else {}
 
@@ -228,7 +228,7 @@ class OrchestratorAgent(BaseAgent):
             receiver_id="content_agent",
             intent="GENERATE_MARKETING_CONTENT",
             payload={"strategy": strategy_result.get("strategy", {})},
-            skill_used="brand_voice_craft"
+            skill_used="brand_voice"
         )
         content_result = content_response.payload if content_response.message_type == A2AMessageType.RESPONSE else {}
 

@@ -24,17 +24,19 @@ images:
 EOF
 ) .
 
-# 2. Deploy Cloud Run Services (Backend, Frontend, Simulator)
-SERVICES=("agent-platform-backend" "agent-platform-frontend" "agent-platform-simulator")
+# 2. Deploy Backend to Cloud Run
+echo "🚀 Deploying Cloud Run service: [agent-platform-backend]..."
+gcloud run deploy "agent-platform-backend" \
+  --image="${IMAGE_TAG}" \
+  --region="${REGION}" \
+  --platform=managed \
+  --port=8080 \
+  --allow-unauthenticated \
+  --service-account="agent-platform-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},GCP_REGION=${REGION},USE_GCP_CLOUD=true,ENVIRONMENT=gcp_cloud,GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace,OTEL_METRICS_EXPORTER=google_cloud_monitoring,OTEL_LOGS_EXPORTER=google_cloud_logging,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true"
 
-for SERVICE in "${SERVICES[@]}"; do
-  echo "🚀 Deploying Cloud Run service: [${SERVICE}]..."
-  gcloud run deploy "${SERVICE}" \
-    --image="${IMAGE_TAG}" \
-    --region="${REGION}" \
-    --platform=managed \
-    --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},GCP_REGION=${REGION},USE_GCP_CLOUD=true" \
-    --service-account="agent-platform-sa@${PROJECT_ID}.iam.gserviceaccount.com"
-done
-
-echo "✅ Cloud Run Services (Backend, Frontend, Simulator) Deployed Successfully!"
+echo ""
+echo "ℹ️  To deploy Frontend and Simulator, use their dedicated scripts:"
+echo "    bash deploy/deploy_frontend.sh"
+echo ""
+echo "✅ Cloud Run Backend Service Deployed Successfully!"

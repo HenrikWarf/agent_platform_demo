@@ -30,13 +30,9 @@ class BaseAgent:
         self.skills: List[str] = skills or []
         self.active_skill_contents: Dict[str, str] = {}
         self._load_skills()
-        self.router.register_agent(self.agent_id, self)
-
-    @property
-    def router(self):
-        r = A2ARouter()
-        r.register_agent(self.agent_id, self)
-        return r
+        self._router = A2ARouter()
+        self._router.register_agent(self.agent_id, self)
+        self._init_telemetry()
 
     def _load_skills(self):
         """Loads SKILL.md contents from the local skills directory if available."""
@@ -83,7 +79,7 @@ class BaseAgent:
                     payload=payload,
                     skill_used=skill_used
                 )
-                return self.router.route_message(msg)
+                return self._router.route_message(msg)
         else:
             msg = A2AMessage(
                 sender_id=self.agent_id,
@@ -93,7 +89,7 @@ class BaseAgent:
                 payload=payload,
                 skill_used=skill_used
             )
-            return self.router.route_message(msg)
+            return self._router.route_message(msg)
 
     def handle_a2a_message(self, message: A2AMessage) -> A2AMessage:
         """Override in subclasses to handle incoming A2A requests."""
@@ -105,7 +101,7 @@ class BaseAgent:
             from opentelemetry import trace
             from opentelemetry.sdk.trace import TracerProvider
             from opentelemetry.sdk.trace.export import BatchSpanProcessor
-            from opentelemetry_exporter_gcp_trace import CloudTraceSpanExporter
+            from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
 
             project_id = os.environ.get("GCP_PROJECT_ID", "agent-demo-09")
             provider = trace.get_tracer_provider()
@@ -123,6 +119,11 @@ class BaseAgent:
         """Vertex AI Reasoning Engine lifecycle initialization hook."""
         self._load_skills()
         self._init_telemetry()
+
+    @property
+    def router(self):
+        """Backward-compatible accessor for the A2A router."""
+        return self._router
 
     def query(self, input_text: str = "", **kwargs) -> Dict[str, Any]:
         """Vertex AI Agent Engine (Reasoning Engine) standard entrypoint interface."""
