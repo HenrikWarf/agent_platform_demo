@@ -258,12 +258,15 @@ jobs:
             --quiet || echo "Agent Gateway provisioned or updated."
 
       # --- 4. ADK Agent Runtime Deployment ---
+      - name: Install uv (required by agents-cli)
+        if: needs.changes.outputs.agents == 'true'
+        uses: astral-sh/setup-uv@v6
+
       - name: Deploy ADK Agent to Agent Runtime
         if: needs.changes.outputs.agents == 'true'
         run: |
           echo "🚀 Deploying ADK Agent to Agent Runtime..."
-          python -m pip install --upgrade pip
-          pip install google-agents-cli
+          uv tool install google-agents-cli
           agents-cli deploy \
             --project ${{ env.GCP_PROJECT_ID }} \
             --region ${{ env.GCP_REGION }} \
