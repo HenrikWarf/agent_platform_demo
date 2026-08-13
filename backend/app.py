@@ -19,11 +19,33 @@ from backend.skill_registry import SkillRegistry
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("agent_platform_backend")
 
+# OpenTelemetry Cloud Trace Initialization
+try:
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+    tracer_provider = TracerProvider()
+    cloud_exporter = CloudTraceSpanExporter(project_id=Config.GCP_PROJECT_ID)
+    tracer_provider.add_span_processor(BatchSpanProcessor(cloud_exporter))
+    trace.set_tracer_provider(tracer_provider)
+    logger.info(f"OpenTelemetry CloudTraceSpanExporter initialized for project '{Config.GCP_PROJECT_ID}'")
+except Exception as e:
+    logger.warning(f"Could not initialize OpenTelemetry CloudTraceSpanExporter: {e}")
+
 app = FastAPI(
     title="Google Cloud Agent Platform API",
     description="Backend API for Vertex AI Agent Engine, A2A Protocol, Agent Registry Skills, Model Armor, BigQuery, and OpenTelemetry.",
     version="1.0.0"
 )
+
+try:
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    FastAPIInstrumentor.instrument_app(app)
+except Exception as e:
+    logger.warning(f"FastAPIInstrumentor warning: {e}")
 
 # CORS configuration
 app.add_middleware(
