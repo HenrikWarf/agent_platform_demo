@@ -4,11 +4,18 @@ Coordinates multi-agent workflows across Analytics, Strategy, and Content agents
 """
 from typing import Dict, Any, List
 import logging
-from .base_agent import BaseAgent
-from .a2a_protocol import A2AMessage, A2AMessageType
-from .analytics_agent import AnalyticsAgent
-from .strategy_agent import StrategyAgent
-from .content_agent import ContentAgent
+try:
+    from .base_agent import BaseAgent
+    from .a2a_protocol import A2AMessage, A2AMessageType
+    from .analytics_agent import AnalyticsAgent
+    from .strategy_agent import StrategyAgent
+    from .content_agent import ContentAgent
+except ImportError:
+    from agents.base_agent import BaseAgent
+    from agents.a2a_protocol import A2AMessage, A2AMessageType
+    from agents.analytics_agent import AnalyticsAgent
+    from agents.strategy_agent import StrategyAgent
+    from agents.content_agent import ContentAgent
 
 logger = logging.getLogger("orchestrator_agent")
 

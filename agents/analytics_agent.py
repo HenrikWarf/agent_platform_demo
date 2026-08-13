@@ -13,8 +13,12 @@ except ImportError:
     genai = None
     types = None
 
-from .base_agent import BaseAgent
-from .a2a_protocol import A2AMessage, A2AMessageType
+try:
+    from .base_agent import BaseAgent
+    from .a2a_protocol import A2AMessage, A2AMessageType
+except ImportError:
+    from agents.base_agent import BaseAgent
+    from agents.a2a_protocol import A2AMessage, A2AMessageType
 
 logger = logging.getLogger("analytics_agent")
 
