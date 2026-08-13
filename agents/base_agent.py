@@ -8,6 +8,12 @@ import json
 import logging
 from .a2a_protocol import A2AMessage, A2AMessageType, A2ARouter
 
+try:
+    from opentelemetry import trace
+    tracer = trace.get_tracer("google.adk.agent")
+except ImportError:
+    tracer = None
+
 logger = logging.getLogger("base_agent")
 
 class BaseAgent:
@@ -62,15 +68,32 @@ class BaseAgent:
         }
 
     def send_a2a(self, receiver_id: str, intent: str, payload: Dict[str, Any], skill_used: Optional[str] = None) -> A2AMessage:
-        msg = A2AMessage(
-            sender_id=self.agent_id,
-            receiver_id=receiver_id,
-            message_type=A2AMessageType.REQUEST,
-            intent=intent,
-            payload=payload,
-            skill_used=skill_used
-        )
-        return self.router.route_message(msg)
+        if tracer:
+            with tracer.start_as_current_span(f"a2a_message:{self.agent_id}->{receiver_id}") as span:
+                span.set_attribute("a2a.sender_id", self.agent_id)
+                span.set_attribute("a2a.receiver_id", receiver_id)
+                span.set_attribute("a2a.intent", intent)
+                if skill_used:
+                    span.set_attribute("a2a.skill_used", skill_used)
+                msg = A2AMessage(
+                    sender_id=self.agent_id,
+                    receiver_id=receiver_id,
+                    message_type=A2AMessageType.REQUEST,
+                    intent=intent,
+                    payload=payload,
+                    skill_used=skill_used
+                )
+                return self.router.route_message(msg)
+        else:
+            msg = A2AMessage(
+                sender_id=self.agent_id,
+                receiver_id=receiver_id,
+                message_type=A2AMessageType.REQUEST,
+                intent=intent,
+                payload=payload,
+                skill_used=skill_used
+            )
+            return self.router.route_message(msg)
 
     def handle_a2a_message(self, message: A2AMessage) -> A2AMessage:
         """Override in subclasses to handle incoming A2A requests."""
@@ -82,16 +105,32 @@ class BaseAgent:
 
     def query(self, input_text: str = "", **kwargs) -> Dict[str, Any]:
         """Vertex AI Agent Engine (Reasoning Engine) standard entrypoint interface."""
-        intent = kwargs.get("intent", "DEFAULT_QUERY")
-        msg = A2AMessage(
-            sender_id="agent_engine_client",
-            receiver_id=self.agent_id,
-            message_type=A2AMessageType.REQUEST,
-            intent=intent,
-            payload={"prompt": input_text, **kwargs}
-        )
-        res = self.handle_a2a_message(msg)
-        return res.payload if res else {}
+        if tracer:
+            with tracer.start_as_current_span(f"invoke_agent:{self.agent_id}") as span:
+                span.set_attribute("agent.id", self.agent_id)
+                span.set_attribute("agent.name", self.name)
+                span.set_attribute("input.prompt", input_text)
+                intent = kwargs.get("intent", "DEFAULT_QUERY")
+                msg = A2AMessage(
+                    sender_id="agent_engine_client",
+                    receiver_id=self.agent_id,
+                    message_type=A2AMessageType.REQUEST,
+                    intent=intent,
+                    payload={"prompt": input_text, **kwargs}
+                )
+                res = self.handle_a2a_message(msg)
+                return res.payload if res else {}
+        else:
+            intent = kwargs.get("intent", "DEFAULT_QUERY")
+            msg = A2AMessage(
+                sender_id="agent_engine_client",
+                receiver_id=self.agent_id,
+                message_type=A2AMessageType.REQUEST,
+                intent=intent,
+                payload={"prompt": input_text, **kwargs}
+            )
+            res = self.handle_a2a_message(msg)
+            return res.payload if res else {}
 
     def get_metadata(self) -> Dict[str, Any]:
         return {

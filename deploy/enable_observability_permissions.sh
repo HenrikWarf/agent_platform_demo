@@ -40,6 +40,10 @@ TARGET_PRINCIPALS=(
   "serviceAccount:agent-platform-sa@${PROJECT_ID}.iam.gserviceaccount.com"
   "serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
   "serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform.iam.gserviceaccount.com"
+  "principal://agents.global.org-481945953452.system.id.goog/resources/aiplatform/projects/${PROJECT_NUMBER}/locations/us-central1/reasoningEngines/4762742973165207552"
+  "principal://agents.global.org-481945953452.system.id.goog/resources/aiplatform/projects/${PROJECT_NUMBER}/locations/us-central1/reasoningEngines/1358021654873112576"
+  "principal://agents.global.org-481945953452.system.id.goog/resources/aiplatform/projects/${PROJECT_NUMBER}/locations/us-central1/reasoningEngines/2731619541221113856"
+  "principal://agents.global.org-481945953452.system.id.goog/resources/aiplatform/projects/${PROJECT_NUMBER}/locations/us-central1/reasoningEngines/5406757719879188480"
 )
 
 OBSERVABILITY_ROLES=(
@@ -47,6 +51,7 @@ OBSERVABILITY_ROLES=(
   "roles/logging.logWriter"
   "roles/monitoring.metricWriter"
   "roles/monitoring.admin"
+  "roles/storage.admin"
   "roles/aiplatform.admin"
   "roles/bigquery.dataEditor"
   "roles/bigquery.jobUser"
