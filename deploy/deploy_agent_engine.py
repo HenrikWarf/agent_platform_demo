@@ -73,12 +73,28 @@ def deploy_agent_instances():
     print("\n🚀 Deploying Standalone Agents to Vertex AI Agent Engine...")
     print("======================================================================")
 
+    # Fetch existing deployed ReasoningEngine instances to prevent creating duplicate orphaned resources
+    try:
+        from vertexai.preview import reasoning_engines
+        existing_engine_map = {e.display_name: e for e in reasoning_engines.ReasoningEngine.list()}
+    except Exception as list_err:
+        logger.warning(f"Could not fetch existing Reasoning Engines: {list_err}")
+        existing_engine_map = {}
+
     for agent_spec in agents_to_deploy:
         name = agent_spec["display_name"]
         print(f"📦 Deploying Agent Engine Instance: [{name}]...")
 
         try:
-            from vertexai.preview import reasoning_engines
+            # Delete old duplicate instance if present to avoid spawning duplicate resources
+            if name in existing_engine_map:
+                old_engine = existing_engine_map[name]
+                print(f"🔄 Found existing Agent Engine instance [{name}] ({old_engine.resource_name}). Replacing with updated container...")
+                try:
+                    old_engine.delete()
+                    logger.info(f"🗑️ Cleanly deleted old instance [{old_engine.resource_name}]")
+                except Exception as del_err:
+                    logger.warning(f"Could not delete old instance {old_engine.resource_name}: {del_err}")
 
             # Dynamically load class
             module = __import__(agent_spec["module"], fromlist=[agent_spec["class_name"]])
@@ -91,6 +107,9 @@ def deploy_agent_instances():
                     "google-cloud-aiplatform[agent_engines]>=1.45.0",
                     "google-cloud-bigquery>=3.18.0",
                     "google-genai>=1.0.0",
+                    "opentelemetry-api>=1.23.0",
+                    "opentelemetry-sdk>=1.23.0",
+                    "opentelemetry-exporter-gcp-trace>=1.6.0",
                     "pydantic>=2.6.0",
                     "requests>=2.31.0",
                     "cloudpickle>=3.0.0"

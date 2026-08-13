@@ -99,9 +99,30 @@ class BaseAgent:
         """Override in subclasses to handle incoming A2A requests."""
         raise NotImplementedError
 
+    def _init_telemetry(self):
+        """Initializes OpenTelemetry CloudTraceSpanExporter for GCP Agent Engine observability."""
+        try:
+            from opentelemetry import trace
+            from opentelemetry.sdk.trace import TracerProvider
+            from opentelemetry.sdk.trace.export import BatchSpanProcessor
+            from opentelemetry_exporter_gcp_trace import CloudTraceSpanExporter
+
+            project_id = os.environ.get("GCP_PROJECT_ID", "agent-demo-09")
+            provider = trace.get_tracer_provider()
+            if not isinstance(provider, TracerProvider):
+                provider = TracerProvider()
+                trace.set_tracer_provider(provider)
+            
+            exporter = CloudTraceSpanExporter(project_id=project_id)
+            provider.add_span_processor(BatchSpanProcessor(exporter))
+            logger.info(f"OpenTelemetry CloudTraceSpanExporter initialized inside Agent Engine instance for project '{project_id}'")
+        except Exception as e:
+            logger.warning(f"Could not initialize OpenTelemetry CloudTraceSpanExporter inside Agent Engine: {e}")
+
     def set_up(self) -> None:
         """Vertex AI Reasoning Engine lifecycle initialization hook."""
         self._load_skills()
+        self._init_telemetry()
 
     def query(self, input_text: str = "", **kwargs) -> Dict[str, Any]:
         """Vertex AI Agent Engine (Reasoning Engine) standard entrypoint interface."""
