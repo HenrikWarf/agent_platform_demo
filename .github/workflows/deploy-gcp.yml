@@ -17,6 +17,7 @@ on:
           - frontend_only
           - agents_only
           - skills_only
+          - infra_only
 
 permissions:
   contents: read
@@ -29,6 +30,9 @@ env:
   BIGQUERY_DATASET: marketing_analytics
 
 jobs:
+  # ============================================================
+  # Job 1: Detect which components changed (selective deployment)
+  # ============================================================
   changes:
     name: Detect Changed Components
     runs-on: ubuntu-latest
@@ -37,7 +41,8 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'frontend_only')) }}
       agents: ${{ steps.filter.outputs.agents == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }}
       skills: ${{ steps.filter.outputs.skills == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'skills_only')) }}
-      infra: ${{ steps.filter.outputs.infra == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.service == 'all') }}
+      infra: ${{ steps.filter.outputs.infra == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'infra_only')) }}
+      any_deploy: ${{ steps.summarize.outputs.any_deploy }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -46,29 +51,51 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              - 'Dockerfile'
+              - 'agents/**'
               - 'deploy/Dockerfile.backend'
-              - 'deploy/deploy_backend.sh'
-              - '.github/workflows/**'
             frontend:
               - 'frontend/**'
-              - 'deploy/deploy_frontend.sh'
-              - '.github/workflows/**'
             agents:
               - 'app/**'
               - 'fast_api_app.py'
               - 'requirements.txt'
               - 'pyproject.toml'
               - 'Dockerfile'
-              - '.github/workflows/**'
             skills:
               - 'skills/**'
-              - '.github/workflows/**'
+              - 'deploy/register_skills.py'
             infra:
               - 'deploy/agent_gateway.yaml'
               - 'deploy/enable_observability_permissions.sh'
-              - '.github/workflows/**'
+      - name: Summarize changes
+        id: summarize
+        run: |
+          echo "## 📋 Change Detection Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Changed | Will Deploy |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|---------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend   | ${{ steps.filter.outputs.backend }} | ${{ steps.filter.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'backend_only')) }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend  | ${{ steps.filter.outputs.frontend }} | ${{ steps.filter.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'frontend_only')) }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Agents    | ${{ steps.filter.outputs.agents }} | ${{ steps.filter.outputs.agents == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Skills    | ${{ steps.filter.outputs.skills }} | ${{ steps.filter.outputs.skills == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'skills_only')) }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Infra     | ${{ steps.filter.outputs.infra }} | ${{ steps.filter.outputs.infra == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'infra_only')) }} |" >> $GITHUB_STEP_SUMMARY
 
+          # Determine if any deployment is needed
+          if [[ "${{ steps.filter.outputs.backend }}" == "true" ]] || \
+             [[ "${{ steps.filter.outputs.frontend }}" == "true" ]] || \
+             [[ "${{ steps.filter.outputs.agents }}" == "true" ]] || \
+             [[ "${{ steps.filter.outputs.skills }}" == "true" ]] || \
+             [[ "${{ steps.filter.outputs.infra }}" == "true" ]] || \
+             [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "any_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "any_deploy=false" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> ℹ️ No deployable changes detected. Skipping deployment." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ============================================================
+  # Job 2: Run quality evaluation (always runs on push to main)
+  # ============================================================
   eval-and-test:
     name: Run Quality Evaluation Suite
     runs-on: ubuntu-latest
@@ -128,9 +155,13 @@ jobs:
         run: |
           PYTHONPATH=. python eval/run_eval.py
 
+  # ============================================================
+  # Job 3: Selective deployment (only changed components)
+  # ============================================================
   deploy-to-gcp:
     name: Selective Service Deployment to GCP
     needs: [changes, eval-and-test]
+    if: needs.changes.outputs.any_deploy == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -175,10 +206,11 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
-      # --- 1. FastAPI Backend Deployment ---
+      # --- 1. FastAPI Backend Deployment (Cloud Run) ---
       - name: Build & Deploy Backend (Cloud Run)
         if: needs.changes.outputs.backend == 'true'
         run: |
+          echo "🚀 Deploying Backend to Cloud Run..."
           IMAGE_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/backend:${{ github.sha }}"
           LATEST_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/backend:latest"
           docker build -t "$IMAGE_URI" -t "$LATEST_URI" -f deploy/Dockerfile.backend .
@@ -192,10 +224,11 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }},BIGQUERY_DATASET=${{ env.BIGQUERY_DATASET }},GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace,OTEL_METRICS_EXPORTER=google_cloud_monitoring,OTEL_LOGS_EXPORTER=google_cloud_logging,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT
 
-      # --- 2. React Frontend Deployment ---
+      # --- 2. React Frontend Deployment (Cloud Run) ---
       - name: Build & Deploy Frontend (Cloud Run)
         if: needs.changes.outputs.frontend == 'true'
         run: |
+          echo "🚀 Deploying Frontend to Cloud Run..."
           IMAGE_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/frontend:${{ github.sha }}"
           LATEST_URI="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/frontend:latest"
           docker build -t "$IMAGE_URI" -t "$LATEST_URI" ./frontend
@@ -211,6 +244,7 @@ jobs:
       - name: Install Telemetry & Enable Permissions
         if: needs.changes.outputs.infra == 'true'
         run: |
+          echo "🚀 Provisioning Observability & Agent Gateway..."
           gcloud components install alpha --quiet || true
           bash deploy/enable_observability_permissions.sh
 
@@ -226,9 +260,8 @@ jobs:
       # --- 4. ADK Agent Runtime Deployment ---
       - name: Deploy ADK Agent to Agent Runtime
         if: needs.changes.outputs.agents == 'true'
-        env:
-          GEMINI_ENTERPRISE_APP_ID: projects/${{ env.GCP_PROJECT_ID }}/locations/global/collections/default_collection/engines/marketing-app
         run: |
+          echo "🚀 Deploying ADK Agent to Agent Runtime..."
           python -m pip install --upgrade pip
           pip install google-agents-cli
           agents-cli deploy \
@@ -242,6 +275,7 @@ jobs:
         env:
           GEMINI_ENTERPRISE_APP_ID: projects/${{ env.GCP_PROJECT_ID }}/locations/global/collections/default_collection/engines/marketing-app
         run: |
+          echo "🚀 Publishing Agent to Gemini Enterprise..."
           agents-cli publish gemini-enterprise \
             --gemini-enterprise-app-id "$GEMINI_ENTERPRISE_APP_ID" \
             --display-name "Marketing Campaign Orchestrator" \
@@ -252,5 +286,19 @@ jobs:
       - name: Register Skills in Agent Registry
         if: needs.changes.outputs.skills == 'true'
         run: |
+          echo "🚀 Registering Skills in Agent Registry..."
           gcloud components install alpha --quiet || true
           python3 deploy/register_skills.py
+
+      # --- Deployment Summary ---
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend (Cloud Run) | ${{ needs.changes.outputs.backend }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend (Cloud Run) | ${{ needs.changes.outputs.frontend }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADK Agent (Agent Runtime) | ${{ needs.changes.outputs.agents }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Skills (Agent Registry) | ${{ needs.changes.outputs.skills }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Infra (Gateway/Observability) | ${{ needs.changes.outputs.infra }} |" >> $GITHUB_STEP_SUMMARY
