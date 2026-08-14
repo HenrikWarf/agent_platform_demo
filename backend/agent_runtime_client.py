@@ -189,15 +189,27 @@ class AgentRuntimeClient:
         a2a_trace = []
         sql_executed = ""
         seen_agents = []
+        last_text = ""
+        current_agent = ""
 
         for event in events:
             # SSE events have a nested content structure
             event_content = event.get("content", {})
 
-            # Extract text content
+            # Track current agent from event-level author
+            author = event.get("author", "")
+            if author:
+                current_agent = author
+
+            # Extract text content — only keep orchestrator text for the summary.
+            # Sub-agent text (analytics, strategy, content) duplicates the
+            # structured card data and should not appear in the summary.
             text = self._extract_text(event_content)
             if text:
-                summary_parts.append(text)
+                if "orchestrator" in current_agent or not current_agent:
+                    summary_parts.append(text)
+                # Always track the last text for fallback
+                last_text = text
 
             # Extract tool results (analytics, strategy, content)
             tool_results = self._extract_tool_results(event_content)
@@ -213,7 +225,6 @@ class AgentRuntimeClient:
 
             # Track agent sequence for A2A trace
             # In SSE events: 'author' is at the event top level, not inside 'content'
-            author = event.get("author", "")
             transfer_to = event.get("actions", {}).get("transferToAgent", "")
             if author and (not seen_agents or seen_agents[-1] != author):
                 seen_agents.append(author)
@@ -243,9 +254,12 @@ class AgentRuntimeClient:
                 "skill_used": skill_map.get(receiver, ""),
             })
 
+        # Use orchestrator text, or fall back to the last text event
+        summary = "\n".join(summary_parts) if summary_parts else (last_text or "Agent completed processing.")
+
         return {
             "status": "SUCCESS",
-            "summary": "\n".join(summary_parts) if summary_parts else "Agent completed processing.",
+            "summary": summary,
             "analytics": analytics,
             "strategy": strategy,
             "content": content,
