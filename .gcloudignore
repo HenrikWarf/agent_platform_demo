@@ -1,11 +1,46 @@
+# .gcloudignore - Files excluded from agents-cli deploy upload
+# Agent Runtime only needs: app/, fast_api_app.py, pyproject.toml, Dockerfile, requirements.txt
 .git
 .gitignore
+.gcloudignore
+.github/
+.agents/
+.env
+
+# Backend (Cloud Run service - separate deployment)
+backend/
+
+# Frontend (Cloud Run service - separate deployment)
+frontend/
+
+# Legacy agent code (replaced by app/)
+agents/
+
+# Deployment scripts & infrastructure (not needed in container)
+deploy/
+terraform/
+
+# Skills (local reference only - registered separately in Agent Registry)
+skills/
+
+# Documentation
+docs/
+*.md
+LICENSE
+
+# Development
 venv/
 .venv/
 node_modules/
-terraform/.terraform/
 __pycache__/
 *.pyc
 *.pyo
 .DS_Store
+.pytest_cache/
+tests/
+eval/
+
+# Build artifacts
 agent_engine_manifest.json
+deployment_metadata.json
+uv.lock
