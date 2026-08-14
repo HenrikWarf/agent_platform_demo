@@ -19,6 +19,10 @@ from app.app_utils.telemetry import setup_telemetry
 # Load environment variables from .env file at runtime
 load_dotenv()
 
+# Module-level config (must be defined before AgentEngineApp references them)
+gemini_location = os.environ.get("GOOGLE_CLOUD_LOCATION")
+logs_bucket_name = os.environ.get("LOGS_BUCKET_NAME")
+
 
 class AgentEngineApp(AdkApp):
     def set_up(self) -> None:
@@ -33,8 +37,6 @@ class AgentEngineApp(AdkApp):
             os.environ["GOOGLE_CLOUD_LOCATION"] = gemini_location
 
 
-gemini_location = os.environ.get("GOOGLE_CLOUD_LOCATION")
-logs_bucket_name = os.environ.get("LOGS_BUCKET_NAME")
 agent_runtime = AgentEngineApp(
     app=adk_app,
     artifact_service_builder=lambda: (
@@ -43,3 +45,4 @@ agent_runtime = AgentEngineApp(
         else InMemoryArtifactService()
     ),
 )
+

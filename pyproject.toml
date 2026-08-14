@@ -6,7 +6,7 @@ authors = [
     {name = "Henrik Warfvinge", email = "henrikw@google.com"},
 ]
 dependencies = [
-    "google-adk[otel-gcp]>=2.6.0",
+    "google-adk[otel-gcp]>=1.15.0,<2.0.0",
     "opentelemetry-exporter-otlp-proto-http",
     "opentelemetry-exporter-gcp-trace",
     "opentelemetry-exporter-gcp-logging",
@@ -16,8 +16,11 @@ dependencies = [
     "google-cloud-bigquery>=3.18.0",
     "google-genai>=1.0.0",
     "google-cloud-logging>=3.12.0,<4.0.0",
-    "google-cloud-aiplatform[agent-engines]>=1.130.0",
+    "google-cloud-aiplatform[agent-engines,evaluation]>=1.130.0",
     "python-dotenv>=1.0.0",
+    "gcsfs>=2024.11.0",
+    "opentelemetry-instrumentation-google-genai>=0.1.0,<1.0.0",
+    "protobuf>=6.31.1,<7.0.0",
 ]
 requires-python = ">=3.11,<3.14"
 
@@ -60,7 +63,6 @@ acli_version = "0.1.3"
 [tool.agents-cli.create_params]
 # Parameters used during project creation
 deployment_target = "agent_runtime"
-session_type = "none"
 cicd_runner = "skip"
 include_data_ingestion = false
 datastore = "none"
