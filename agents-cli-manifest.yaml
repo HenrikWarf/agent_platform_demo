@@ -1,0 +1,11 @@
+name: agent-platform-demo
+description: GCP Multi-Agent Marketing Platform with BigQuery analytics, omnichannel
+  strategy, and content generation
+base_template: adk
+agent_directory: app
+acli_version: 1.3.1
+create_params:
+  deployment_target: agent_runtime
+  cicd_runner: skip
+  include_data_ingestion: false
+  datastore: none
