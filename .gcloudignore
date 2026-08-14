@@ -26,6 +26,7 @@ skills/
 # Documentation
 docs/
 *.md
+!README.md
 LICENSE
 
 # Development
@@ -43,4 +44,3 @@ eval/
 # Build artifacts
 agent_engine_manifest.json
 deployment_metadata.json
-uv.lock
