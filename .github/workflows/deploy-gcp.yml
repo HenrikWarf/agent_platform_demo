@@ -224,11 +224,13 @@ jobs:
             --description "Multi-agent marketing platform: BigQuery analytics, omnichannel strategy, and creative content generation" \
             --registration-type adk
 
-      # --- 6. Register Skills in Agent Registry ---
+      # --- 6. Register Skills in Agent Registry (Preview — gcloud API not yet available) ---
       - name: Register Skills in Agent Registry
         if: needs.changes.outputs.skills == 'true'
+        continue-on-error: true
         run: |
           echo "🚀 Registering Skills in Agent Registry..."
+          echo "ℹ️  Note: Agent Registry Skills API is preview. Skills are deployed with the ADK agent."
           gcloud components install alpha --quiet || true
           python3 deploy/register_skills.py
 
