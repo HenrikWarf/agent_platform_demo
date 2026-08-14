@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Send, Sparkles, Shield, Cpu, Layers, FileText, CheckCircle2, Share2, Mail, MessageSquare, Target, TrendingUp, HelpCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import AgentGraphVisualizer from './AgentGraphVisualizer';
 
 export default function ChatInterface() {
@@ -138,7 +139,9 @@ export default function ChatInterface() {
                   )}
                 </div>
 
-                <div style={{ whiteSpace: 'pre-wrap', color: msg.role === 'user' ? '#ffffff' : 'var(--text-main)' }}>{formatMarkdownText(msg.content)}</div>
+                <div className="markdown-body" style={{ color: msg.role === 'user' ? '#ffffff' : 'var(--text-main)' }}>
+                  <MarkdownRenderer content={msg.content} isUser={msg.role === 'user'} />
+                </div>
 
                 {/* Strategy Output Card */}
                 {msg.data?.strategy && Object.keys(msg.data.strategy).length > 0 && (
@@ -415,63 +418,113 @@ function dedentCode(code) {
   return code;
 }
 
-function formatMarkdownText(text) {
-  if (!text) return null;
-  const parts = text.split(/(```[\s\S]*?```|\*\*[^*]+\*\*|`[^`]+`)/g);
-  return parts.map((part, idx) => {
-    if (part.startsWith('```') && part.endsWith('```')) {
-      const content = part.slice(3, -3);
-      const match = content.match(/^([a-z]+)?\n([\s\S]*)$/i);
-      const lang = match ? match[1].toLowerCase() : '';
-      const rawCode = match ? match[2] : content;
-      const cleanCode = dedentCode(rawCode.trim());
-      
-      const isSql = lang === 'sql' || cleanCode.toUpperCase().includes('SELECT');
-      const title = isSql ? '🔍 View Executed BigQuery SQL Query' : '💻 View Code Snippet';
+function MarkdownRenderer({ content, isUser }) {
+  if (!content) return null;
 
-      return (
-        <details key={idx} style={{
-          background: 'var(--code-bg)', 
-          border: '1px solid var(--border-color)',
-          borderRadius: '8px', 
-          marginTop: '0.6rem',
-          marginBottom: '0.6rem',
-          overflow: 'hidden'
-        }}>
-          <summary style={{
-            padding: '0.6rem 0.9rem',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-sans)',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            color: 'var(--color-primary)',
-            background: 'var(--chip-bg)',
-            userSelect: 'none',
-            outline: 'none'
-          }}>
-            {title}
-          </summary>
-          <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid var(--border-color)', overflowX: 'auto' }}>
-            <pre style={{
-              margin: 0,
-              fontFamily: 'var(--font-mono)', 
-              fontSize: '0.82rem',
-              color: 'var(--text-main)',
-              whiteSpace: 'pre',
-              textAlign: 'left'
+  return (
+    <ReactMarkdown
+      components={{
+        h1: ({ children }) => (
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0.8rem 0 0.4rem', color: isUser ? '#fff' : 'var(--text-main)', borderBottom: isUser ? 'none' : '1px solid var(--border-color)', paddingBottom: '0.3rem' }}>{children}</h3>
+        ),
+        h2: ({ children }) => (
+          <h3 style={{ fontSize: '1.0rem', fontWeight: 700, margin: '0.8rem 0 0.4rem', color: isUser ? '#fff' : 'var(--text-main)', borderBottom: isUser ? 'none' : '1px solid var(--border-color)', paddingBottom: '0.3rem' }}>{children}</h3>
+        ),
+        h3: ({ children }) => (
+          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0.7rem 0 0.3rem', color: isUser ? '#fff' : 'var(--text-main)' }}>{children}</h4>
+        ),
+        h4: ({ children }) => (
+          <h5 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0.5rem 0 0.2rem', color: isUser ? '#fff' : 'var(--color-primary)' }}>{children}</h5>
+        ),
+        p: ({ children }) => (
+          <p style={{ margin: '0.3rem 0', lineHeight: '1.65' }}>{children}</p>
+        ),
+        ul: ({ children }) => (
+          <ul style={{ margin: '0.3rem 0', paddingLeft: '1.4rem', listStyleType: 'disc' }}>{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol style={{ margin: '0.3rem 0', paddingLeft: '1.4rem' }}>{children}</ol>
+        ),
+        li: ({ children }) => (
+          <li style={{ margin: '0.15rem 0', lineHeight: '1.6' }}>{children}</li>
+        ),
+        hr: () => (
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '0.6rem 0' }} />
+        ),
+        strong: ({ children }) => (
+          <strong style={{ fontWeight: 700, color: isUser ? '#fff' : 'var(--text-main)' }}>{children}</strong>
+        ),
+        em: ({ children }) => (
+          <em style={{ fontStyle: 'italic', color: isUser ? 'rgba(255,255,255,0.9)' : 'var(--text-muted)' }}>{children}</em>
+        ),
+        code: ({ inline, className, children }) => {
+          const codeStr = String(children).replace(/\n$/, '');
+          if (inline) {
+            return (
+              <code style={{ background: 'var(--chip-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.84rem', color: 'var(--color-primary)' }}>{codeStr}</code>
+            );
+          }
+          const lang = (className || '').replace('language-', '');
+          const isSql = lang === 'sql' || codeStr.toUpperCase().includes('SELECT');
+          const title = isSql ? '🔍 View Executed BigQuery SQL Query' : '💻 View Code Snippet';
+          const cleanCode = dedentCode(codeStr);
+          return (
+            <details style={{
+              background: 'var(--code-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              marginTop: '0.6rem',
+              marginBottom: '0.6rem',
+              overflow: 'hidden'
             }}>
-              <code>{cleanCode}</code>
-            </pre>
+              <summary style={{
+                padding: '0.6rem 0.9rem',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                color: 'var(--color-primary)',
+                background: 'var(--chip-bg)',
+                userSelect: 'none',
+                outline: 'none'
+              }}>
+                {title}
+              </summary>
+              <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid var(--border-color)', overflowX: 'auto' }}>
+                <pre style={{
+                  margin: 0,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-main)',
+                  whiteSpace: 'pre',
+                  textAlign: 'left'
+                }}>
+                  <code>{cleanCode}</code>
+                </pre>
+              </div>
+            </details>
+          );
+        },
+        table: ({ children }) => (
+          <div style={{ overflowX: 'auto', margin: '0.5rem 0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>{children}</table>
           </div>
-        </details>
-      );
-    }
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={idx} style={{ color: 'var(--text-main)', fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith('`') && part.endsWith('`') && part !== '```') {
-      return <code key={idx} style={{ background: 'var(--chip-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontFamily: 'var(--font-mono)', color: 'var(--color-primary)' }}>{part.slice(1, -1)}</code>;
-    }
-    return part;
-  });
+        ),
+        th: ({ children }) => (
+          <th style={{ textAlign: 'left', padding: '0.5rem 0.7rem', borderBottom: '2px solid var(--border-color)', fontWeight: 700, color: 'var(--text-main)', background: 'var(--chip-bg)' }}>{children}</th>
+        ),
+        td: ({ children }) => (
+          <td style={{ padding: '0.4rem 0.7rem', borderBottom: '1px solid var(--border-color)', color: 'var(--text-main)' }}>{children}</td>
+        ),
+        blockquote: ({ children }) => (
+          <blockquote style={{ borderLeft: '3px solid var(--color-primary)', paddingLeft: '0.8rem', margin: '0.4rem 0', color: 'var(--text-muted)', fontStyle: 'italic' }}>{children}</blockquote>
+        ),
+        a: ({ href, children }) => (
+          <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>{children}</a>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
 }
