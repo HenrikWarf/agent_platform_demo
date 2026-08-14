@@ -285,17 +285,36 @@ export default function ChatInterface() {
           )}
         </div>
 
-        {/* Quick Sample Prompts Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>Try Sample Objectives:</span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+        {/* Quick Sample Prompts — Collapsible Accordion (closed by default) */}
+        <details style={{
+          background: 'var(--chip-bg)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '10px',
+          padding: '0',
+          overflow: 'hidden'
+        }}>
+          <summary style={{
+            fontSize: '0.74rem',
+            color: 'var(--text-muted)',
+            fontWeight: 600,
+            cursor: 'pointer',
+            padding: '0.55rem 0.85rem',
+            listStyle: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            userSelect: 'none'
+          }}>
+            <span style={{ fontSize: '0.85rem' }}>💡</span> Try Sample Objectives
+          </summary>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', padding: '0.5rem 0.85rem 0.65rem' }}>
             {samplePrompts.map((sp, idx) => (
               <button
                 key={idx}
                 onClick={() => setPrompt(sp)}
                 style={{
                   fontSize: '0.74rem',
-                  background: 'var(--chip-bg)',
+                  background: 'var(--card-bg)',
                   border: '1px solid var(--border-color)',
                   color: 'var(--text-main)',
                   padding: '0.35rem 0.75rem',
@@ -313,7 +332,7 @@ export default function ChatInterface() {
               </button>
             ))}
           </div>
-        </div>
+        </details>
 
         {/* Input Bar */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.6rem' }}>
