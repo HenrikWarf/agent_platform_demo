@@ -188,6 +188,7 @@ class AgentRuntimeClient:
         content = {}
         a2a_trace = []
         sql_executed = ""
+        seen_agents = []
 
         for event in events:
             # SSE events have a nested content structure
@@ -200,6 +201,7 @@ class AgentRuntimeClient:
 
             # Extract tool results (analytics, strategy, content)
             tool_results = self._extract_tool_results(event_content)
+            tool_name = self._extract_tool_name(event_content)
             if tool_results:
                 if "cohort_details" in tool_results or "sql_executed" in tool_results or "results" in tool_results:
                     analytics = tool_results
@@ -209,13 +211,33 @@ class AgentRuntimeClient:
                 elif "generated_assets" in tool_results:
                     content = tool_results
 
-            # Build A2A trace from events
+            # Track agent sequence for A2A trace
             author = event_content.get("author", event.get("author", ""))
-            if author:
-                a2a_trace.append({
-                    "agent": author,
-                    "type": "agent_event",
-                })
+            if author and (not seen_agents or seen_agents[-1] != author):
+                seen_agents.append(author)
+
+        # Build A2A trace as sender→receiver pairs from the agent sequence
+        # Also infer the skill used based on the agent name
+        skill_map = {
+            "analytics_agent": "bigquery_customer_analytics",
+            "strategy_agent": "omnichannel_strategy",
+            "content_agent": "brand_voice",
+        }
+        intent = "ANALYTICS_ONLY"
+        if any("strategy" in a for a in seen_agents):
+            intent = "STRATEGY_ONLY"
+        if any("content" in a for a in seen_agents):
+            intent = "FULL_CAMPAIGN"
+
+        for i in range(len(seen_agents) - 1):
+            sender = seen_agents[i]
+            receiver = seen_agents[i + 1]
+            a2a_trace.append({
+                "sender_id": sender,
+                "receiver_id": receiver,
+                "intent": intent,
+                "skill_used": skill_map.get(receiver, ""),
+            })
 
         return {
             "status": "SUCCESS",
@@ -225,7 +247,7 @@ class AgentRuntimeClient:
             "content": content,
             "sql_executed": sql_executed,
             "a2a_trace": a2a_trace,
-            "intent": "FULL_CAMPAIGN",
+            "intent": intent,
             "target_segment": target_segment,
         }
 
@@ -254,6 +276,21 @@ class AgentRuntimeClient:
                     response = part["function_response"]
                     if isinstance(response, dict):
                         return response.get("response", response)
+        return None
+
+    @staticmethod
+    def _extract_tool_name(content: dict) -> Optional[str]:
+        """Extract the tool/function name from an ADK SSE event content block."""
+        if isinstance(content, dict):
+            parts = content.get("parts", [])
+            for part in parts:
+                if isinstance(part, dict):
+                    fc = part.get("functionCall") or part.get("function_call")
+                    if fc and isinstance(fc, dict):
+                        return fc.get("name", "")
+                    fr = part.get("functionResponse") or part.get("function_response")
+                    if fr and isinstance(fr, dict):
+                        return fr.get("name", "")
         return None
 
     @property
