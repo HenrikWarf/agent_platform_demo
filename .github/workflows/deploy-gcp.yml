@@ -212,10 +212,12 @@ jobs:
       # --- 5. Publish Agent to Gemini Enterprise ---
       - name: Publish Agent to Gemini Enterprise
         if: needs.changes.outputs.agents == 'true'
+        continue-on-error: true
         env:
           GEMINI_ENTERPRISE_APP_ID: projects/${{ env.GCP_PROJECT_ID }}/locations/global/collections/default_collection/engines/marketing-app
         run: |
           echo "🚀 Publishing Agent to Gemini Enterprise..."
+          echo "ℹ️  Note: Gemini Enterprise app must exist first. Create in Cloud Console → Gemini Enterprise → Apps."
           agents-cli publish gemini-enterprise \
             --gemini-enterprise-app-id "$GEMINI_ENTERPRISE_APP_ID" \
             --display-name "Marketing Campaign Orchestrator" \
