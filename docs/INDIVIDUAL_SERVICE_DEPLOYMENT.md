@@ -1,108 +1,109 @@
 # Individual GCP Service Deployment Guide
 
-This guide details how to update and deploy each component of the **Google Cloud Agent Platform** individually directly from your local terminal or CLI without waiting for the full GitHub Actions CI/CD matrix pipeline.
+This guide details how to update and deploy each component individually from your local terminal without waiting for the full CI/CD pipeline.
 
 ---
 
-## Quick Reference Summary
+## Quick Reference
 
-| GCP Service / Component | Target Deployment Environment | Recommended Command / Executable Script | Estimated Time |
-| :--- | :--- | :--- | :--- |
+| Component | Target | Command | Time |
+|-----------|--------|---------|------|
+| **ADK Agent** | Agent Runtime (Reasoning Engine) | `agents-cli deploy` | **~2-5 min** |
 | **FastAPI Backend** | Cloud Run (`agent-platform-backend`) | `./deploy/deploy_backend.sh` | **~45-60s** |
 | **React Frontend** | Cloud Run (`agent-platform-frontend`) | `./deploy/deploy_frontend.sh` | **~30-45s** |
-| **Vertex AI Agent Engine (All Agents)** | Vertex AI Reasoning Engines | `PYTHONPATH=. ./venv/bin/python deploy/deploy_all_agents_to_agent_runtime.sh` | **~90s** |
-| **Single Agent Engine Instance** | Vertex AI Reasoning Engine | `PYTHONPATH=. ./venv/bin/python deploy/deploy_agent_engine.py --agent <agent_id>` | **~30s** |
-| **Agent Registry Marketing Skills** | Gemini Enterprise Agent Registry | `PYTHONPATH=. ./venv/bin/python deploy/publish_skills.py` | **~10s** |
-| **BigQuery Customer Analytics Dataset** | Google BigQuery | `PYTHONPATH=. ./venv/bin/python deploy/seed_bigquery_data.py` | **~15s** |
-| **Agent Gateway & Model Armor** | GCP Network Services & Model Armor | `gcloud alpha network-services agent-gateways import marketing-agent-gateway --source=deploy/agent_gateway.yaml --location=us-central1 --project=agent-demo-09` | **~15s** |
-| **Observability, Telemetry & IAM** | Cloud Trace, Cloud Logging & IAM | `./deploy/enable_observability_permissions.sh` | **~20s** |
+| **Gemini Enterprise** | Agent Registry | `agents-cli publish gemini-enterprise` | **~15s** |
+| **BigQuery Data** | BigQuery tables | `PYTHONPATH=. ./venv/bin/python deploy/seed_bigquery_data.py` | **~15s** |
+| **Agent Gateway** | Network Services | `gcloud alpha network-services agent-gateways import ...` | **~15s** |
+| **Observability IAM** | IAM & APIs | `./deploy/enable_observability_permissions.sh` | **~20s** |
 
 ---
 
-## Detailed Step-by-Step Service Updates
+## Detailed Step-by-Step
 
-### 1. Update FastAPI Backend (`agent-platform-backend`)
+### 1. Deploy ADK Agent to Agent Runtime
 
-Use this when modifying `backend/app.py`, `backend/gateway.py`, `backend/bq_client.py`, `backend/config.py`, or agent logic called by the server.
+Use this when modifying agent logic in `app/agent.py`, tools, or the orchestrator/subagent code.
 
-#### Option A: Convenient 1-Command Script
+```bash
+# Deploy or update the Reasoning Engine instance
+agents-cli deploy --project agent-demo-09 --region us-central1 --no-confirm-project
+```
+
+This packages the `app/` directory, builds a container from `Dockerfile` (using `uv sync --frozen`), and creates/updates the Reasoning Engine. The result is written to `deployment_metadata.json`.
+
+**Verify the deployed agent:**
+```bash
+# Quick test
+agents-cli run --url <RUNTIME_URL> --mode adk "How many customers are in the Champions segment?"
+```
+
+> [!IMPORTANT]
+> Do NOT hand-edit `Dockerfile`, `app/fast_api_app.py`, or `app/app_utils/services.py`. These are scaffolded by `agents-cli` and auto-generated on `scaffold upgrade`.
+
+---
+
+### 2. Update FastAPI Backend (`agent-platform-backend`)
+
+Use this when modifying `backend/app.py`, `backend/agent_runtime_client.py`, `backend/bq_client.py`, or `backend/config.py`.
+
+#### Option A: Script
 ```bash
 ./deploy/deploy_backend.sh
 ```
 
-#### Option B: Manual `gcloud` Execution
+#### Option B: Manual
 ```bash
-# 1. Build and push container image via Cloud Build
 gcloud builds submit --tag us-central1-docker.pkg.dev/agent-demo-09/agent-platform/backend:latest .
 
-# 2. Deploy revision to Cloud Run
 gcloud run deploy agent-platform-backend \
   --image us-central1-docker.pkg.dev/agent-demo-09/agent-platform/backend:latest \
-  --region us-central1 \
-  --platform managed \
-  --port 8080 \
-  --allow-unauthenticated \
-  --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=agent-demo-09,BIGQUERY_DATASET=marketing_analytics,GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace,OTEL_METRICS_EXPORTER=google_cloud_monitoring,OTEL_LOGS_EXPORTER=google_cloud_logging,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT
+  --region us-central1 --platform managed --port 8080 --allow-unauthenticated \
+  --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=agent-demo-09,BIGQUERY_DATASET=marketing_analytics
 ```
 
 ---
 
-### 2. Update React Frontend (`agent-platform-frontend`)
+### 3. Update React Frontend (`agent-platform-frontend`)
 
-Use this when modifying React components (`frontend/src/components/*`), styles, theme modes, or UI layout.
+Use this when modifying React components (`frontend/src/components/*`), styles, or UI layout.
 
-#### Option A: Convenient 1-Command Script
+#### Option A: Script
 ```bash
 ./deploy/deploy_frontend.sh
 ```
 
-#### Option B: Manual `gcloud` Execution
+#### Option B: Manual
 ```bash
-# 1. Build and push frontend image via Cloud Build
 gcloud builds submit --tag us-central1-docker.pkg.dev/agent-demo-09/agent-platform/frontend:latest ./frontend
 
-# 2. Deploy frontend container to Cloud Run
 gcloud run deploy agent-platform-frontend \
   --image us-central1-docker.pkg.dev/agent-demo-09/agent-platform/frontend:latest \
-  --region us-central1 \
-  --platform managed \
-  --port 80 \
-  --allow-unauthenticated \
+  --region us-central1 --platform managed --port 80 --allow-unauthenticated \
   --set-env-vars VITE_BACKEND_URL=https://agent-platform-backend-1047232371360.us-central1.run.app
 ```
 
 ---
 
-### 3. Update Vertex AI Agent Engine Agents
+### 4. Publish to Gemini Enterprise
 
-Use this when updating ADK agent logic, prompt definitions, or A2A message handlers in `agents/`.
+Use this after deploying a new agent version to register it in the Gemini Enterprise app.
 
-#### Option A: Deploy All 4 Agents (`analytics_agent`, `strategy_agent`, `content_agent`, `orchestrator_agent`)
 ```bash
-PYTHONPATH=. ./venv/bin/python deploy/deploy_all_agents_to_agent_runtime.sh
+agents-cli publish gemini-enterprise \
+  --project agent-demo-09 \
+  --location us-central1 \
+  --display-name "Marketing Campaign Orchestrator" \
+  --gemini-enterprise-app-id projects/ml-developer-project-fe07/locations/global/collections/default_collection/engines/crazy-furniture-app-dev_1770975798363
 ```
 
-#### Option B: Deploy a Single Specific Agent
-```bash
-# Target options: analytics_agent | strategy_agent | content_agent | orchestrator_agent
-PYTHONPATH=. ./venv/bin/python deploy/deploy_agent_engine.py --agent analytics_agent
-```
+> [!NOTE]
+> Requires `roles/discoveryengine.editor` on `ml-developer-project-fe07` for the service account.
 
 ---
 
-### 4. Update Agent Registry Marketing Skills
+### 5. Reseed BigQuery Customer Dataset
 
-Use this when adding, updating, or re-indexing marketing skills (`skills/marketing_analytics`, `skills/omnichannel_strategy`, `skills/brand_voice`).
-
-```bash
-PYTHONPATH=. ./venv/bin/python deploy/publish_skills.py
-```
-
----
-
-### 5. Reseed BigQuery Customer Dataset & Tables
-
-Use this when modifying customer schema or resetting RFM metrics/demographics data.
+Use this when modifying customer schema or resetting RFM/demographics data.
 
 ```bash
 PYTHONPATH=. ./venv/bin/python deploy/seed_bigquery_data.py
@@ -110,17 +111,13 @@ PYTHONPATH=. ./venv/bin/python deploy/seed_bigquery_data.py
 
 ---
 
-### 6. Update Agent Gateway & Model Armor Policies
-
-Use this when updating `deploy/agent_gateway.yaml` routing specifications or Model Armor floor policies.
+### 6. Update Agent Gateway & Model Armor
 
 ```bash
 # Import Agent Gateway specification
 gcloud alpha network-services agent-gateways import marketing-agent-gateway \
   --source=deploy/agent_gateway.yaml \
-  --location=us-central1 \
-  --project=agent-demo-09 \
-  --quiet
+  --location=us-central1 --project=agent-demo-09 --quiet
 
 # Re-apply Model Armor Security Floor Policy
 PYTHONPATH=. ./venv/bin/python deploy/setup_model_armor.py
@@ -128,9 +125,7 @@ PYTHONPATH=. ./venv/bin/python deploy/setup_model_armor.py
 
 ---
 
-### 7. Re-apply Observability, Telemetry & IAM Permissions
-
-Use this when updating OpenTelemetry APIs, Log Analytics on `_Default` bucket, or Service Account IAM roles.
+### 7. Re-apply Observability & IAM Permissions
 
 ```bash
 ./deploy/enable_observability_permissions.sh
@@ -138,10 +133,17 @@ Use this when updating OpenTelemetry APIs, Log Analytics on `_Default` bucket, o
 
 ---
 
-## Local Pre-Commit Check (Recommended Before Deploying)
+## Pre-Deploy Quality Check
 
-Run the pre-commit quality check locally before executing individual service deployments:
-
+Always run before deploying:
 ```bash
 ./scripts/pre_commit_lint.sh
+```
+
+## Scaffold Upgrade
+
+When `agents-cli` releases a new version, upgrade the project scaffolding:
+```bash
+agents-cli scaffold upgrade --dry-run   # Preview changes
+agents-cli scaffold upgrade             # Apply upgrade
 ```

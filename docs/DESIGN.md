@@ -1,11 +1,11 @@
-# System & UI/UX Design Architecture (DESIGN.md)
+# System & UI/UX Design Architecture
 ## GCP Multi-Agent Marketing Platform
 
 ---
 
 ## 1. High-Level Architecture Topology
 
-The application follows a microservice multi-agent topology powered by FastAPI, React (Vite), Google BigQuery, Model Armor, Agent Gateway, Agent Registry, and Vertex AI Agent Engine using Agent-to-Agent (A2A) protocol.
+The application follows a microservice multi-agent topology powered by the **Google Agent Development Kit (ADK)**, **Agent Runtime (Vertex AI Reasoning Engine)**, React (Vite), Google BigQuery, Model Armor, Agent Gateway, and Gemini Enterprise.
 
 ```
 +-------------------------------------------------------------------------+
@@ -15,23 +15,23 @@ The application follows a microservice multi-agent topology powered by FastAPI, 
                                      | (REST HTTP JSON)
                                      v
 +-------------------------------------------------------------------------+
-|                             FASTAPI BACKEND                             |
-|                        (backend/app.py Port 8080)                       |
+|                       CLOUD RUN BACKEND (API Layer)                     |
+|                     (backend/app.py — Port 8080)                        |
+|              AgentRuntimeClient → Vertex AI Agent Runtime               |
 +------------------------------------+------------------------------------+
                                      |
                                      v
 +-------------------------------------------------------------------------+
-|                         AGENT GATEWAY & MODEL ARMOR                     |
-|      governedAccessPath: CLIENT_TO_AGENT | Prompt Shield Inspection     |
+|                    VERTEX AI AGENT RUNTIME (Container)                   |
+|          app/fast_api_app.py → ADK FastAPI + Reasoning Engine           |
+|       :streamQuery / :query ← Gemini Enterprise / Console Playground    |
 +------------------------------------+------------------------------------+
-                                     |
-                                     v
-+-------------------------------------------------------------------------+
-|                        ORCHESTRATOR SUPERVISOR                          |
-|                  Selective Intent Classification Engine                 |
+|                                    |
+|       Agent Gateway & Model Armor  |  (Prompt Shield Inspection)
+|                                    |
 +-----+------------------------------+------------------------------+-----+
       |                              |                              |
-      | (A2A Protocol)               | (A2A Protocol)               | (A2A Protocol)
+      | (A2A Protocol)               | (A2A Protocol)               | (A2A)
       v                              v                              v
 +------------------+         +------------------+         +------------------+
 | Analytics Agent  |         |  Strategy Agent  |         |  Content Agent   |
@@ -47,96 +47,107 @@ The application follows a microservice multi-agent topology powered by FastAPI, 
 
 ---
 
-## 2. Agent Gateway & Model Armor Governance Architecture
+## 2. Container & Serving Architecture
 
-### 2.1 Agent Gateway (`marketing-agent-gateway`)
-- **Resource Identifier**: `projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway`
+### 2.1 Agent Runtime Container (`app/fast_api_app.py`)
+The scaffolded `app/fast_api_app.py` is the container entrypoint, created by `agents-cli scaffold`. It serves three route families:
+
+| Route Family | Endpoints | Consumer |
+|-------------|-----------|----------|
+| **ADK Web UI** | `/run_sse`, `/apps/{app}/...` | `agents-cli playground`, dev UI |
+| **Reasoning Engine** | `/api/reasoning_engine`, `/api/stream_reasoning_engine` | Vertex AI `:query`/`:streamQuery`, Console Playground, Gemini Enterprise |
+| **A2A Protocol** | `/a2a/{app_name}/...` | Agent-to-Agent JSON-RPC |
+
+The `lifespan` builds a shared `Runner` with session/artifact services (`app/app_utils/services.py`) and mounts A2A routes. `attach_reasoning_engine_routes(app)` adds the Vertex AI contract.
+
+### 2.2 Agent Runtime App (`app/agent_runtime_app.py`)
+The `AgentEngineApp(AdkApp)` entry point wraps the ADK agent for the non-container Agent Engine deployment path. It initializes `vertexai`, telemetry, and Cloud Logging.
+
+### 2.3 Session & Artifact Services (`app/app_utils/services.py`)
+- **Sessions**: In-memory locally; upgrades to `VertexAiSessionService` on Agent Runtime (when `GOOGLE_CLOUD_AGENT_ENGINE_ID` is set)
+- **Artifacts**: `GcsArtifactService` when `LOGS_BUCKET_NAME` is set; otherwise `InMemoryArtifactService`
+
+---
+
+## 3. Agent Gateway & Model Armor Governance
+
+### 3.1 Agent Gateway (`marketing-agent-gateway`)
+- **Resource**: `projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway`
 - **Governed Access Path**: `googleManaged.governedAccessPath: CLIENT_TO_AGENT`
-- **Bound Registries**: `//agentregistry.googleapis.com/projects/agent-demo-09/locations/us-central1`
-- **Protocols Supported**: `MCP`, `HTTP_JSON`
+- **Protocols**: `MCP`, `HTTP_JSON`
 
-### 2.2 Model Armor Security Policy
-- **Floor Metadata**: `projects/agent-demo-09/locations/us-central1/floors/marketing-floor`
+### 3.2 Model Armor Security Policy
 - **Prompt Shield Template**: `projects/agent-demo-09/locations/us-central1/templates/marketing-prompt-shield`
-- **Active Safety Filters**:
-  - Prompt Injection Defense (detects system override & malicious SQL manipulation).
-  - Jailbreak Detection & Redirection.
-  - Harmful Content & Data Exfiltration Prevention.
+- **Active Filters**: Prompt Injection Defense, Jailbreak Detection, Harmful Content Prevention
 
 ---
 
-## 3. Multi-Agent Design & A2A Protocol Routing
+## 4. Multi-Agent Design & A2A Protocol
 
-### 3.1 Supervisor & Intent Classifier Engine
-The **Orchestrator Agent** ([agents/orchestrator_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/orchestrator_agent.py)) intercepts all incoming requests:
-1. **Security Validation**: Passes prompt to Model Armor gateway inspection.
-2. **Intent Classification**:
-   - `ANALYTICS_ONLY`: Data queries, segment counts, averages, and row listings. Executes `AnalyticsAgent` ONLY.
-   - `STRATEGY_ONLY`: Framework and channel allocation prompts without copy assets. Executes `AnalyticsAgent` -> `StrategyAgent`.
-   - `FULL_CAMPAIGN`: Creative copywriting and end-to-end campaign prompts. Executes `AnalyticsAgent` -> `StrategyAgent` -> `ContentAgent`.
+### 4.1 Orchestrator & Intent Classifier
+The **Orchestrator Agent** (`agents/orchestrator_agent.py`) classifies user intent:
 
-### 3.2 Subagent Architecture & Responsibilities
-- **Analytics Agent** ([agents/analytics_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/analytics_agent.py)):
-  - Bound Skill: `bigquery_customer_analytics` ([skills/marketing_analytics/SKILL.md](file:///Users/henrikw/Projects/agent_platform_demo/skills/marketing_analytics/SKILL.md)).
-  - Natural Language to SQL (NL2SQL) engine powered by Vertex AI Gemini (`gemini-3.6-flash`).
-  - Executes live SQL against BigQuery tables (`customer_rfm_summary`, `customer_demographics_360`, `customer_transactions`). Zero dummy fallbacks.
-- **Strategy Agent** ([agents/strategy_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/strategy_agent.py)):
-  - Bound Skill: `omnichannel_strategy` ([skills/omnichannel_strategy/SKILL.md](file:///Users/henrikw/Projects/agent_platform_demo/skills/omnichannel_strategy/SKILL.md)).
-  - Generates campaign title, business goals, channel weights, and ROI projections.
-- **Content Agent** ([agents/content_agent.py](file:///Users/henrikw/Projects/agent_platform_demo/agents/content_agent.py)):
-  - Bound Skill: `brand_voice` ([skills/brand_voice/SKILL.md](file:///Users/henrikw/Projects/agent_platform_demo/skills/brand_voice/SKILL.md)).
-  - Generates subject lines, email templates, and LinkedIn ad copy.
+| Intent | Execution Flow | Output |
+|--------|---------------|--------|
+| `ANALYTICS_ONLY` | Orchestrator → AnalyticsAgent | Data summary + SQL accordion |
+| `STRATEGY_ONLY` | Orchestrator → AnalyticsAgent → StrategyAgent | + Strategy framework |
+| `FULL_CAMPAIGN` | Orchestrator → AnalyticsAgent → StrategyAgent → ContentAgent | + Creative copy |
+
+### 4.2 Subagent Architecture
+- **Analytics Agent** (`agents/analytics_agent.py`): NL2SQL engine with `bigquery_customer_analytics` skill. Queries live BigQuery tables.
+- **Strategy Agent** (`agents/strategy_agent.py`): `omnichannel_strategy` skill. Campaign frameworks, channel mix, ROI projections.
+- **Content Agent** (`agents/content_agent.py`): `brand_voice` skill. Subject lines, email templates, ad copy.
+
+### 4.3 ADK Root Agent (`app/agent.py`)
+The `app/agent.py` defines the `root_agent` using `google.adk.agents.Agent`. This is the ADK entry point that Agent Runtime discovers and serves. It delegates to the orchestrator agent's tools.
 
 ---
 
-## 4. UI/UX Design System & Theme Engine
+## 5. UI/UX Design System
 
-### 4.1 Design System Tokens (`frontend/src/index.css`)
-The UI utilizes CSS custom properties for instant light/dark theme switching without compilation overhead.
-
+### 5.1 Theme Engine (`frontend/src/index.css`)
+CSS custom properties for instant light/dark theme switching:
 ```css
 :root, [data-theme="light"] {
   --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.85);
   --color-primary: #2563eb;
-  --text-main: #0f172a;
-  --code-bg: rgba(226, 232, 240, 0.85);
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
-
 [data-theme="dark"] {
   --bg-primary: #090b10;
-  --bg-secondary: #111520;
-  --bg-card: rgba(18, 23, 37, 0.75);
   --color-primary: #4285f4;
-  --text-main: #f8fafc;
-  --code-bg: rgba(0, 0, 0, 0.3);
 }
 ```
 
-### 4.2 Formatting Engine & Collapsible SQL Accordion
-In [frontend/src/components/ChatInterface.jsx](file:///Users/henrikw/Projects/agent_platform_demo/frontend/src/components/ChatInterface.jsx), markdown responses pass through `formatMarkdownText()` and `dedentCode()`:
-- **Accordion Container**: Executed BigQuery SQL code blocks are parsed and rendered inside `<details><summary>` containers (`🔍 View Executed BigQuery SQL Query`).
-- **Selective Card Visibility**: Strategy & Content UI containers only mount when `Object.keys(msg.data.strategy).length > 0`.
+### 5.2 Response Rendering
+- **Collapsible SQL Accordion**: BigQuery SQL in `<details><summary>` containers (`🔍 View Executed BigQuery SQL Query`)
+- **Selective Card Visibility**: Strategy & Content cards render only when payload is present
+- **Agent Graph Visualizer**: Interactive A2A routing topology display
+
+### 5.3 Component Architecture
+| Component | Responsibility |
+|-----------|---------------|
+| `ChatInterface.jsx` | Main chat with markdown rendering, SQL accordion |
+| `AgentGraphVisualizer.jsx` | A2A protocol routing visualization |
+| `BigQueryDataViewer.jsx` | Live BigQuery table sampling & inspection |
+| `SimulatorControls.jsx` | Traffic load simulator for telemetry |
+| `SkillsInspector.jsx` | Skill registry browser (filters CLI dev skills) |
 
 ---
 
-## 5. Observability, Telemetry & Code Quality Architecture
+## 6. Observability & Telemetry
 
-### 5.1 Cloud Logging Log Analytics Architecture
-For GCP Console Observability Analytics to process Agent Gateway and Agent Engine invocation counts, turn metrics, and latency charts:
-- **Log Analytics**: Must be enabled on the global `_Default` log bucket (`gcloud logging buckets update _Default --location=global --enable-analytics`).
-- **Log Views**: Log queries filter against the default `_AllLogs` view.
+### 6.1 Scaffolded Telemetry (`app/app_utils/telemetry.py`)
+- Cloud Trace span export (gated on `GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY`)
+- Prompt-response logging to GCS (`NO_CONTENT` metadata-only mode)
+- GenAI instrumentation with `OTEL_INSTRUMENTATION_GENAI_COMPLETION_HOOK=upload`
 
-### 5.2 Service Account Telemetry IAM Bindings
-Provisions metric writing and tracing permissions to service accounts via [deploy/enable_observability_permissions.sh](file:///Users/henrikw/Projects/agent_platform_demo/deploy/enable_observability_permissions.sh):
-- **Service Accounts**: `agent-platform-sa@agent-demo-09.iam.gserviceaccount.com`, Compute Engine SA (`1047232371360-compute`), and Vertex AI Service Agent (`service-1047232371360@gcp-sa-aiplatform.iam.gserviceaccount.com`).
-- **Roles**: `roles/cloudtrace.agent`, `roles/logging.logWriter`, `roles/monitoring.metricWriter`, `roles/monitoring.admin`, `roles/aiplatform.admin`, `roles/bigquery.dataEditor`, `roles/bigquery.jobUser`.
+### 6.2 Cloud Logging & Log Analytics
+- Log Analytics enabled on global `_Default` bucket
+- Queries filter against the `_AllLogs` view for Agent Gateway, Model Armor, and Agent Engine logs
 
-### 5.3 Automated Code Quality Linter Hook
-- **Git Pre-Commit Hook** ([scripts/pre_commit_lint.sh](file:///Users/henrikw/Projects/agent_platform_demo/scripts/pre_commit_lint.sh)): Runs automatically on `git commit` to validate Python syntax/imports and React ESLint rules.
-- **IDE Language Server Config**: [.vscode/settings.json](file:///Users/henrikw/Projects/agent_platform_demo/.vscode/settings.json) and [pyrightconfig.json](file:///Users/henrikw/Projects/agent_platform_demo/pyrightconfig.json) direct Pyrefly/Pyright to resolve `venv/lib/python3.14/site-packages` without missing module warnings.
-
-
+### 6.3 Pre-Commit Quality Linter
+Automated Git hook (`scripts/pre_commit_lint.sh`):
+- Python `py_compile` syntax & module import verification
+- React ESLint check (`cd frontend && npm run lint`)

@@ -1,8 +1,8 @@
-# Deployment & Operations Guide (DEPLOY.md)
+# Deployment & Operations Guide
 ## GCP Multi-Agent Marketing Platform
 
 > [!TIP]
-> For fast single-service updates (e.g. backend or frontend only), see the [Individual GCP Service Deployment Guide](file:///Users/henrikw/Projects/agent_platform_demo/docs/INDIVIDUAL_SERVICE_DEPLOYMENT.md).
+> For fast single-service updates (e.g. backend or frontend only), see the [Individual GCP Service Deployment Guide](INDIVIDUAL_SERVICE_DEPLOYMENT.md).
 
 ---
 
@@ -14,9 +14,9 @@
 - **Project Number**: `1047232371360`
 - **BigQuery Dataset**: `marketing_analytics`
 - **Service Account**: `agent-platform-sa@agent-demo-09.iam.gserviceaccount.com`
+- **Gemini Enterprise App**: `crazy-furniture-app-dev_1770975798363` (project: `ml-developer-project-fe07`)
 
-### 1.2 Required GCP APIs (22 Codified APIs)
-Ensure the following APIs are activated on project `agent-demo-09`:
+### 1.2 Required GCP APIs
 ```bash
 gcloud services enable \
   bigquery.googleapis.com \
@@ -29,49 +29,63 @@ gcloud services enable \
   cloudtrace.googleapis.com \
   monitoring.googleapis.com \
   logging.googleapis.com \
-  iap.googleapis.com \
-  apptopology.googleapis.com \
-  observability.googleapis.com \
-  telemetry.googleapis.com \
-  clouderrorreporting.googleapis.com \
   iam.googleapis.com \
   cloudresourcemanager.googleapis.com
 ```
 
 ---
 
-## 2. Local Setup & Execution Workflow
+## 2. Project Scaffolding & Local Setup
 
-### 2.1 Virtual Environment Setup
+### 2.1 Prerequisites
+- **Python**: 3.12 (container) / 3.11+ (local dev)
+- **agents-cli**: `1.3.1` (installed via `uv tool install google-agents-cli`)
+- **Node.js**: 18+ (for frontend)
+
+### 2.2 Project Structure (Scaffolded with `agents-cli`)
+This project uses the **ADK scaffolded structure** generated and maintained by `agents-cli`. Key infrastructure files are auto-generated and should NOT be hand-edited:
+
+| File | Purpose | Editable? |
+|------|---------|-----------|
+| `Dockerfile` | Container build for Agent Runtime | ❌ Scaffolded |
+| `app/fast_api_app.py` | FastAPI app with lifespan, A2A, reasoning engine routes | ❌ Scaffolded |
+| `app/app_utils/services.py` | Session & artifact service factory | ❌ Scaffolded |
+| `app/app_utils/reasoning_engine_adapter.py` | `/api/reasoning_engine` routes | ❌ Scaffolded |
+| `app/app_utils/a2a.py` | A2A protocol support | ❌ Scaffolded |
+| `agents-cli-manifest.yaml` | CLI metadata & project config | ❌ Scaffolded |
+| `app/agent.py` | Agent definition & tools | ✅ Your code |
+| `app/app_utils/telemetry.py` | Telemetry configuration | ✅ Your code |
+
+### 2.3 Scaffold Commands
 ```bash
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate
+# Upgrade project to latest agents-cli version
+agents-cli scaffold upgrade
 
-# Install Python dependencies
-pip install -r backend/requirements.txt
+# Add deployment target (if not already present)
+agents-cli scaffold enhance . --deployment-target agent_runtime
+
+# Add CI/CD pipeline
+agents-cli scaffold enhance . --cicd-runner github_actions
 ```
 
-### 2.2 Seed Live BigQuery Dataset (200 Aligned Rows)
-Populates or realigns customer records across all 3 BigQuery tables (`customer_rfm_summary`, `customer_demographics_360`, `customer_transactions`):
+### 2.4 Local Development
+```bash
+# Install dependencies
+agents-cli install
+
+# Run agent locally with playground UI
+agents-cli playground
+
+# Quick smoke test
+agents-cli run "How many customers are in the Champions segment?"
+```
+
+### 2.5 Seed BigQuery Dataset (200 Aligned Rows)
 ```bash
 PYTHONPATH=. ./venv/bin/python deploy/seed_bigquery_data.py
 ```
 
-### 2.3 Publish Marketing Skills to Agent Registry
-Registers marketing skills with Agent Registry in `us-central1`:
-```bash
-PYTHONPATH=. ./venv/bin/python deploy/publish_skills.py
-```
-
-### 2.4 Run Local Golden Evaluation Suite
-Runs benchmark quality eval suite across natural language prompts:
-```bash
-PYTHONPATH=. ./venv/bin/python eval/run_eval.py
-```
-
-### 2.5 Start Application Stack
-Launches FastAPI backend (Port 8080) and React frontend (Port 3000):
+### 2.6 Start Full Application Stack (Backend + Frontend)
 ```bash
 ./start_local.sh
 ```
@@ -80,115 +94,145 @@ Launches FastAPI backend (Port 8080) and React frontend (Port 3000):
 
 ---
 
-## 3. Production Cloud Run & Agent Engine Deployment
+## 3. Agent Runtime Deployment
 
-### 3.1 Container Build & Deploy
+### 3.1 Deploy Agent to Agent Runtime
+The ADK agent deploys to Vertex AI Agent Runtime as a container-based Reasoning Engine:
+
 ```bash
-# Submit Container Build
-gcloud builds submit --tag gcr.io/agent-demo-09/agent-platform-backend:latest .
-
-# Deploy Backend to Cloud Run
-gcloud run deploy agent-platform-backend \
-  --image gcr.io/agent-demo-09/agent-platform-backend:latest \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars USE_GCP_CLOUD=true,GCP_PROJECT_ID=agent-demo-09,BIGQUERY_DATASET=marketing_analytics,GEMINI_LOCATION=global
+# Deploy (creates or updates the Reasoning Engine instance)
+agents-cli deploy --project agent-demo-09 --region us-central1 --no-confirm-project
 ```
 
-### 3.2 Live Deployed Endpoints
-- **Backend API**: `https://agent-platform-backend-q5c3bhebga-uc.a.run.app`
-- **Frontend App**: `https://agent-platform-frontend-q5c3bhebga-uc.a.run.app`
+This:
+1. Packages project files (honoring `.gcloudignore`)
+2. Builds container image from `Dockerfile` (using `uv sync --frozen`)
+3. Creates/updates the Reasoning Engine instance
+4. Writes `deployment_metadata.json` with the engine resource ID
+
+### 3.2 Deployment Architecture
+```
+Dockerfile CMD: uv run uvicorn app.fast_api_app:app --host 0.0.0.0 --port 8080
+
+app/fast_api_app.py (container entrypoint)
+├── get_fast_api_app(web=True, lifespan=..., otel_to_cloud=True)
+│   ├── /run_sse, /apps/... (ADK dev UI routes)
+│   └── lifespan → Runner + attach_a2a_routes()
+├── attach_reasoning_engine_routes(app)
+│   ├── /api/reasoning_engine      ← Vertex AI :query contract
+│   └── /api/stream_reasoning_engine  ← Vertex AI :streamQuery contract
+└── /feedback (structured logging)
+```
+
+### 3.3 Query Deployed Agent
+```bash
+# Via agents-cli
+agents-cli run --url https://us-central1-aiplatform.googleapis.com/v1/projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936 --mode adk "Hello"
+
+# Via Python SDK
+import vertexai
+client = vertexai.Client(location="us-central1")
+agent = client.agent_engines.get(name="projects/.../reasoningEngines/ID")
+async for event in agent.async_stream_query(message="Hello!", user_id="test"):
+    print(event)
+```
+
+### 3.4 Publish to Gemini Enterprise
+```bash
+agents-cli publish gemini-enterprise \
+  --project agent-demo-09 \
+  --location us-central1 \
+  --display-name "Marketing Campaign Orchestrator" \
+  --gemini-enterprise-app-id projects/ml-developer-project-fe07/locations/global/collections/default_collection/engines/crazy-furniture-app-dev_1770975798363
+```
+
+### 3.5 Cloud Run Services (Backend API & Frontend)
+```bash
+# Backend
+gcloud run deploy agent-platform-backend \
+  --image us-central1-docker.pkg.dev/agent-demo-09/agent-platform/backend:latest \
+  --region us-central1 --platform managed --port 8080 --allow-unauthenticated
+
+# Frontend
+gcloud run deploy agent-platform-frontend \
+  --image us-central1-docker.pkg.dev/agent-demo-09/agent-platform/frontend:latest \
+  --region us-central1 --platform managed --port 80 --allow-unauthenticated
+```
+
+**Live Endpoints**:
+- **Backend**: `https://agent-platform-backend-q5c3bhebga-uc.a.run.app`
+- **Frontend**: `https://agent-platform-frontend-q5c3bhebga-uc.a.run.app`
 
 ---
 
-## 4. Terraform Infrastructure-as-Code (`terraform/main.tf`)
-The Terraform configuration in `terraform/main.tf` codifies:
-- All 22 GCP APIs.
-- IAM roles (`roles/bigquery.dataViewer`, `roles/modelarmor.user`, `roles/modelarmor.calloutUser`, `roles/cloudtrace.agent`, `roles/agentregistry.editor`).
-- Agent Gateway `marketing-agent-gateway` with `googleManaged: {governedAccessPath: CLIENT_TO_AGENT}`.
+## 4. Terraform Infrastructure (`deployment/terraform/`)
+
+The scaffolded Terraform configuration in `deployment/terraform/single-project/` codifies:
+- GCP APIs enablement
+- IAM roles and service accounts
+- Agent Runtime (Reasoning Engine) resource
+- Storage and telemetry infrastructure
 
 ```bash
-cd terraform
+cd deployment/terraform/single-project
 terraform init
-terraform plan -out=tfplan
+terraform plan -var-file=vars/env.tfvars -out=tfplan
 terraform apply tfplan
 ```
 
----
-
-## 5. Automated CI/CD Workflow (`.github/workflows/deploy-gcp.yml`)
-On push to `main` branch, GitHub Actions executes:
-1. Python unit & golden benchmark evaluation suite (`eval/run_eval.py`).
-2. GCP Workload Identity authentication.
-3. Enabling required GCP APIs.
-4. Container image build & Cloud Run deployment.
-5. Agent Engine Reasoning Engine deployment (`deploy/deploy_all_agents_to_agent_runtime.sh`).
-6. Agent Registry skill publishing (`deploy/publish_skills.py`).
+> [!IMPORTANT]
+> The Reasoning Engine resource uses `lifecycle.ignore_changes` for `container_spec`, `source_code_spec`, and `deployment_spec` — the image and source are updated by `agents-cli deploy`, not Terraform.
 
 ---
 
-## 6. Observability & Telemetry Configuration
+## 5. CI/CD Pipeline (`.github/workflows/deploy-gcp.yml`)
 
-### 6.1 Log Analytics Prerequisites for Agent Gateway & Agent Engine
-To enable telemetry dashboards, request counts, turn metrics, and latency charts in the GCP Console for Agent Gateway and Agent Engine:
-- **Cloud Logging Log Analytics**: Must be enabled on the global `_Default` log bucket with an active `_AllLogs` view:
+On push to `main`, GitHub Actions executes:
+1. **Evaluation**: Runs `agents-cli eval` post-deployment benchmark against live Agent Runtime.
+2. **Authentication**: GCP Workload Identity Federation.
+3. **Agent Deployment**: `agents-cli deploy` to Agent Runtime.
+4. **Backend Build**: Container image → Cloud Run (`agent-platform-backend`).
+5. **Frontend Build**: Container image → Cloud Run (`agent-platform-frontend`).
+6. **Gemini Enterprise Registration**: `agents-cli publish gemini-enterprise` (non-blocking).
+
+Selective deployment: only changed services are redeployed based on path filters.
+
+---
+
+## 6. Observability & Telemetry
+
+### 6.1 OpenTelemetry Configuration
+The scaffolded `app/app_utils/telemetry.py` configures:
+- Cloud Trace span export (gated on `GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true`)
+- Prompt-response logging to GCS (when `LOGS_BUCKET_NAME` is set)
+- GenAI content capture mode (`NO_CONTENT` metadata-only by default)
+
+### 6.2 Log Analytics
 ```bash
 gcloud logging buckets update _Default \
-  --location=global \
-  --project=agent-demo-09 \
-  --enable-analytics
+  --location=global --project=agent-demo-09 --enable-analytics
 ```
 
-### 6.2 Service Account Observability & IAM Permissions (`deploy/enable_observability_permissions.sh`)
-The script `deploy/enable_observability_permissions.sh` provisions required APIs and binds telemetry roles across:
-- `agent-platform-sa@agent-demo-09.iam.gserviceaccount.com`
-- `1047232371360-compute@developer.gserviceaccount.com` (Compute Engine SA)
-- `service-1047232371360@gcp-sa-aiplatform.iam.gserviceaccount.com` (Vertex AI Service Agent)
-
-**Roles Provisioned**:
-- `roles/cloudtrace.agent` (Trace exporter)
-- `roles/logging.logWriter` (Cloud Logging)
-- `roles/monitoring.metricWriter` (Cloud Monitoring metric exporter)
-- `roles/monitoring.admin` (Observability dashboards)
-- `roles/aiplatform.admin` (Agent Engine runtime control)
-- `roles/bigquery.dataEditor` & `roles/bigquery.jobUser` (Agent Analytics export)
-
-Run permission script:
+### 6.3 Telemetry IAM Permissions
 ```bash
 bash deploy/enable_observability_permissions.sh
 ```
 
-### 6.3 OpenTelemetry & Telemetry Flags
-Application backend and Standalone Agent Engine instances output tracing, metrics, and logs using OpenTelemetry environment variables:
-- `GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true`
-- `OTEL_TRACES_EXPORTER=google_cloud_trace`
-- `OTEL_METRICS_EXPORTER=google_cloud_monitoring`
-- `OTEL_LOGS_EXPORTER=google_cloud_logging`
-- `OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true`
-- `ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true`
-- `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT`
-- `OTEL_INSTRUMENTATION_GENAI_COMPLETION_HOOK=upload`
-
-Traces and metrics can be visualized in the **GCP Cloud Trace Console**, **GCP Monitoring Dashboards**, or via the **Traffic Simulator & OTel** tab in the web interface.
-
 ---
 
-## 7. Developer Experience & Code Quality Automation
+## 7. Developer Experience
 
-### 7.1 Git Pre-Commit Quality Linter Hook (`scripts/pre_commit_lint.sh`)
-An automated Git pre-commit hook is installed at `.git/hooks/pre-commit` and executed prior to every commit:
-- **Backend (Python)**: Executes `python3 -m py_compile` across all Python source files and validates module imports.
-- **Frontend (React / JSX)**: Executes `cd frontend && npm run lint` using ESLint (`frontend/eslint.config.js`).
-
-Trigger manual pre-commit check:
+### 7.1 Pre-Commit Quality Linter
 ```bash
 ./scripts/pre_commit_lint.sh
 ```
+Validates Python syntax/imports and React ESLint rules on every `git commit`.
 
-### 7.2 IDE Language Server & Pyrefly Configuration
-To prevent missing import warnings in Pyrefly / Pyright / VS Code:
-- **[.vscode/settings.json](file:///Users/henrikw/Projects/agent_platform_demo/.vscode/settings.json)**: Sets `"python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python"` and extra search paths.
-- **[pyrightconfig.json](file:///Users/henrikw/Projects/agent_platform_demo/pyrightconfig.json)**: Directs Pyright/Pyrefly to `venv/lib/python3.14/site-packages`.
+### 7.2 Evaluation
+```bash
+# Generate eval dataset
+agents-cli eval generate
 
-
+# Grade agent responses
+agents-cli eval grade
+```

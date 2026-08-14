@@ -1,33 +1,27 @@
-# Technical & API Specifications (SPEC.md)
+# Technical & API Specifications
 ## GCP Multi-Agent Marketing Platform
 
 ---
 
-## 1. REST API Specification & Endpoint Specs
+## 1. REST API Specification
 
-### 1.1 Multi-Agent Chat & Orchestration Endpoint
+### 1.1 Multi-Agent Chat Endpoint
 - **URL**: `POST /api/chat`
-- **Description**: Main execution entrypoint. Validates user prompt through Model Armor, determines intent (`ANALYTICS_ONLY`, `STRATEGY_ONLY`, `FULL_CAMPAIGN`), and dispatches A2A messages across subagents.
-- **Request Parameters**:
-  - `prompt` (*string*, required): User's natural language question, objective, or marketing command.
-  - `target_segment` (*string*, optional, default: `"At-Risk Premium"`): Cohort target filter (`"All Cohorts (Full Dataset)"`, `"At-Risk Premium"`, `"Champions"`, `"Loyal Customers"`, `"Recent Buyers"`).
-
-- **Request Example**:
+- **Description**: Main execution entrypoint on the Cloud Run backend. Proxies requests to the deployed Agent Runtime via `AgentRuntimeClient`.
+- **Request**:
 ```json
 {
   "prompt": "What is the average age of customers in the Champions segment?",
   "target_segment": "Champions"
 }
 ```
-
-- **Response Schema (`ANALYTICS_ONLY` Intent)**:
+- **Response** (`ANALYTICS_ONLY` intent):
 ```json
 {
   "status": "SUCCESS",
   "model_armor_passed": true,
   "intent": "ANALYTICS_ONLY",
-  "user_prompt": "What is the average age of customers in the Champions segment?",
-  "summary": "📊 **BigQuery Data Query Result**:\n\n• Average age for Champions is 42.5 years with average monetary spend of $12,500.00.\n\n**BigQuery SQL Executed:**\n```sql\nSELECT AVG(demo.age) AS avg_age FROM `agent-demo-09.marketing_analytics.customer_demographics_360` demo JOIN `agent-demo-09.marketing_analytics.customer_rfm_summary` rfm ON demo.customer_id = rfm.customer_id WHERE rfm.rfm_segment = 'Champions'\n```",
+  "summary": "📊 BigQuery Data Query Result...",
   "analytics": {
     "status": "SUCCESS",
     "skill_executed": "bigquery_customer_analytics",
@@ -35,186 +29,157 @@
     "cohort_details": {
       "total_customers_analyzed": 52,
       "target_segment": "Champions",
-      "count_in_segment": 52,
-      "sql_executed": "SELECT AVG(demo.age) ...",
-      "custom_results": [{"avg_age": 42.5}]
+      "sql_executed": "SELECT AVG(demo.age) ..."
     }
   },
   "strategy": {},
   "content": {},
-  "model_armor": {
-    "passed": true,
-    "filter_reason": "Clean",
-    "sanitized_prompt": "What is the average age of customers in the Champions segment?"
-  },
   "a2a_trace": [
     {
       "sender_id": "orchestrator_agent",
       "receiver_id": "analytics_agent",
-      "intent": "ANALYZE_CUSTOMER_COHORTS",
       "skill_used": "bigquery_customer_analytics"
     }
   ]
 }
 ```
 
-### 1.2 Vertex AI Reasoning Engine Streaming Endpoint
-- **URL**: `POST /api/query_reasoning_engine` & `POST /api/stream_reasoning_engine`
-- **Request Body**: Accepts standard Reasoning Engine request wrapper:
-```json
-{
-  "input": {
-    "prompt": "Analyze churn risk for At-Risk Premium customer segment and generate win-back strategy",
-    "target_segment": "At-Risk Premium"
-  }
-}
-```
+### 1.2 Agent Runtime Endpoints (Container Routes)
+These routes are served by `app/fast_api_app.py` inside the Agent Runtime container:
+
+| Route | Method | Consumer |
+|-------|--------|----------|
+| `/api/reasoning_engine` | POST | Vertex AI `:query` contract |
+| `/api/stream_reasoning_engine` | POST | Vertex AI `:streamQuery` contract |
+| `/run_sse` | POST | ADK dev UI streaming |
+| `/apps/{app_name}/users/{user_id}/sessions` | Various | ADK session management |
+| `/a2a/{app_name}` | POST | A2A JSON-RPC protocol |
+| `/a2a/{app_name}/.well-known/agent-card.json` | GET | A2A agent card discovery |
+| `/feedback` | POST | Structured feedback logging |
 
 ### 1.3 System Health & Version Endpoints
 - **URL**: `GET /api/health` & `GET /health`
-- **Response**:
 ```json
 {
   "status": "HEALTHY",
   "service": "gcp-agent-platform-backend",
   "version": "v1.2.0",
   "environment": "production",
-  "gcp_project": "agent-demo-09",
-  "region": "us-central1",
-  "cloud_mode": true
+  "gcp_project": "agent-demo-09"
 }
 ```
+- **URL**: `GET /api/version` — Returns deployment parameters, Agent Runtime resource ID, and Model Armor metadata.
 
-- **URL**: `GET /api/version`
-- **Response**: Returns active deployment parameters, Agent Runtime Reasoning Engine resource IDs, Agent Gateway URLs, and Model Armor floor metadata.
+### 1.4 Skill Store Endpoints
+- **URL**: `GET /api/skills` — Returns marketing skills (filters out `google-agents-cli-*` dev skills).
+- **URL**: `GET /api/skills/{skill_id}` — Returns raw `SKILL.md` content.
 
-### 1.4 Agent Registry & Skill Store Endpoints
-- **URL**: `GET /api/skills`
-- **Response**: Returns active application marketing skills while filtering out CLI dev skills (`google-agents-cli-*`).
-```json
-{
-  "skills": [
-    {
-      "name": "bigquery_customer_analytics",
-      "description": "Queries customer RFM segmentation metrics and demographic data in BigQuery.",
-      "bound_agent": "AnalyticsAgent"
-    },
-    {
-      "name": "omnichannel_strategy",
-      "description": "Formulates omnichannel campaign strategy frameworks and ROI projections.",
-      "bound_agent": "StrategyAgent"
-    },
-    {
-      "name": "brand_voice",
-      "description": "Generates brand-aligned subject lines, email templates, and LinkedIn ad copy.",
-      "bound_agent": "ContentAgent"
-    }
-  ]
-}
-```
-
-- **URL**: `GET /api/skills/{skill_id}`
-- **Parameters**: `skill_id` (path parameter, string, e.g. `bigquery_customer_analytics`)
-- **Response**: Returns complete raw markdown contents of `SKILL.md`.
-
-### 1.5 BigQuery Data Inspector Endpoint
+### 1.5 BigQuery Data Inspector
 - **URL**: `GET /api/bigquery/sample`
-- **Parameters**:
-  - `table_name` (*string*, optional, default: `"customer_rfm_summary"`): Target table (`"customer_rfm_summary"`, `"customer_demographics_360"`, `"customer_transactions"`).
-  - `limit` (*integer*, optional, default: `10`): Number of sample rows to retrieve.
-- **Response**:
+- **Parameters**: `table_name` (default: `customer_rfm_summary`), `limit` (default: `10`)
+
+### 1.6 Traffic Simulator
+- **URL**: `GET /api/simulator/status`
+- **URL**: `POST /api/simulator/toggle` — Body: `{"active": true}`
+
+---
+
+## 2. BigQuery Data Architecture
+
+### 2.1 Table: `customer_rfm_summary` (200 rows)
+| Column | Type | Description |
+|--------|------|-------------|
+| `customer_id` | STRING | Unique ID (`CUST_001`) |
+| `rfm_segment` | STRING | Segment (At-Risk Premium, Champions, Loyal Customers, Recent Buyers, Lost Customers) |
+| `recency_days` | INT64 | Days since last transaction |
+| `frequency_orders` | INT64 | Total completed orders |
+| `total_monetary` | NUMERIC | Lifetime monetary value ($) |
+
+### 2.2 Table: `customer_demographics_360` (200 rows)
+| Column | Type | Description |
+|--------|------|-------------|
+| `customer_id` | STRING | Unique ID |
+| `full_name` | STRING | Customer name |
+| `email` | STRING | Email address |
+| `age` | INT64 | Age in years |
+| `location_city` | STRING | Primary metro city |
+| `location_country` | STRING | Primary country |
+| `income_bracket` | STRING | Income bracket ($100k-$150k) |
+| `preferred_communication_channel` | STRING | Email, LinkedIn, SMS |
+| `churn_risk_score` | NUMERIC | Churn probability (0.00–1.00) |
+| `lifetime_value_tier` | STRING | Tier 1 VIP, Tier 2 Enterprise, Tier 3 Standard |
+
+### 2.3 Table: `customer_transactions` (400 rows)
+| Column | Type | Description |
+|--------|------|-------------|
+| `transaction_id` | STRING | Unique transaction ID |
+| `customer_id` | STRING | Foreign key |
+| `amount` | NUMERIC | Transaction amount ($) |
+| `transaction_date` | TIMESTAMP | Purchase timestamp |
+
+---
+
+## 3. Evaluation & Benchmarking
+
+### 3.1 ADK Eval Framework (`agents-cli eval`)
+The project uses the scaffolded evaluation framework:
+
+```bash
+# Generate eval traces from dataset
+agents-cli eval generate
+
+# Grade agent responses
+agents-cli eval grade
+```
+
+- **Dataset**: `tests/eval/datasets/basic-dataset.json`
+- **Config**: `tests/eval/eval_config.yaml`
+- **Custom Scorer**: `tests/eval/response_quality.py`
+
+### 3.2 Legacy Eval Suite (`eval/run_eval.py`)
+- **Runner**: `PYTHONPATH=. ./venv/bin/python eval/run_eval.py`
+- **Dataset**: `eval/dataset/golden_marketing_prompts.json`
+- **Scoring**: Intent validation, A2A routing, NL2SQL generation, Model Armor blocking
+- **Target**: `100.0% (3/3 Passed)`
+
+---
+
+## 4. Deployment Metadata
+
+### 4.1 `deployment_metadata.json`
+Written by `agents-cli deploy`:
 ```json
 {
-  "dataset": "marketing_analytics",
-  "table": "customer_rfm_summary",
-  "total_rows": 200,
-  "sample_data": [
-    {
-      "customer_id": "CUST_001",
-      "rfm_segment": "At-Risk Premium",
-      "recency_days": 120,
-      "frequency_orders": 8,
-      "total_monetary": 4500.0
-    }
-  ]
+  "remote_agent_runtime_id": "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936",
+  "deployment_target": "agent_runtime",
+  "is_a2a": false,
+  "agent_directory": "app"
 }
 ```
 
-### 1.6 Traffic Load Simulator Controls
-- **URL**: `GET /api/simulator/status` -> Returns `{"active": false, "generated_count": 42}`
-- **URL**: `POST /api/simulator/toggle` -> Request body: `{"active": true}`
+### 4.2 `agents-cli-manifest.yaml`
+Project metadata for the CLI:
+```yaml
+name: agent-platform-demo
+base_template: adk
+agent_directory: app
+acli_version: 1.3.1
+create_params:
+  deployment_target: agent_runtime
+```
 
 ---
 
-## 2. BigQuery Data Architecture Schemas
+## 5. Observability Specifications
 
-### 2.1 Table: `agent-demo-09.marketing_analytics.customer_rfm_summary`
-| Column Name | Data Type | Mode | Description |
-| :--- | :--- | :--- | :--- |
-| `customer_id` | STRING | REQUIRED | Unique customer identifier (e.g. `CUST_001`) |
-| `rfm_segment` | STRING | REQUIRED | Segment (`At-Risk Premium`, `Champions`, `Loyal Customers`, `Recent Buyers`, `Lost Customers`) |
-| `recency_days` | INT64 | NULLABLE | Days elapsed since last completed transaction |
-| `frequency_orders` | INT64 | NULLABLE | Total completed orders count |
-| `total_monetary` | NUMERIC | NULLABLE | Total lifetime monetary value ($) |
+### 5.1 Cloud Logging Log Analytics
+- **Bucket**: `projects/agent-demo-09/locations/global/buckets/_Default`
+- **Analytics**: Enabled via `gcloud logging buckets update _Default --enable-analytics`
 
-### 2.2 Table: `agent-demo-09.marketing_analytics.customer_demographics_360`
-| Column Name | Data Type | Mode | Description |
-| :--- | :--- | :--- | :--- |
-| `customer_id` | STRING | REQUIRED | Unique customer identifier |
-| `full_name` | STRING | NULLABLE | Customer primary contact full name |
-| `email` | STRING | NULLABLE | Primary email address |
-| `age` | INT64 | NULLABLE | Customer age in years |
-| `location_city` | STRING | NULLABLE | Primary metro location city |
-| `location_country` | STRING | NULLABLE | Primary location country |
-| `income_bracket` | STRING | NULLABLE | Household income bracket (e.g. `$100k-$150k`) |
-| `preferred_communication_channel` | STRING | NULLABLE | Preferred outreach channel (`Email`, `LinkedIn`, `SMS`) |
-| `favorite_product_features` | STRING | NULLABLE | Primary product module used |
-| `churn_risk_score` | NUMERIC | NULLABLE | Predicted churn probability score (`0.00` to `1.00`) |
-| `lifetime_value_tier` | STRING | NULLABLE | Value tier (`Tier 1 VIP`, `Tier 2 Enterprise`, `Tier 3 Standard`) |
+### 5.2 Telemetry IAM
+- **Service Accounts**: `agent-platform-sa`, Compute Engine SA, Vertex AI Service Agent
+- **Roles**: `cloudtrace.agent`, `logging.logWriter`, `monitoring.metricWriter`, `monitoring.admin`, `aiplatform.admin`
 
-### 2.3 Table: `agent-demo-09.marketing_analytics.customer_transactions`
-| Column Name | Data Type | Mode | Description |
-| :--- | :--- | :--- | :--- |
-| `transaction_id` | STRING | REQUIRED | Unique transaction transaction ID |
-| `customer_id` | STRING | REQUIRED | Foreign key customer identifier |
-| `customer_name` | STRING | NULLABLE | Customer name |
-| `email` | STRING | NULLABLE | Customer email |
-| `segment` | STRING | NULLABLE | Transaction segment tag |
-| `amount` | NUMERIC | NULLABLE | Transaction amount ($) |
-| `transaction_date` | TIMESTAMP | NULLABLE | ISO timestamp of purchase |
-
----
-
-## 3. Benchmark Quality Evaluation Suite (`eval/run_eval.py`)
-- **Evaluation Runner**: `PYTHONPATH=. ./venv/bin/python eval/run_eval.py`
-- **Dataset File**: `eval/dataset/golden_marketing_prompts.json`
-- **Scoring Criteria**:
-  1. `eval_01`: Validates `FULL_CAMPAIGN` intent, A2A routing, live Gemini NL2SQL generation, strategy matrix, and email copy.
-  2. `eval_02`: Validates `Champions` cohort analytics, high-value retention strategy, and social copy.
-  3. `eval_03`: Prompt injection attack simulation -> verifies Model Armor returns status `BLOCKED_BY_MODEL_ARMOR`.
-- **Target Pass Benchmark**: `100.0% (3/3 Passed)`.
-
----
-
-## 4. Observability & Developer Environment Specifications
-
-### 4.1 Cloud Logging Log Analytics Specification
-- **Target Bucket**: `projects/agent-demo-09/locations/global/buckets/_Default`
-- **Analytics Configuration**: `--enable-analytics` enabled via `gcloud logging buckets update`.
-- **Target View**: `_AllLogs` (queries all structured logs across Agent Gateway, Model Armor, Cloud Run, and Agent Engine).
-
-### 4.2 Telemetry Permissions Script Specification (`deploy/enable_observability_permissions.sh`)
-- **Executable**: `bash deploy/enable_observability_permissions.sh`
-- **Service Accounts Targeted**:
-  - `agent-platform-sa@agent-demo-09.iam.gserviceaccount.com`
-  - `1047232371360-compute@developer.gserviceaccount.com`
-  - `service-1047232371360@gcp-sa-aiplatform.iam.gserviceaccount.com`
-- **Roles Provisioned**: `roles/cloudtrace.agent`, `roles/logging.logWriter`, `roles/monitoring.metricWriter`, `roles/monitoring.admin`, `roles/aiplatform.admin`, `roles/bigquery.dataEditor`, `roles/bigquery.jobUser`.
-
-### 4.3 Automated Git Pre-Commit Quality Linter Specification (`scripts/pre_commit_lint.sh`)
-- **Executable Hook**: `.git/hooks/pre-commit` -> `scripts/pre_commit_lint.sh`
-- **Checks Executed**:
-  1. Python `py_compile` syntax and module import verification (`agents/*.py`, `backend/*.py`, `deploy/*.py`, `eval/*.py`).
-  2. Frontend React ESLint check (`cd frontend && npm run lint`).
-
-
+### 5.3 Pre-Commit Linter (`scripts/pre_commit_lint.sh`)
+- Python `py_compile` across `agents/`, `backend/`, `deploy/`, `eval/`, `app/`
+- React ESLint via `cd frontend && npm run lint`
