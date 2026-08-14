@@ -58,6 +58,93 @@ def _run_bq_query(sql: str, job_config=None) -> list[dict]:
     return rows
 
 
+# ─── Tool: Run Custom BigQuery SQL ─────────────────────────────────────────────
+
+def run_bigquery_sql(user_question: str, tool_context: ToolContext) -> dict:
+    """Execute a natural language question against BigQuery by generating and running SQL.
+
+    Converts any user data question into a BigQuery SQL query using Gemini,
+    then executes it against the customer analytics tables and returns results.
+    Use this for any data question: counts, averages, listings, comparisons, etc.
+
+    Args:
+        user_question: The user's natural language data question, e.g. 'How many customers are in the Champions segment?' or 'Show the top 5 customers by total spend'.
+
+    Returns:
+        dict with 'status', 'summary', 'sql_executed', 'row_count', and 'results' keys.
+    """
+    project_id, dataset_id = _get_project_and_dataset()
+
+    try:
+        from google import genai
+        from google.genai import types
+
+        location = os.environ.get("GOOGLE_CLOUD_LOCATION", os.environ.get("GEMINI_LOCATION", "global"))
+        client = genai.Client(vertexai=True, project=project_id, location=location)
+        model_name = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+
+        sql_gen_prompt = f"""
+You are a BigQuery SQL Expert for Google Cloud Marketing Analytics.
+Generate a single, valid BigQuery Standard SQL query to answer: '{user_question}'
+
+Available tables in dataset '{project_id}.{dataset_id}':
+
+1. `{project_id}.{dataset_id}.customer_rfm_summary`:
+   - customer_id (STRING), rfm_segment (STRING), recency_days (INT64),
+     frequency_orders (INT64), total_monetary (NUMERIC)
+   - Segments: 'At-Risk Premium', 'Champions', 'Loyal Customers', 'Recent Buyers', 'Lost Customers'
+
+2. `{project_id}.{dataset_id}.customer_demographics_360`:
+   - customer_id (STRING), full_name (STRING), email (STRING), age (INT64),
+     location_city (STRING), location_country (STRING), income_bracket (STRING),
+     preferred_communication_channel (STRING), favorite_product_features (STRING),
+     churn_risk_score (NUMERIC), lifetime_value_tier (STRING)
+
+3. `{project_id}.{dataset_id}.customer_transactions`:
+   - transaction_id (STRING), customer_id (STRING), customer_name (STRING),
+     email (STRING), segment (STRING), amount (NUMERIC), transaction_date (TIMESTAMP)
+
+Rules:
+1. Return ONLY the raw SQL query inside a ```sql markdown block.
+2. Use fully qualified table names as listed above.
+3. Add LIMIT 20 for row listings to avoid returning too many results.
+4. Use JOINs on customer_id when combining tables.
+"""
+        res = client.models.generate_content(
+            model=model_name,
+            contents=sql_gen_prompt,
+            config=types.GenerateContentConfig(temperature=0.1)
+        )
+
+        generated_text = res.text or ""
+        sql_match = re.search(r"```sql\s*(.*?)\s*```", generated_text, re.DOTALL)
+        custom_sql = sql_match.group(1).strip() if sql_match else generated_text.replace("```", "").strip()
+
+        if not custom_sql or "SELECT" not in custom_sql.upper():
+            return {"status": "ERROR", "summary": "Failed to generate valid SQL from your question.", "sql_executed": "", "row_count": 0, "results": []}
+
+        rows = _run_bq_query(custom_sql)
+
+        # Store in session state for downstream agents
+        tool_context.state["analytics_result"] = {
+            "summary": f"Query returned {len(rows)} rows.",
+            "total_customers_analyzed": len(rows),
+            "sql_executed": custom_sql,
+        }
+
+        return {
+            "status": "SUCCESS",
+            "summary": f"Query executed successfully. Returned {len(rows)} rows.",
+            "sql_executed": custom_sql,
+            "row_count": len(rows),
+            "results": rows[:20],
+        }
+
+    except Exception as e:
+        logger.error(f"BigQuery query failed: {e}")
+        return {"status": "ERROR", "summary": f"BigQuery Error: {e}", "sql_executed": "", "row_count": 0, "results": []}
+
+
 # ─── Tool: BigQuery Customer Analytics ─────────────────────────────────────────
 
 def query_customer_cohorts(segment_filter: str, user_prompt: str, tool_context: ToolContext) -> dict:

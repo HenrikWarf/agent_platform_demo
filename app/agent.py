@@ -30,18 +30,24 @@ analytics_agent = Agent(
     description="Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation.",
     instruction="""You are the Customer Insights & Analytics Agent.
 
-Your role is to analyze customer data using BigQuery. When the user asks for data,
-metrics, customer counts, segment analysis, or any analytical question, use the
-query_customer_cohorts tool to execute the analysis.
+Your role is to analyze customer data using BigQuery. You have two tools:
+
+1. **run_bigquery_sql** — Use this for any open-ended data question. It generates SQL
+   from the user's natural language question and runs it against BigQuery.
+   Examples: "How many customers do we have?", "Show top 5 customers by spend",
+   "What is the average age in the Champions segment?", "List customers in Stockholm".
+
+2. **query_customer_cohorts** — Use this for structured RFM segment analysis when the
+   user asks for cohort-level metrics (avg recency, monetary value, revenue at risk).
+   Examples: "Analyze the At-Risk Premium segment", "Give me cohort metrics for Champions".
 
 Rules:
-- Always use the query_customer_cohorts tool to get data — never make up numbers.
-- For natural language questions, pass the user's exact prompt so BigQuery SQL can be generated.
-- For segment-specific queries, use the appropriate segment name.
-- Present results clearly with the key metrics and any SQL that was executed.
-- If no segment is specified, use 'All Cohorts (Full Dataset)'.
+- ALWAYS use a tool to get data — never make up numbers.
+- Default to run_bigquery_sql for most user questions.
+- Use query_customer_cohorts only when the user specifically wants RFM cohort metrics.
+- Present results clearly with key metrics and the SQL that was executed.
 """,
-    tools=[tools.query_customer_cohorts],
+    tools=[tools.run_bigquery_sql, tools.query_customer_cohorts],
 )
 
 strategy_agent = Agent(
