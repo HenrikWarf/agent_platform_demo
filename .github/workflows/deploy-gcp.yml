@@ -137,6 +137,8 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '>= 576.0.0'
+          install_components: 'alpha'
 
       - name: Configure Docker for GCP Artifact Registry
         if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
@@ -182,7 +184,6 @@ jobs:
         if: needs.changes.outputs.infra == 'true'
         run: |
           echo "🚀 Provisioning Observability & Agent Gateway..."
-          gcloud components install alpha --quiet || true
           bash deploy/enable_observability_permissions.sh
 
       - name: Provision Agent Gateway (Network Services)
@@ -224,14 +225,12 @@ jobs:
             --description "Multi-agent marketing platform: BigQuery analytics, omnichannel strategy, and creative content generation" \
             --registration-type adk
 
-      # --- 6. Register Skills in Agent Registry (Preview — gcloud API not yet available) ---
+      # --- 6. Register Skills in Agent Registry (Preview) ---
       - name: Register Skills in Agent Registry
         if: needs.changes.outputs.skills == 'true'
         continue-on-error: true
         run: |
           echo "🚀 Registering Skills in Agent Registry..."
-          echo "ℹ️  Note: Agent Registry Skills API is preview. Skills are deployed with the ADK agent."
-          gcloud components install alpha --quiet || true
           python3 deploy/register_skills.py
 
       # --- Deployment Summary ---
