@@ -15,6 +15,5 @@ AGENTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app")
 
 app = get_fast_api_app(
     agents_dir=AGENTS_DIR,
-    web=True,
     otel_to_cloud=True,
 )

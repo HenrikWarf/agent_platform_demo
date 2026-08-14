@@ -1,5 +1,6 @@
 {
   "deployment_target": "agent_runtime",
   "is_a2a": false,
-  "agent_directory": "app"
+  "agent_directory": "app",
+  "remote_agent_runtime_id": "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936"
 }
