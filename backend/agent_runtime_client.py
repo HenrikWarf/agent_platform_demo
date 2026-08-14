@@ -212,9 +212,13 @@ class AgentRuntimeClient:
                     content = tool_results
 
             # Track agent sequence for A2A trace
-            author = event_content.get("author", event.get("author", ""))
+            # In SSE events: 'author' is at the event top level, not inside 'content'
+            author = event.get("author", "")
+            transfer_to = event.get("actions", {}).get("transferToAgent", "")
             if author and (not seen_agents or seen_agents[-1] != author):
                 seen_agents.append(author)
+            if transfer_to and (not seen_agents or seen_agents[-1] != transfer_to):
+                seen_agents.append(transfer_to)
 
         # Build A2A trace as sender→receiver pairs from the agent sequence
         # Also infer the skill used based on the agent name
