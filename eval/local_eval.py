@@ -1,6 +1,9 @@
 """
 Local Evaluation Harness for GCP Agent Platform
-Evaluates agent quality, grounding against BigQuery data, safety defense, and A2A routing completeness.
+Evaluates agent quality by sending prompts to the deployed Agent Runtime instance.
+
+Uses the same AgentRuntimeClient as the backend to call the Agent Runtime.
+For full ADK-native evaluation, use `agents-cli eval`.
 """
 import sys
 import os
@@ -9,8 +12,7 @@ import logging
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from agents.orchestrator_agent import OrchestratorAgent
-from backend.bq_client import BigQueryClient
+from backend.agent_runtime_client import AgentRuntimeClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("local_eval")
@@ -22,8 +24,17 @@ def run_local_evaluation():
     with open(dataset_path, "r", encoding="utf-8") as f:
         eval_cases = json.load(f)
 
-    bq_client = BigQueryClient()
-    orchestrator = OrchestratorAgent(bq_client=bq_client)
+    runtime_client = AgentRuntimeClient()
+
+    if not runtime_client.is_configured:
+        logger.error("Agent Runtime is not configured. Deploy with 'agents-cli deploy' first.")
+        return {
+            "benchmark_score_pct": 0.0,
+            "total_cases": len(eval_cases),
+            "passed_cases": 0,
+            "error": "Agent Runtime not configured. Set AGENT_RUNTIME_ID or deploy first.",
+            "details": []
+        }
 
     results = []
     passed_count = 0
@@ -35,20 +46,16 @@ def run_local_evaluation():
         target_segment = case.get("target_segment", "At-Risk Premium")
 
         logger.info(f"Running Eval Case [{eval_id}]: {prompt[:60]}...")
-        res = orchestrator.process_user_request(prompt, target_segment=target_segment)
+        res = runtime_client.query(prompt, target_segment=target_segment)
 
         # Safety Check Evaluation
-        actual_safety = "blocked" if res.get("model_armor_blocked") or not res.get("model_armor_passed") else "passed"
+        actual_safety = "blocked" if res.get("status") == "BLOCKED_BY_MODEL_ARMOR" else "passed"
         safety_correct = actual_safety == expected_safety
 
-        # A2A Routing Completeness Evaluation
-        a2a_trace = res.get("a2a_trace", [])
-        a2a_complete = len(a2a_trace) >= 6 if expected_safety == "passed" else True
-
-        # Skills Executed Check
-        skills_used = [m.get("skill_used") for m in a2a_trace if m.get("skill_used")]
+        # Response Quality Evaluation
+        has_content = bool(res.get("summary") and res["summary"] != "Agent completed processing.")
         
-        case_passed = safety_correct and a2a_complete
+        case_passed = safety_correct and (has_content or expected_safety == "blocked")
         if case_passed:
             passed_count += 1
 
@@ -56,12 +63,12 @@ def run_local_evaluation():
             "eval_id": eval_id,
             "prompt": prompt,
             "safety_eval": {"expected": expected_safety, "actual": actual_safety, "passed": safety_correct},
-            "a2a_eval": {"trace_hops": len(a2a_trace), "skills_used": skills_used, "complete": a2a_complete},
+            "quality_eval": {"has_content": has_content},
             "status": "PASS" if case_passed else "FAIL"
         })
 
     total_cases = len(eval_cases)
-    accuracy = (passed_count / total_cases) * 100.0
+    accuracy = (passed_count / total_cases) * 100.0 if total_cases > 0 else 0.0
 
     logger.info(f"=== Local Evaluation Complete. Benchmark Score: {accuracy:.1f}% ({passed_count}/{total_cases}) ===")
     

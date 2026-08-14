@@ -1,11 +1,14 @@
 """
 Google Cloud Agent Platform Demo - FastAPI Server
-Exposes Model Armor safety, Agent Engine, Agent Registry Skills, BigQuery, and Evaluation endpoints.
+Exposes Model Armor safety, Agent Runtime proxy, Agent Registry Skills, BigQuery, and Evaluation endpoints.
+
+The backend is a thin API layer — all agent orchestration is delegated to the
+deployed ADK Agent on Vertex AI Agent Runtime via AgentRuntimeClient.
 """
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 import logging
 import os
 import sys
@@ -14,17 +17,17 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
-    from agents.orchestrator_agent import OrchestratorAgent
     from backend.config import Config
     from backend.bq_client import BigQueryClient
     from backend.safety import PromptSafetyGuard as AgentGateway
     from backend.skill_registry import SkillRegistry
+    from backend.agent_runtime_client import AgentRuntimeClient
 except ImportError:
-    from agents.orchestrator_agent import OrchestratorAgent
     from config import Config
     from bq_client import BigQueryClient
     from safety import PromptSafetyGuard as AgentGateway
     from skill_registry import SkillRegistry
+    from agent_runtime_client import AgentRuntimeClient
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -47,7 +50,7 @@ except Exception as e:
 
 app = FastAPI(
     title="Google Cloud Agent Platform API",
-    description="Backend API for Vertex AI Agent Engine, A2A Protocol, Agent Registry Skills, Model Armor, BigQuery, and OpenTelemetry.",
+    description="Backend API for Vertex AI Agent Runtime, Agent Registry Skills, Model Armor, BigQuery, and OpenTelemetry.",
     version="1.0.0"
 )
 
@@ -68,7 +71,7 @@ app.add_middleware(
 
 # Initialize Services
 bq_client = BigQueryClient()
-orchestrator = OrchestratorAgent(bq_client=bq_client)
+runtime_client = AgentRuntimeClient()
 gateway = AgentGateway()
 skill_registry = SkillRegistry()
 
@@ -92,7 +95,8 @@ def health_check():
         "environment": Config.ENVIRONMENT,
         "gcp_project": Config.GCP_PROJECT_ID,
         "region": Config.GCP_REGION,
-        "cloud_mode": Config.USE_GCP_CLOUD
+        "cloud_mode": Config.USE_GCP_CLOUD,
+        "agent_runtime_configured": runtime_client.is_configured,
     }
 
 @app.get("/api/version")
@@ -114,27 +118,22 @@ def get_version_info():
 def list_agents():
     """Lists registered agents in the platform and their active bound skills."""
     return {
-        "agents": [
-            orchestrator.get_metadata(),
-            orchestrator.analytics_agent.get_metadata(),
-            orchestrator.strategy_agent.get_metadata(),
-            orchestrator.content_agent.get_metadata(),
-        ]
+        "agents": runtime_client.get_agent_metadata()
     }
 
 @app.get("/api/agent_engine/manifest")
 def get_agent_engine_manifest():
-    """Returns Vertex AI Agent Engine deployed instances manifest."""
-    manifest_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agent_engine_manifest.json"))
-    if os.path.exists(manifest_path):
-        import json
-        with open(manifest_path, "r", encoding="utf-8") as f:
+    """Returns Vertex AI Agent Runtime deployment manifest."""
+    import json
+    metadata_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "deployment_metadata.json"))
+    if os.path.exists(metadata_path):
+        with open(metadata_path, "r", encoding="utf-8") as f:
             return json.load(f)
     return {
-        "agent-orchestrator": {"display_name": "agent-orchestrator", "status": "IN_MEMORY_INSTANCE"},
-        "agent-analytics": {"display_name": "agent-analytics", "status": "IN_MEMORY_INSTANCE"},
-        "agent-strategy": {"display_name": "agent-strategy", "status": "IN_MEMORY_INSTANCE"},
-        "agent-content": {"display_name": "agent-content", "status": "IN_MEMORY_INSTANCE"}
+        "deployment_target": "agent_runtime",
+        "agent_directory": "app",
+        "status": "NOT_DEPLOYED" if not runtime_client.is_configured else "DEPLOYED",
+        "remote_agent_runtime_id": runtime_client.runtime_id or "Not Available",
     }
 
 @app.get("/api/skills")
@@ -175,7 +174,7 @@ def get_bigquery_sample(table_name: str = "customer_rfm_summary"):
 
 @app.post("/api/chat")
 def process_chat(req: ChatRequest):
-    """Processes user marketing prompts through Model Armor and Orchestrator Agent."""
+    """Processes user marketing prompts through Model Armor and Agent Runtime."""
     logger.info(f"Received chat request: '{req.prompt}' for segment '{req.target_segment}'")
     
     # 1. Model Armor Gateway Check
@@ -188,9 +187,9 @@ def process_chat(req: ChatRequest):
             "a2a_trace": []
         }
 
-    # 2. Process via Multi-Agent Orchestrator
-    result = orchestrator.process_user_request(
-        user_prompt=armor_res["sanitized_prompt"],
+    # 2. Proxy to Agent Runtime
+    result = runtime_client.query(
+        prompt=armor_res["sanitized_prompt"],
         target_segment=req.target_segment
     )
     result["model_armor"] = armor_res
@@ -199,7 +198,7 @@ def process_chat(req: ChatRequest):
 @app.post("/api/stream_reasoning_engine")
 @app.post("/api/query_reasoning_engine")
 def stream_reasoning_engine(request: Dict[str, Any]):
-    """Vertex AI Agent Engine Reasoning Engine streaming endpoint."""
+    """Vertex AI Agent Runtime streaming endpoint."""
     input_data = request.get("input", {})
     prompt = input_data.get("prompt") or request.get("prompt", "Analyze customer segment performance")
     segment = input_data.get("target_segment") or request.get("target_segment", "All Cohorts (Full Dataset)")
@@ -214,8 +213,8 @@ def stream_reasoning_engine(request: Dict[str, Any]):
             "a2a_trace": []
         }
 
-    result = orchestrator.process_user_request(
-        user_prompt=armor_res["sanitized_prompt"],
+    result = runtime_client.query(
+        prompt=armor_res["sanitized_prompt"],
         target_segment=segment
     )
     result["model_armor"] = armor_res
