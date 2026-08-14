@@ -1,11 +1,16 @@
 # ADK Agent Runtime Dependencies
+# Must match pyproject.toml [project.dependencies] — this file is used by the Dockerfile
 google-adk[otel-gcp]>=2.6.0
 google-cloud-bigquery>=3.18.0
 google-genai>=1.0.0
+google-cloud-logging>=3.12.0,<4.0.0
+google-cloud-aiplatform>=1.130.0
+google-cloud-resource-manager>=1.12.0
+python-dotenv>=1.0.0
 # Explicit OTel deps (required by ADK telemetry at container startup)
+opentelemetry-instrumentation-google-genai>=0.1.0,<1.0.0
 opentelemetry-exporter-otlp-proto-http
 opentelemetry-exporter-gcp-trace
 opentelemetry-exporter-gcp-logging
 opentelemetry-sdk
 opentelemetry-api
-google-cloud-resource-manager>=1.12.0
