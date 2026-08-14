@@ -113,7 +113,7 @@ Rules:
         res = client.models.generate_content(
             model=model_name,
             contents=sql_gen_prompt,
-            config=types.GenerateContentConfig(temperature=0.1)
+            config=types.GenerateContentConfig(temperature=0.0, max_output_tokens=512)
         )
 
         generated_text = res.text or ""
@@ -200,7 +200,7 @@ Rules:
             res = client.models.generate_content(
                 model=model_name,
                 contents=sql_gen_prompt,
-                config=types.GenerateContentConfig(temperature=0.1)
+                config=types.GenerateContentConfig(temperature=0.0, max_output_tokens=512)
             )
 
             generated_text = res.text or ""
@@ -209,14 +209,7 @@ Rules:
 
             if custom_sql and "SELECT" in custom_sql.upper():
                 custom_rows = _run_bq_query(custom_sql)
-                # Summarize results
-                summary_prompt = f"Summarize these BigQuery query results in 2-3 bullet points for the user prompt '{user_prompt}':\n{json.dumps(custom_rows[:5])}"
-                summary_res = client.models.generate_content(
-                    model=model_name,
-                    contents=summary_prompt,
-                    config=types.GenerateContentConfig(temperature=0.2)
-                )
-                summary_text = summary_res.text or f"Executed query returned {len(custom_rows)} records."
+                summary_text = f"Query returned {len(custom_rows)} records for segment '{segment_filter}'."
 
                 # Store in session state for downstream agents
                 tool_context.state["analytics_result"] = {
@@ -316,22 +309,25 @@ Goal: {campaign_goal}
 Target Cohort: {target_segment}
 Analytics Context: {analytics_summary}
 
-Construct a JSON marketing strategy with the following keys:
-- campaign_title (string)
-- business_goal (string)
+Return a concise JSON marketing strategy with these keys:
+- campaign_title (string, max 10 words)
+- business_goal (string, 1 sentence)
 - target_cohort (string)
-- projected_revenue_recovery (string)
-- campaign_pillars (list of objects with keys 'pillar', 'description', 'channels')
-- channel_mix (list of objects with keys 'channel', 'weight', 'cadence')
-- ab_testing_hypotheses (list of strings)
+- projected_revenue_recovery (string, e.g. "$1.2M")
+- campaign_pillars (exactly 3 objects with keys: pillar, description (1 sentence), channels (list of 2-3 strings))
+- channel_mix (exactly 4 objects with keys: channel, weight, cadence)
+- ab_testing_hypotheses (exactly 3 short strings)
+
+Be concise. No explanations outside the JSON.
 """
         response = client.models.generate_content(
             model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction="You are an expert Omnichannel Marketing Strategist. Return ONLY valid JSON.",
+                system_instruction="Expert Omnichannel Marketing Strategist. Return ONLY valid JSON. Be concise.",
                 response_mime_type="application/json",
-                temperature=0.7,
+                temperature=0.5,
+                max_output_tokens=1024,
             ),
         )
         strategy = json.loads(response.text)
@@ -391,22 +387,25 @@ def generate_marketing_content(campaign_title: str, target_segment: str, strateg
         model_name = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 
         prompt = f"""
-Campaign Title: {campaign_title}
-Target Cohort: {target_segment}
-Strategy Context: {strategy_summary}
+Campaign: {campaign_title}
+Cohort: {target_segment}
+Strategy: {strategy_summary}
 
-Generate a JSON object containing high-converting marketing creative assets with keys:
-- email_template (object with keys 'subject', 'preview_text', 'body', 'cta_button')
-- social_posts (list of objects with keys 'platform', 'copy')
-- sms_copy (string)
+Return a concise JSON with these keys:
+- email_template (object: subject (max 10 words), preview_text (1 sentence), body (3-4 sentences), cta_button (max 5 words))
+- social_posts (exactly 2 objects: platform, copy (max 2 sentences each))
+- sms_copy (1 sentence, max 160 chars)
+
+Be concise and punchy. No filler.
 """
         response = client.models.generate_content(
             model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction="You are an expert Copywriter crafting brand-aligned marketing assets. Return ONLY valid JSON.",
+                system_instruction="Expert Copywriter. Return ONLY valid JSON. Be concise and punchy.",
                 response_mime_type="application/json",
-                temperature=0.8,
+                temperature=0.6,
+                max_output_tokens=768,
             ),
         )
         assets = json.loads(response.text)
