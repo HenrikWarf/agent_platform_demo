@@ -5,11 +5,19 @@ Instead of running agents locally, the Cloud Run backend delegates all agent
 orchestration to the Agent Runtime instance deployed via `agents-cli deploy`.
 This keeps the backend as a thin API layer handling safety, BigQuery data browsing,
 and skill registry — while the actual multi-agent workflow runs on managed infrastructure.
+
+Uses the Agent Engine `/api` passthrough to call the container's `/run_sse` endpoint
+(ADK streaming API). Traffic routes through Agent Gateway when bound.
 """
 import os
 import json
 import logging
+import uuid
 from typing import Dict, Any, Optional
+
+import requests
+import google.auth
+import google.auth.transport.requests
 
 logger = logging.getLogger("agent_runtime_client")
 
@@ -22,18 +30,22 @@ except ImportError:
 class AgentRuntimeClient:
     """Client for calling the deployed ADK Agent on Vertex AI Agent Runtime.
 
-    Uses the `vertexai` SDK to send queries to the Reasoning Engine instance
-    and collect streamed ADK events into a structured response dict that
-    matches the format the frontend expects.
+    Uses the Agent Engine `/api` HTTP passthrough to send SSE streaming requests
+    to the container's `/run_sse` endpoint. This is the recommended calling
+    pattern for scaffolded ADK agents (v1.3.1+).
+
+    Traffic flow when Agent Gateway is bound:
+      Client → API passthrough → Agent Gateway (governance) → Container (/run_sse)
     """
 
     def __init__(self):
-        self._engine = None
-        self._client = None
+        self._credentials = None
         self.runtime_id = Config.AGENT_RUNTIME_ID
         if not self.runtime_id:
-            # Try reading from deployment_metadata.json
             self.runtime_id = self._read_deployment_metadata()
+
+        # Build the /api passthrough base URL from the runtime ID
+        self._base_url = self._build_passthrough_url()
 
     def _read_deployment_metadata(self) -> Optional[str]:
         """Read runtime ID from deployment_metadata.json if it exists."""
@@ -52,33 +64,48 @@ class AgentRuntimeClient:
                 logger.warning(f"Failed to read deployment_metadata.json: {e}")
         return None
 
-    @property
-    def engine(self):
-        """Lazy-initialize the Vertex AI Agent Engine client."""
-        if self._engine is None:
-            if not self.runtime_id:
-                raise RuntimeError(
-                    "AGENT_RUNTIME_ID is not configured. "
-                    "Deploy the agent first with 'agents-cli deploy' and set "
-                    "AGENT_RUNTIME_ID in your environment or .env file."
-                )
-            try:
-                import vertexai
-                self._client = vertexai.Client(
-                    project=Config.GCP_PROJECT_ID,
-                    location=Config.GCP_REGION,
-                )
-                self._engine = self._client.agent_engines.get(name=self.runtime_id)
-                logger.info(f"Connected to Agent Runtime: {self.runtime_id}")
-            except Exception as e:
-                logger.error(f"Failed to connect to Agent Runtime: {e}")
-                raise RuntimeError(f"Agent Runtime connection failed: {e}")
-        return self._engine
+    def _build_passthrough_url(self) -> Optional[str]:
+        """Build the Agent Engine /api passthrough URL from the runtime resource ID.
+
+        The /api passthrough exposes the container's full HTTP surface:
+          https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/{resource}/api/...
+
+        This lets us call /run_sse, /apps/..., /a2a/... endpoints directly.
+        """
+        if not self.runtime_id:
+            return None
+        # runtime_id format: projects/{number}/locations/{location}/reasoningEngines/{id}
+        parts = self.runtime_id.split("/")
+        if len(parts) >= 6:
+            location = parts[3]  # e.g. "us-central1"
+            return f"https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/{self.runtime_id}/api"
+        return None
+
+    def _get_auth_headers(self) -> Dict[str, str]:
+        """Get authenticated headers using Google Cloud default credentials."""
+        if self._credentials is None:
+            self._credentials, _ = google.auth.default()
+
+        auth_req = google.auth.transport.requests.Request()
+        self._credentials.refresh(auth_req)
+        return {
+            "Authorization": f"Bearer {self._credentials.token}",
+            "Content-Type": "application/json",
+        }
+
+    def _create_session(self, user_id: str) -> str:
+        """Create a new ADK session via the /api passthrough."""
+        url = f"{self._base_url}/apps/app/users/{user_id}/sessions"
+        resp = requests.post(url, headers=self._get_auth_headers(), json={}, timeout=30)
+        resp.raise_for_status()
+        session_id = resp.json().get("id", "")
+        logger.info(f"Created session {session_id} for user {user_id}")
+        return session_id
 
     def query(self, prompt: str, target_segment: str = "At-Risk Premium") -> Dict[str, Any]:
-        """Send a prompt to Agent Runtime and return structured results.
+        """Send a prompt to Agent Runtime via /run_sse and return structured results.
 
-        Calls the deployed ADK agent's :streamQuery endpoint, collects all events,
+        Creates a session, sends the message via SSE streaming, collects all events,
         and formats them into the response structure the frontend expects.
 
         Args:
@@ -88,7 +115,7 @@ class AgentRuntimeClient:
         Returns:
             Dict with status, summary, analytics, strategy, content, and a2a_trace.
         """
-        if not self.runtime_id:
+        if not self._base_url:
             return {
                 "status": "ERROR",
                 "summary": "Agent Runtime is not configured. Deploy the agent first with 'agents-cli deploy'.",
@@ -99,16 +126,40 @@ class AgentRuntimeClient:
             }
 
         try:
+            user_id = f"backend-{uuid.uuid4().hex[:8]}"
+            session_id = self._create_session(user_id)
+
             # Combine prompt with segment context
             full_message = f"{prompt}\n\nTarget customer segment: {target_segment}"
 
-            # Call Agent Runtime via streaming query
+            # Call /run_sse via the /api passthrough
+            sse_url = f"{self._base_url}/run_sse"
+            resp = requests.post(
+                sse_url,
+                headers=self._get_auth_headers(),
+                json={
+                    "app_name": "app",
+                    "user_id": user_id,
+                    "session_id": session_id,
+                    "new_message": {
+                        "role": "user",
+                        "parts": [{"text": full_message}],
+                    },
+                },
+                stream=True,
+                timeout=120,
+            )
+            resp.raise_for_status()
+
+            # Collect SSE events
             events = []
-            for event in self.engine.stream_query(
-                message=full_message,
-                user_id="backend-cloud-run",
-            ):
-                events.append(event)
+            for line in resp.iter_lines(decode_unicode=True):
+                if line and line.startswith("data:"):
+                    try:
+                        event = json.loads(line[5:].strip())
+                        events.append(event)
+                    except json.JSONDecodeError:
+                        continue
 
             return self._format_response(events, prompt, target_segment)
 
@@ -126,7 +177,7 @@ class AgentRuntimeClient:
     def _format_response(
         self, events: list, prompt: str, target_segment: str
     ) -> Dict[str, Any]:
-        """Format ADK streaming events into the frontend response structure.
+        """Format ADK SSE events into the frontend response structure.
 
         Extracts the final agent text response and any tool call results
         (analytics, strategy, content) from the event stream.
@@ -139,17 +190,18 @@ class AgentRuntimeClient:
         sql_executed = ""
 
         for event in events:
-            event_dict = event if isinstance(event, dict) else getattr(event, "__dict__", {})
+            # SSE events have a nested content structure
+            event_content = event.get("content", {})
 
-            # Extract text content from the event
-            text = self._extract_text(event_dict)
+            # Extract text content
+            text = self._extract_text(event_content)
             if text:
                 summary_parts.append(text)
 
             # Extract tool results (analytics, strategy, content)
-            tool_results = self._extract_tool_results(event_dict)
+            tool_results = self._extract_tool_results(event_content)
             if tool_results:
-                if "cohort_details" in tool_results or "sql_executed" in tool_results:
+                if "cohort_details" in tool_results or "sql_executed" in tool_results or "results" in tool_results:
                     analytics = tool_results
                     sql_executed = tool_results.get("sql_executed", sql_executed)
                 elif "strategy" in tool_results:
@@ -158,10 +210,10 @@ class AgentRuntimeClient:
                     content = tool_results
 
             # Build A2A trace from events
-            agent_name = self._extract_agent_name(event_dict)
-            if agent_name:
+            author = event_content.get("author", event.get("author", ""))
+            if author:
                 a2a_trace.append({
-                    "agent": agent_name,
+                    "agent": author,
                     "type": "agent_event",
                 })
 
@@ -178,37 +230,31 @@ class AgentRuntimeClient:
         }
 
     @staticmethod
-    def _extract_text(event_dict: dict) -> Optional[str]:
-        """Extract text content from an ADK event."""
-        # ADK events have nested content structures
-        content = event_dict.get("content", {})
+    def _extract_text(content: dict) -> Optional[str]:
+        """Extract text content from an ADK SSE event content block."""
         if isinstance(content, dict):
             parts = content.get("parts", [])
             for part in parts:
                 if isinstance(part, dict) and "text" in part:
                     return part["text"]
-        # Direct text field
-        if "text" in event_dict:
-            return event_dict["text"]
         return None
 
     @staticmethod
-    def _extract_tool_results(event_dict: dict) -> Optional[Dict[str, Any]]:
-        """Extract tool call results from an ADK event."""
-        content = event_dict.get("content", {})
+    def _extract_tool_results(content: dict) -> Optional[Dict[str, Any]]:
+        """Extract tool call results from an ADK SSE event content block."""
         if isinstance(content, dict):
             parts = content.get("parts", [])
             for part in parts:
+                if isinstance(part, dict) and "functionResponse" in part:
+                    response = part["functionResponse"]
+                    if isinstance(response, dict):
+                        return response.get("response", response)
+                # Also check camelCase variant
                 if isinstance(part, dict) and "function_response" in part:
                     response = part["function_response"]
                     if isinstance(response, dict):
                         return response.get("response", response)
         return None
-
-    @staticmethod
-    def _extract_agent_name(event_dict: dict) -> Optional[str]:
-        """Extract the agent name from an ADK event."""
-        return event_dict.get("author", event_dict.get("agent_name"))
 
     @property
     def is_configured(self) -> bool:
