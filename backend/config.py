@@ -24,7 +24,7 @@ class Config:
     # Agent Engine & Agent Gateway
     AGENT_RUNTIME_ID: str = os.getenv("AGENT_RUNTIME_ID", "")
     AGENT_GATEWAY_URL: str = os.getenv("AGENT_GATEWAY_URL", "projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway")
-    GEMINI_ENTERPRISE_APP_ID: str = os.getenv("GEMINI_ENTERPRISE_APP_ID", "projects/agent-demo-09/locations/global/collections/default_collection/engines/marketing-app")
+    GEMINI_ENTERPRISE_APP_ID: str = os.getenv("GEMINI_ENTERPRISE_APP_ID", "projects/ml-developer-project-fe07/locations/global/collections/default_collection/engines/crazy-furniture-app-dev_1770975798363")
     
     # Model Armor configuration
     MODEL_ARMOR_FLOOR_ID: str = os.getenv("MODEL_ARMOR_FLOOR_ID", "projects/agent-demo-09/locations/us-central1/floors/marketing-floor")

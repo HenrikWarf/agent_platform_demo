@@ -214,7 +214,7 @@ jobs:
         if: needs.changes.outputs.agents == 'true'
         continue-on-error: true
         env:
-          GEMINI_ENTERPRISE_APP_ID: projects/${{ env.GCP_PROJECT_ID }}/locations/global/collections/default_collection/engines/marketing-app
+          GEMINI_ENTERPRISE_APP_ID: projects/ml-developer-project-fe07/locations/global/collections/default_collection/engines/crazy-furniture-app-dev_1770975798363
         run: |
           echo "🚀 Publishing Agent to Gemini Enterprise..."
           echo "ℹ️  Note: Gemini Enterprise app must exist first. Create in Cloud Console → Gemini Enterprise → Apps."
