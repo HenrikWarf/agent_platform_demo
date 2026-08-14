@@ -182,7 +182,6 @@ class AgentRuntimeClient:
         Extracts the final agent text response and any tool call results
         (analytics, strategy, content) from the event stream.
         """
-        summary_parts = []
         analytics = {}
         strategy = {}
         content = {}
@@ -201,14 +200,11 @@ class AgentRuntimeClient:
             if author:
                 current_agent = author
 
-            # Extract text content — only keep orchestrator text for the summary.
-            # Sub-agent text (analytics, strategy, content) duplicates the
-            # structured card data and should not appear in the summary.
+            # Extract text content — only keep the very LAST text event as the summary.
+            # Earlier text events come from sub-agents and duplicate the structured
+            # card data (strategy/content). The orchestrator always speaks last.
             text = self._extract_text(event_content)
             if text:
-                if "orchestrator" in current_agent or not current_agent:
-                    summary_parts.append(text)
-                # Always track the last text for fallback
                 last_text = text
 
             # Extract tool results (analytics, strategy, content)
@@ -254,8 +250,8 @@ class AgentRuntimeClient:
                 "skill_used": skill_map.get(receiver, ""),
             })
 
-        # Use orchestrator text, or fall back to the last text event
-        summary = "\n".join(summary_parts) if summary_parts else (last_text or "Agent completed processing.")
+        # Use the last text event as summary (orchestrator always speaks last)
+        summary = last_text or "Agent completed processing."
 
         return {
             "status": "SUCCESS",

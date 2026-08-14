@@ -354,29 +354,8 @@ Be concise. No explanations outside the JSON.
         return {"status": "SUCCESS", "strategy": strategy}
 
     except Exception as e:
-        logger.warning(f"Gemini strategy generation fell back to template: {e}")
-        fallback = {
-            "campaign_title": f"Re-Engagement Campaign for {target_segment}",
-            "business_goal": campaign_goal,
-            "target_cohort": target_segment,
-            "projected_revenue_recovery": "TBD",
-            "campaign_pillars": [
-                {"pillar": "VIP Recognition & Retention", "description": "Personalized outreach for high-value customers.", "channels": ["Email", "Direct Mail"]},
-                {"pillar": "Product Value Reinforcement", "description": "Demonstrate ROI and highlight underutilized features.", "channels": ["Webinar", "In-App Messaging"]},
-                {"pillar": "Win-Back Incentive Program", "description": "Time-limited upgrades and dedicated support.", "channels": ["Email", "SMS", "Sales"]},
-            ],
-            "channel_mix": [
-                {"channel": "Email", "weight": "40%", "cadence": "2x per week"},
-                {"channel": "LinkedIn", "weight": "25%", "cadence": "3x per week"},
-                {"channel": "SMS", "weight": "15%", "cadence": "1x per week"},
-            ],
-            "ab_testing_hypotheses": [
-                "H1: Personalized subject lines increase open rates by 18%",
-                "H2: Exclusive VIP access CTA outperforms discount CTA by 12%",
-            ],
-        }
-        tool_context.state["strategy_result"] = fallback
-        return {"status": "SUCCESS", "strategy": fallback}
+        logger.error(f"Strategy generation failed: {e}")
+        return {"status": "ERROR", "strategy": {}, "error": f"Strategy generation failed: {str(e)}"}
 
 
 # ─── Tool: Generate Marketing Content ──────────────────────────────────────
@@ -431,18 +410,5 @@ Be concise and punchy. No filler.
         return {"status": "SUCCESS", "campaign_title": campaign_title, "generated_assets": assets}
 
     except Exception as e:
-        logger.warning(f"Gemini content generation fell back to template: {e}")
-        fallback_assets = {
-            "email_template": {
-                "subject": f"Exclusive VIP Access: Elevate Your Data Infrastructure with {campaign_title}",
-                "preview_text": f"Special invitation for {target_segment} members.",
-                "body": f"Dear Valued Partner,\n\nWe noticed your team has been scaling operations. To help you maximize throughput for {target_segment}, we are extending a complimentary architecture audit and 30 days of dedicated node capacity.",
-                "cta_button": "Claim VIP Architecture Audit",
-            },
-            "social_posts": [
-                {"platform": "LinkedIn", "copy": f"🚀 Maximize your enterprise data infrastructure. Learn how {target_segment} teams achieve 99.99% uptime."},
-                {"platform": "X (Twitter)", "copy": f"⚡ Scaling data operations? Request a complimentary architecture audit for {target_segment} accounts."},
-            ],
-            "sms_copy": f"VIP Update: Claim your complimentary architecture review for {campaign_title}. Reply YES for AM contact.",
-        }
-        return {"status": "SUCCESS", "campaign_title": campaign_title, "generated_assets": fallback_assets}
+        logger.error(f"Content generation failed: {e}")
+        return {"status": "ERROR", "campaign_title": campaign_title, "generated_assets": {}, "error": f"Content generation failed: {str(e)}"}
