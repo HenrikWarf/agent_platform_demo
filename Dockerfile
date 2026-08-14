@@ -12,7 +12,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY app/ app/
 COPY fast_api_app.py .
-COPY skills/ skills/
 
 ENV PYTHONPATH=/app
 ENV PORT=8080
