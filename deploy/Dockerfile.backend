@@ -7,12 +7,10 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy codebase
-COPY agents /app/agents
-COPY skills /app/skills
 COPY backend /app/backend
+COPY skills /app/skills
 COPY eval /app/eval
-COPY cli /app/cli
-COPY deployment_metadata.json /app/deployment_metadata.json
+COPY deployment_metadata.json* /app/
 
 ENV PYTHONPATH=/app
 ENV PORT=8080
