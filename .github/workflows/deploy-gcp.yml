@@ -137,7 +137,6 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
-          version: '>= 576.0.0'
           install_components: 'alpha'
 
       - name: Configure Docker for GCP Artifact Registry
