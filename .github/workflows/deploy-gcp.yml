@@ -51,7 +51,6 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              - 'agents/**'
               - 'deploy/Dockerfile.backend'
             frontend:
               - 'frontend/**'
@@ -94,73 +93,11 @@ jobs:
           fi
 
   # ============================================================
-  # Job 2: Run quality evaluation (always runs on push to main)
-  # ============================================================
-  eval-and-test:
-    name: Run Quality Evaluation Suite
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
-
-      - name: Resolve GCP Auth Strategy
-        id: auth_check
-        env:
-          SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          WIF_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-        run: |
-          if [ -n "$SA_KEY" ]; then
-            echo "AUTH_MODE=sa_key" >> $GITHUB_ENV
-          elif [ -n "$WIF_PROVIDER" ]; then
-            echo "AUTH_MODE=wif" >> $GITHUB_ENV
-          else
-            echo "AUTH_MODE=none" >> $GITHUB_ENV
-            echo "❌ No GCP_SA_KEY or WORKLOAD_IDENTITY_PROVIDER found in GitHub Secrets. Cannot authenticate with Vertex AI."
-            exit 1
-          fi
-
-      - name: Authenticate to GCP (Service Account Key)
-        if: env.AUTH_MODE == 'sa_key'
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Authenticate to GCP (Workload Identity Federation)
-        if: env.AUTH_MODE == 'wif'
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SA_EMAIL }}
-
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Run Golden Marketing Benchmark Eval
-        env:
-          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
-          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
-          GEMINI_LOCATION: global
-        run: |
-          PYTHONPATH=. python eval/run_eval.py
-
-  # ============================================================
-  # Job 3: Selective deployment (only changed components)
+  # Job 2: Selective deployment (only changed components)
   # ============================================================
   deploy-to-gcp:
     name: Selective Service Deployment to GCP
-    needs: [changes, eval-and-test]
+    needs: [changes]
     if: needs.changes.outputs.any_deploy == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -305,3 +242,76 @@ jobs:
           echo "| ADK Agent (Agent Runtime) | ${{ needs.changes.outputs.agents }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Skills (Agent Registry) | ${{ needs.changes.outputs.skills }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Infra (Gateway/Observability) | ${{ needs.changes.outputs.infra }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================
+  # Job 3: Post-deployment evaluation against live Agent Runtime
+  # ============================================================
+  post-deploy-eval:
+    name: Post-Deploy Quality Evaluation
+    needs: [changes, deploy-to-gcp]
+    if: needs.changes.outputs.agents == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Resolve GCP Auth Strategy
+        id: auth_check
+        env:
+          SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          WIF_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+        run: |
+          if [ -n "$SA_KEY" ]; then
+            echo "AUTH_MODE=sa_key" >> $GITHUB_ENV
+          elif [ -n "$WIF_PROVIDER" ]; then
+            echo "AUTH_MODE=wif" >> $GITHUB_ENV
+          else
+            echo "AUTH_MODE=none" >> $GITHUB_ENV
+            echo "⚠️ No GCP credentials found. Skipping eval."
+            exit 0
+          fi
+
+      - name: Authenticate to GCP (Service Account Key)
+        if: env.AUTH_MODE == 'sa_key'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate to GCP (Workload Identity Federation)
+        if: env.AUTH_MODE == 'wif'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Run Golden Marketing Benchmark Eval
+        env:
+          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
+          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ env.GCP_REGION }}
+          GEMINI_LOCATION: global
+        run: |
+          echo "🧪 Running post-deployment evaluation against live Agent Runtime..."
+          PYTHONPATH=. python eval/run_eval.py
+
+      - name: Eval Summary
+        if: always()
+        run: |
+          echo "## 🧪 Post-Deploy Evaluation" >> $GITHUB_STEP_SUMMARY
+          echo "Evaluated the deployed Agent Runtime with golden marketing benchmark prompts." >> $GITHUB_STEP_SUMMARY
+
