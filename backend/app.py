@@ -174,10 +174,15 @@ def get_bigquery_sample(table_name: str = "customer_rfm_summary"):
 
 @app.post("/api/chat")
 def process_chat(req: ChatRequest):
-    """Processes user marketing prompts through Model Armor and Agent Runtime."""
+    """Processes user marketing prompts through Model Armor and Agent Runtime via Agent Gateway.
+
+    Traffic flow: Client → Backend → Agent Gateway (governance) → Agent Runtime (Reasoning Engine).
+    The Agent Gateway enforces Model Armor security policies and governed access at the infrastructure level.
+    The local PromptSafetyGuard provides an additional application-level pre-flight safety check.
+    """
     logger.info(f"Received chat request: '{req.prompt}' for segment '{req.target_segment}'")
     
-    # 1. Model Armor Gateway Check
+    # 1. Application-level pre-flight safety check (PII masking, injection patterns)
     armor_res = gateway.inspect_and_sanitize(req.prompt)
     if not armor_res["passed"]:
         return {
@@ -187,12 +192,17 @@ def process_chat(req: ChatRequest):
             "a2a_trace": []
         }
 
-    # 2. Proxy to Agent Runtime
+    # 2. Proxy to Agent Runtime (traffic routes through Agent Gateway when bound)
     result = runtime_client.query(
         prompt=armor_res["sanitized_prompt"],
         target_segment=req.target_segment
     )
     result["model_armor"] = armor_res
+    result["agent_gateway"] = {
+        "resource": Config.AGENT_GATEWAY_URL,
+        "governed_access_path": "CLIENT_TO_AGENT",
+        "status": "ROUTED" if Config.AGENT_GATEWAY_URL else "NOT_CONFIGURED",
+    }
     return result
 
 @app.post("/api/stream_reasoning_engine")
