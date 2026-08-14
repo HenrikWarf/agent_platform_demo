@@ -58,6 +58,27 @@ def _run_bq_query(sql: str, job_config=None) -> list[dict]:
     return rows
 
 
+def _clean_generated_sql(text: str) -> str:
+    """Extract a clean SQL query from Gemini-generated text.
+
+    Handles common Gemini output patterns:
+    - ```sql\nSELECT ...\n```  (code-fenced)
+    - sql\nSELECT ...          (prefixed with 'sql' keyword)
+    - SELECT ...               (raw SQL)
+    """
+    # Try code fence extraction first
+    match = re.search(r"```(?:sql)?\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE)
+    if match:
+        sql = match.group(1).strip()
+    else:
+        sql = text.replace("```", "").strip()
+
+    # Strip leading 'sql' keyword that Gemini sometimes prepends
+    sql = re.sub(r"^\s*sql\s+", "", sql, flags=re.IGNORECASE).strip()
+
+    return sql
+
+
 # ─── Tool: Run Custom BigQuery SQL ─────────────────────────────────────────────
 
 def run_bigquery_sql(user_question: str, tool_context: ToolContext) -> dict:
@@ -117,8 +138,7 @@ Rules:
         )
 
         generated_text = res.text or ""
-        sql_match = re.search(r"```sql\s*(.*?)\s*```", generated_text, re.DOTALL)
-        custom_sql = sql_match.group(1).strip() if sql_match else generated_text.replace("```", "").strip()
+        custom_sql = _clean_generated_sql(generated_text)
 
         if not custom_sql or "SELECT" not in custom_sql.upper():
             return {"status": "ERROR", "summary": "Failed to generate valid SQL from your question.", "sql_executed": "", "row_count": 0, "results": []}
@@ -204,8 +224,7 @@ Rules:
             )
 
             generated_text = res.text or ""
-            sql_match = re.search(r"```sql\s*(.*?)\s*```", generated_text, re.DOTALL)
-            custom_sql = sql_match.group(1).strip() if sql_match else generated_text.replace("```", "").strip()
+            custom_sql = _clean_generated_sql(generated_text)
 
             if custom_sql and "SELECT" in custom_sql.upper():
                 custom_rows = _run_bq_query(custom_sql)
