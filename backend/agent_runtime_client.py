@@ -147,7 +147,7 @@ class AgentRuntimeClient:
                     },
                 },
                 stream=True,
-                timeout=120,
+                timeout=(30, 300),  # 30s connect, 300s read — full campaigns chain 3 agents
             )
             resp.raise_for_status()
 
