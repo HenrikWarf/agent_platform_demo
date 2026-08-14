@@ -37,7 +37,6 @@ dependencies = [
     { name = "opentelemetry-exporter-gcp-logging" },
     { name = "opentelemetry-exporter-gcp-trace" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
-    { name = "opentelemetry-instrumentation-google-genai" },
     { name = "opentelemetry-sdk" },
     { name = "python-dotenv" },
 ]
@@ -66,7 +65,6 @@ requires-dist = [
     { name = "opentelemetry-exporter-gcp-logging" },
     { name = "opentelemetry-exporter-gcp-trace" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
-    { name = "opentelemetry-instrumentation-google-genai", specifier = ">=0.1.0,<1.0.0" },
     { name = "opentelemetry-sdk" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
 ]

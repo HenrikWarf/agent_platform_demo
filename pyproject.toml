@@ -7,7 +7,6 @@ authors = [
 ]
 dependencies = [
     "google-adk[otel-gcp]>=2.6.0",
-    "opentelemetry-instrumentation-google-genai>=0.1.0,<1.0.0",
     "opentelemetry-exporter-otlp-proto-http",
     "opentelemetry-exporter-gcp-trace",
     "opentelemetry-exporter-gcp-logging",
