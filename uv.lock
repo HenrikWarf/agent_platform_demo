@@ -31,8 +31,14 @@ dependencies = [
     { name = "google-cloud-aiplatform", extra = ["agent-engines"] },
     { name = "google-cloud-bigquery" },
     { name = "google-cloud-logging" },
+    { name = "google-cloud-resource-manager" },
     { name = "google-genai" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-gcp-logging" },
+    { name = "opentelemetry-exporter-gcp-trace" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-instrumentation-google-genai" },
+    { name = "opentelemetry-sdk" },
     { name = "python-dotenv" },
 ]
 
@@ -54,8 +60,14 @@ requires-dist = [
     { name = "google-cloud-aiplatform", extras = ["agent-engines"], specifier = ">=1.130.0" },
     { name = "google-cloud-bigquery", specifier = ">=3.18.0" },
     { name = "google-cloud-logging", specifier = ">=3.12.0,<4.0.0" },
+    { name = "google-cloud-resource-manager", specifier = ">=1.12.0" },
     { name = "google-genai", specifier = ">=1.0.0" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-gcp-logging" },
+    { name = "opentelemetry-exporter-gcp-trace" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-instrumentation-google-genai", specifier = ">=0.1.0,<1.0.0" },
+    { name = "opentelemetry-sdk" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
 ]
 provides-extras = ["eval"]

@@ -2,3 +2,10 @@
 google-adk[otel-gcp]>=2.6.0
 google-cloud-bigquery>=3.18.0
 google-genai>=1.0.0
+# Explicit OTel deps (required by ADK telemetry at container startup)
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-gcp-trace
+opentelemetry-exporter-gcp-logging
+opentelemetry-sdk
+opentelemetry-api
+google-cloud-resource-manager>=1.12.0
