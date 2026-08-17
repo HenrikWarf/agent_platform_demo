@@ -76,9 +76,72 @@ The `AgentEngineApp(AdkApp)` entry point wraps the ADK agent for the non-contain
 - **Governed Access Path**: `googleManaged.governedAccessPath: CLIENT_TO_AGENT`
 - **Protocols**: `MCP`, `HTTP_JSON`
 
-### 3.2 Model Armor Security Policy
-- **Prompt Shield Template**: `projects/agent-demo-09/locations/us-central1/templates/marketing-prompt-shield`
-- **Active Filters**: Prompt Injection Defense, Jailbreak Detection, Harmful Content Prevention
+### 3.2 Governed vs Ungoverned API Paths
+
+> [!IMPORTANT]
+> Agent Gateway **only governs** the `:query` and `:streamQuery` Reasoning Engine methods.
+> The `/api` passthrough bypasses gateway governance entirely — no Model Armor screening,
+> no gateway traffic logs, no observability data.
+
+| API Path | Endpoint Pattern | Governed? | Use Case |
+|----------|-----------------|-----------|----------|
+| `:streamQuery` | `v1beta1/{RE_ID}:streamQuery` | ✅ Yes | Agent prompt/response — screened by Model Armor |
+| `:query` | `v1beta1/{RE_ID}:query` | ✅ Yes | Sync calls (session mgmt via AdkApp only) |
+| `/api` passthrough | `reasoningEngines/v1/{RE_ID}/api/...` | ❌ No | Direct container access: `/run_sse`, `/apps/...` |
+
+The backend uses a **hybrid approach**:
+- **Session management** → `/api` passthrough (no governance needed for session CRUD)
+- **Agent queries** → `:streamQuery` with `class_method: "stream_query"` (governed)
+
+```
+Client → :streamQuery → Agent Gateway → Model Armor (request screen)
+       → Container (agent executes) → Model Armor (response screen) → Client
+```
+
+### 3.3 `:streamQuery` Request Format
+The governed `:streamQuery` endpoint requires a specific JSON body format with `class_method` and `input` fields:
+
+```json
+{
+  "class_method": "stream_query",
+  "input": {
+    "app_name": "app",
+    "user_id": "user-123",
+    "session_id": "session-456",
+    "new_message": {
+      "role": "user",
+      "parts": [{"text": "How many customers do we have?"}]
+    }
+  }
+}
+```
+
+Valid `class_method` values are registered by `AdkApp.register_operations()`:
+- **Streaming**: `stream_query`, `async_stream_query`, `streaming_agent_run_with_events`
+- **Sync**: `create_session`, `get_session`, `list_sessions`, `delete_session`
+
+### 3.4 Model Armor Security Policy
+- **Template**: `projects/agent-demo-09/locations/us-central1/templates/marketing-security-template`
+- **RAI Filters**: Hate Speech (MEDIUM+), Harassment (MEDIUM+), Dangerous (MEDIUM+), Sexually Explicit (HIGH)
+- **PI & Jailbreak Filter**: ENABLED, confidence level `MEDIUM_AND_ABOVE`
+- **Malicious URI Filter**: ENABLED
+
+> [!WARNING]
+> Setting PI & Jailbreak to `LOW_AND_ABOVE` will block legitimate marketing content
+> (persuasive language triggers false positives). Use `MEDIUM_AND_ABOVE` for marketing agents.
+
+### 3.5 IAM Requirements for Model Armor
+```bash
+# Reasoning Engine service agent needs Model Armor access
+gcloud projects add-iam-policy-binding agent-demo-09 \
+  --member="serviceAccount:service-1047232371360@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.user"
+
+# Dep service agent (manages gateway-to-MA integration)
+gcloud projects add-iam-policy-binding agent-demo-09 \
+  --member="serviceAccount:service-1047232371360@gcp-sa-dep.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.calloutUser"
+```
 
 ---
 
@@ -94,12 +157,22 @@ The **Orchestrator Agent** (`agents/orchestrator_agent.py`) classifies user inte
 | `FULL_CAMPAIGN` | Orchestrator → AnalyticsAgent → StrategyAgent → ContentAgent | + Creative copy |
 
 ### 4.2 Subagent Architecture
-- **Analytics Agent** (`agents/analytics_agent.py`): NL2SQL engine with `bigquery_customer_analytics` skill. Queries live BigQuery tables.
-- **Strategy Agent** (`agents/strategy_agent.py`): `omnichannel_strategy` skill. Campaign frameworks, channel mix, ROI projections.
-- **Content Agent** (`agents/content_agent.py`): `brand_voice` skill. Subject lines, email templates, ad copy.
+- **Analytics Agent** (`app/agent.py: analytics_agent`): Single-tool agent with `query_customer_data`. The agent generates BigQuery SQL directly from its instructions (which contain the full table schema) and executes it in one tool call. No nested LLM calls.
+- **Strategy Agent** (`app/agent.py: strategy_agent`): `generate_strategy` tool. Campaign frameworks, channel mix, ROI projections.
+- **Content Agent** (`app/agent.py: content_agent`): `generate_content_pieces` tool. Subject lines, email templates, ad copy.
 
 ### 4.3 ADK Root Agent (`app/agent.py`)
 The `app/agent.py` defines the `root_agent` using `google.adk.agents.Agent`. This is the ADK entry point that Agent Runtime discovers and serves. It delegates to the orchestrator agent's tools.
+
+### 4.4 Analytics Tool Design (`app/tools.py`)
+The analytics agent uses a single `query_customer_data(sql_query)` tool that:
+1. Validates the SQL contains a `SELECT` statement
+2. Cleans any markdown formatting the LLM may wrap around SQL
+3. Executes the query against BigQuery
+4. Stores results in `tool_context.state["analytics_result"]` for downstream agents
+5. Returns up to 20 rows with status, summary, and the executed SQL
+
+The agent's system instruction contains the full BigQuery table schema so it generates SQL directly — no nested Gemini calls. This keeps execution to exactly **1 tool call** per analytics query.
 
 ---
 
@@ -144,10 +217,22 @@ CSS custom properties for instant light/dark theme switching:
 - GenAI instrumentation with `OTEL_INSTRUMENTATION_GENAI_COMPLETION_HOOK=upload`
 
 ### 6.2 Cloud Logging & Log Analytics
-- Log Analytics enabled on global `_Default` bucket
+- Log Analytics enabled on global `_Default` bucket (`analyticsEnabled: true`)
+- Linked BigQuery dataset: `defaultLink` (location: US)
 - Queries filter against the `_AllLogs` view for Agent Gateway, Model Armor, and Agent Engine logs
 
-### 6.3 Pre-Commit Quality Linter
+> [!NOTE]
+> The Log Analytics view path `global._Default._AllLogs` is only queryable from the
+> **Observability Analytics** page in Cloud Console, NOT from BigQuery Studio directly.
+> To query logs from BigQuery Studio, use the linked dataset: `agent-demo-09.defaultLink._AllLogs`.
+
+### 6.3 Model Armor Audit Logs
+Model Armor screening activity is logged as audit logs with:
+- Service: `modelarmor.googleapis.com`
+- Methods: `SanitizeModelResponse`, `SanitizeUserPrompt`
+- Enabled via Data Access audit log configuration for the `modelarmor.googleapis.com` service
+
+### 6.4 Pre-Commit Quality Linter
 Automated Git hook (`scripts/pre_commit_lint.sh`):
 - Python `py_compile` syntax & module import verification
 - React ESLint check (`cd frontend && npm run lint`)

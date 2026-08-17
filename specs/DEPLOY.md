@@ -147,20 +147,32 @@ agents-cli publish gemini-enterprise \
 ```
 
 ### 3.5 Cloud Run Services (Backend API & Frontend)
+
+#### Backend Deployment
+The backend uses a hybrid URL approach for Agent Gateway governance:
 ```bash
-# Backend
+# Build backend image (uses deploy/Dockerfile.backend)
+# NOTE: Temporarily modify .gcloudignore to include backend/ and skills/
+gcloud builds submit . \
+  --config cloudbuild-backend.yaml \
+  --project agent-demo-09
+
+# Deploy to Cloud Run
 gcloud run deploy agent-platform-backend \
   --image us-central1-docker.pkg.dev/agent-demo-09/agent-platform/backend:latest \
-  --region us-central1 --platform managed --port 8080 --allow-unauthenticated
+  --region us-central1 --platform managed --port 8080 --allow-unauthenticated \
+  --set-env-vars "ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=agent-demo-09,BIGQUERY_DATASET=marketing_analytics,GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true"
+```
 
-# Frontend
+#### Frontend Deployment
+```bash
 gcloud run deploy agent-platform-frontend \
   --image us-central1-docker.pkg.dev/agent-demo-09/agent-platform/frontend:latest \
   --region us-central1 --platform managed --port 80 --allow-unauthenticated
 ```
 
 **Live Endpoints**:
-- **Backend**: `https://agent-platform-backend-q5c3bhebga-uc.a.run.app`
+- **Backend**: `https://agent-platform-backend-1047232371360.us-central1.run.app`
 - **Frontend**: `https://agent-platform-frontend-q5c3bhebga-uc.a.run.app`
 
 ---
@@ -207,13 +219,43 @@ The scaffolded `app/app_utils/telemetry.py` configures:
 - Prompt-response logging to GCS (when `LOGS_BUCKET_NAME` is set)
 - GenAI content capture mode (`NO_CONTENT` metadata-only by default)
 
-### 6.2 Log Analytics
+### 6.2 Log Analytics Setup
 ```bash
+# Enable analytics on _Default bucket
 gcloud logging buckets update _Default \
   --location=global --project=agent-demo-09 --enable-analytics
+
+# Create linked BigQuery dataset
+gcloud logging links create defaultLink \
+  --bucket=_Default --location=global --project=agent-demo-09
 ```
 
-### 6.3 Telemetry IAM Permissions
+> [!IMPORTANT]
+> The linked dataset is named `defaultLink`, NOT `global._Default`.
+> - **Observability Analytics page**: Use `global._Default._AllLogs` (Log Analytics engine)
+> - **BigQuery Studio direct queries**: Use `agent-demo-09.defaultLink._AllLogs` (location: US)
+
+### 6.3 Agent Gateway Observability Dashboard
+The Agent Gateway dashboard queries use the Log Analytics view path `global._Default._AllLogs`.
+For the dashboard to show data:
+1. Observability Analytics must be enabled on the `_Default` bucket ✓
+2. The `_AllLogs` view must exist ✓
+3. Traffic must flow through `:streamQuery` or `:query` (NOT `/api` passthrough) ✓
+4. Model Armor audit logging must be enabled ✓
+
+### 6.4 Model Armor Audit Logging
+```bash
+# Enable Data Access audit logs for Model Armor
+gcloud projects get-iam-policy agent-demo-09 \
+  --format=json > /tmp/policy.json
+# Add modelarmor.googleapis.com to auditConfigs with DATA_READ/DATA_WRITE
+```
+
+Audit log entries:
+- `google.cloud.modelarmor.v1main.ModelArmor.SanitizeUserPrompt` — request screening
+- `google.cloud.modelarmor.v1main.ModelArmor.SanitizeModelResponse` — response screening
+
+### 6.5 Telemetry IAM Permissions
 ```bash
 bash deploy/enable_observability_permissions.sh
 ```
@@ -236,3 +278,75 @@ agents-cli eval generate
 # Grade agent responses
 agents-cli eval grade
 ```
+
+---
+
+## 8. Troubleshooting & Known Issues
+
+### 8.1 Agent Tool Looping (71s+ Latency)
+
+**Symptom**: Analytics queries take 60-70+ seconds and Cloud Trace shows 4-5 redundant tool calls in a loop. Gateway returns 504 timeouts.
+
+**Root Cause**: Two overlapping tools (`run_bigquery_sql` and `query_customer_cohorts`) both contained internal `generate_content()` calls to Gemini for SQL generation. The agent would call one tool, get results, then call the other tool with the same intent, creating a loop of nested LLM invocations.
+
+**Fix**: Consolidated into a single `query_customer_data(sql_query)` tool that only executes SQL. Moved SQL generation responsibility to the agent's system instruction which contains the full BigQuery table schema. Added explicit "call EXACTLY ONCE" and "STOP after results" directives.
+
+**Result**: 71s → 11s latency. 1 tool call per query instead of 4-5.
+
+**Files changed**:
+- `app/tools.py`: Merged two tools into `query_customer_data`
+- `app/agent.py`: Updated `analytics_agent` instructions with schema + single-call directive
+
+---
+
+### 8.2 Agent Gateway Observability Dashboard Empty
+
+**Symptom**: The Agent Gateway Observability dashboard shows zero data. No gateway traffic logs or Model Armor metrics appear. The dashboard alert says "Observability Analytics must be enabled on the _Default bucket."
+
+**Root Cause (Layer 1 — Log Analytics path)**: The dashboard queries `global._Default._AllLogs` which is a Log Analytics view path. This works in the Observability Analytics page but NOT in BigQuery Studio. The linked dataset is named `defaultLink`, not `global._Default`.
+
+**Root Cause (Layer 2 — Gateway bypass)**: The backend was calling `/api/run_sse` (the `/api` passthrough) which bypasses Agent Gateway governance entirely. The gateway only governs `:query` and `:streamQuery` Reasoning Engine methods. Since all traffic used the passthrough, zero traffic was screened by Model Armor and zero gateway logs were generated.
+
+**Fix**:
+1. Switched backend from `/api/run_sse` passthrough to `:streamQuery` with `class_method: "stream_query"` (governed path)
+2. Kept session creation on `/api` passthrough (sessions don't need governance)
+3. Relaxed Model Armor PI/Jailbreak filter from `LOW_AND_ABOVE` to `MEDIUM_AND_ABOVE` (LOW triggers false positives on marketing content)
+
+**Files changed**:
+- `backend/agent_runtime_client.py`: Hybrid URL approach — `/api` for sessions, `:streamQuery` for queries
+
+---
+
+### 8.3 Model Armor Blocking Legitimate Content
+
+**Symptom**: `:streamQuery` returns `403 PERMISSION_DENIED` with "Response violates content security configurations."
+
+**Root Cause**: Model Armor template `marketing-security-template` had the PI & Jailbreak filter set to `LOW_AND_ABOVE`. Marketing content with persuasive language triggers low-confidence prompt injection detection.
+
+**Fix**:
+```bash
+curl -X PATCH \
+  -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+  "https://modelarmor.us-central1.rep.googleapis.com/v1/projects/agent-demo-09/locations/us-central1/templates/marketing-security-template?updateMask=filterConfig.piAndJailbreakFilterSettings.confidenceLevel" \
+  -d '{"filterConfig": {"piAndJailbreakFilterSettings": {"filterEnforcement": "ENABLED", "confidenceLevel": "MEDIUM_AND_ABOVE"}}}'
+```
+
+---
+
+### 8.4 `:streamQuery` Returns 404 for `class_method: "run_sse"`
+
+**Symptom**: Calling `:streamQuery` with `class_method: "run_sse"` returns 404.
+
+**Root Cause**: The ADK container's `reasoning_engine_adapter.py` only allows methods registered by `AdkApp.register_operations()`. The valid streaming methods are `stream_query`, `async_stream_query`, and `streaming_agent_run_with_events`. `run_sse` is an ADK dev UI endpoint, not a Reasoning Engine class method.
+
+**Fix**: Use `class_method: "stream_query"` for `:streamQuery` calls.
+
+---
+
+### 8.5 `.gcloudignore` Excludes Backend from Cloud Build
+
+**Symptom**: `gcloud builds submit` fails with "file not found: backend/requirements.txt".
+
+**Root Cause**: The `.gcloudignore` excludes `backend/`, `deploy/`, and `skills/` directories (designed for `agents-cli deploy` which only needs `app/`). But the backend Cloud Build needs these directories.
+
+**Fix**: Temporarily modify `.gcloudignore` before backend builds to include the required directories, or use a `cloudbuild.yaml` that generates the Dockerfile inline.

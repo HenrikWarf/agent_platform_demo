@@ -1,0 +1,694 @@
+# GCP Multi-Agent Marketing Platform: Comprehensive Architecture & Implementation Walkthrough
+
+This document provides an end-to-end, detailed technical walkthrough of every layer in the **GCP Multi-Agent Marketing Platform**. It covers the functions and features of each **Google Cloud Platform (GCP)** service and **Agent Platform component**, detailing how they are designed, integrated, and implemented with actual code snippets from the codebase.
+
+---
+
+## 🏛️ 1. High-Level Architecture Diagram
+
+```
+                                    +-----------------------+
+                                    |     React Frontend    |
+                                    | (Light/Dark Mode, Vite)|
+                                    +-----------+-----------+
+                                                |
+                                                v (REST HTTP/JSON)
+                                    +-----------------------+
+                                    |    FastAPI Backend    |
+                                    |   (Cloud Run / Local) |
+                                    +-----------+-----------+
+                                                |
+                                                v
+                                    +-----------------------+
+                                    |    Agent Gateway      |
+                                    | (Model Armor Enforce) |
+                                    +-----------+-----------+
+                                                |
+                      +-------------------------+-------------------------+
+                      | (A2A Protocol)          | (A2A Protocol)          | (A2A Protocol)
+                      v                         v                         v
+          +-----------------------+ +-----------------------+ +-----------------------+
+          |    Analytics Agent    | |    Strategy Agent     | |     Content Agent     |
+          | (bigquery_analytics)  | | (omnichannel_strat)  | |     (brand_voice)     |
+          +-----------+-----------+ +-----------------------+ +-----------------------+
+                      |
+                      v
+          +-----------------------+
+          |    Google BigQuery    |
+          |  (agent-demo-09)      |
+          +-----------------------+
+```
+
+---
+
+## 🌐 2. Frontend Layer (React 18 / Vite on GCP Cloud Run)
+
+### 2.1 GCP Component: Cloud Run
+* **Feature & Function**: **Google Cloud Run** is a fully managed serverless container runtime that automatically scales HTTP containers from zero to handle incoming web traffic.
+* **Role in App**: Hosts the compiled static React/Vite single-page application inside an Nginx container.
+
+### 2.2 Application Implementation
+The frontend is built with **React 18**, **Vite**, and **Lucide Icons**. It uses CSS custom properties for instant light/dark mode theme toggling without page reloads.
+
+#### Code Snippet: State & Theme Switching ([`frontend/src/App.jsx`](file:///Users/henrikw/Projects/agent_platform_demo/frontend/src/App.jsx))
+
+```javascript
+import React, { useState, useEffect } from 'react';
+import { MessageSquare, BookOpen, Database, Activity, Cpu, Sun, Moon } from 'lucide-react';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('chat');
+  const [theme, setTheme] = useState('light');
+
+  // React effect synchronizing data-theme attribute on root DOM element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  return (
+    <div className="app-container">
+      <header className="navbar">
+        <button onClick={toggleTheme} className="theme-toggle-btn">
+          {theme === 'dark' ? <Sun size={15} color="#fbbc04" /> : <Moon size={15} color="#4285f4" />}
+          <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+        </button>
+      </header>
+    </div>
+  );
+}
+```
+
+#### Code Snippet: Collapsible SQL Accordion & Selective Rendering ([`frontend/src/components/ChatInterface.jsx`](file:///Users/henrikw/Projects/agent_platform_demo/frontend/src/components/ChatInterface.jsx))
+
+```javascript
+{/* Render BigQuery SQL Query inside a collapsible left-aligned accordion */}
+{msg.sql_executed && (
+  <details className="sql-accordion">
+    <summary className="sql-accordion-summary">
+      <Code size={14} />
+      <span>🔍 View Executed BigQuery SQL Query</span>
+    </summary>
+    <div className="sql-accordion-content">
+      <pre className="sql-code-block"><code>{msg.sql_executed}</code></pre>
+    </div>
+  </details>
+)}
+
+{/* Selective Rendering: Strategy card renders strictly when payload is present */}
+{msg.strategy && Object.keys(msg.strategy).length > 0 && (
+  <div className="strategy-card">
+    <h3>{msg.strategy.campaign_title}</h3>
+    <p>Projected Recovery: {msg.strategy.projected_revenue_recovery}</p>
+  </div>
+)}
+```
+
+---
+
+## ⚡ 3. Backend API Layer (FastAPI on GCP Cloud Run)
+
+### 3.1 GCP Component: FastAPI + OpenTelemetry Cloud Trace Exporter
+* **Feature & Function**: Provides lightweight, asynchronous REST API endpoints while exporting OpenTelemetry span traces directly to **Google Cloud Trace**.
+* **Role in App**: Receives user prompts from the frontend, proxies requests to Vertex AI Agent Runtime via the governed `:streamQuery` endpoint (where Agent Gateway enforces Model Armor), and surfaces BigQuery customer data tables.
+
+### 3.2 Application Implementation
+The backend entry point is [`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py). It initializes OpenTelemetry tracing and defines `/api/chat`, `/health`, and `/api/version` endpoints.
+
+#### Code Snippet: Server Initialization & Trace Setup ([`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py))
+
+```python
+from fastapi import FastAPI, HTTPException
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+from backend.config import Config
+from backend.agent_runtime_client import AgentRuntimeClient
+
+# Initialize OpenTelemetry exporter for Google Cloud Trace
+tracer_provider = TracerProvider()
+cloud_exporter = CloudTraceSpanExporter(project_id=Config.GCP_PROJECT_ID)
+tracer_provider.add_span_processor(BatchSpanProcessor(cloud_exporter))
+trace.set_tracer_provider(tracer_provider)
+
+app = FastAPI(title="Google Cloud Agent Platform API", version="1.0.0")
+runtime_client = AgentRuntimeClient()
+
+@app.post("/api/chat")
+def process_chat(req: ChatRequest):
+    """Proxies prompt to Agent Runtime via governed :streamQuery endpoint.
+    Model Armor security screening is enforced at the Agent Gateway
+    infrastructure level — no application-level pre-flight needed."""
+    result = runtime_client.query(
+        prompt=req.prompt,
+        target_segment=req.target_segment
+    )
+    result["agent_gateway"] = {
+        "resource": Config.AGENT_GATEWAY_URL,
+        "governed_access_path": "CLIENT_TO_AGENT",
+        "model_armor_enforcement": "AGENT_GATEWAY",
+        "model_armor_floor_id": Config.MODEL_ARMOR_FLOOR_ID,
+    }
+    return result
+```
+
+---
+
+## 🛡️ 4. Security & Governance Layer (GCP Agent Gateway & Model Armor)
+
+### 4.1 GCP Component: GCP Agent Gateway & Vertex AI Model Armor
+* **GCP Agent Gateway** (`networkservices.googleapis.com`): Programmable network proxy providing governed ingress/egress access policies for AI agents.
+* **Vertex AI Model Armor** (`modelarmor.googleapis.com`): Security engine filtering prompt injections, masking sensitive PII (emails, SSNs), and enforcing Responsible AI safety thresholds.
+
+### 4.2 Application Implementation
+Model Armor security screening is enforced **exclusively at the Agent Gateway infrastructure level** via the `:streamQuery` governed endpoint. The backend does **not** perform any application-level pre-flight safety checks — all prompt injection detection, PII masking, and Responsible AI filtering is handled by the managed Agent Gateway and its bound Model Armor floor policy.
+
+Governance is configured via declarative YAML ([`deploy/agent_gateway.yaml`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/agent_gateway.yaml)) and bound to the Reasoning Engine spec via API patch ([`deploy/bind_agent_gateway.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/bind_agent_gateway.py)).
+
+#### Code Snippet: Agent Gateway Resource Spec ([`deploy/agent_gateway.yaml`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/agent_gateway.yaml))
+
+```yaml
+name: projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway
+description: Enterprise Agent Gateway enforcing Model Armor security policies and governed routing.
+protocols:
+  - MCP
+registries:
+  - //agentregistry.googleapis.com/projects/agent-demo-09/locations/us-central1
+googleManaged:
+  governedAccessPath: CLIENT_TO_AGENT
+```
+
+#### Code Snippet: Binding Gateway to Reasoning Engine ([`deploy/bind_agent_gateway.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/bind_agent_gateway.py))
+
+```python
+import requests
+
+def bind_gateway(engine_resource: str, gateway_resource: str, token: str):
+    url = f"https://us-central1-aiplatform.googleapis.com/v1beta1/{engine_resource}?updateMask=spec.deploymentSpec.agentGatewayConfig"
+    
+    payload = {
+        "spec": {
+            "deploymentSpec": {
+                "agentGatewayConfig": {
+                    "clientToAgentConfig": {
+                        "agentGateway": gateway_resource,
+                    }
+                }
+            }
+        }
+    }
+    
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    resp = requests.patch(url, headers=headers, json=payload)
+    resp.raise_for_status()
+    print("✅ Agent Gateway bound to Reasoning Engine!")
+```
+
+> **Note**: The backend previously included a `PromptSafetyGuard` class (`backend/safety.py`) that performed application-level regex-based pre-flight checks (injection pattern detection, PII masking). This was **removed** because Model Armor screening is enforced at the Agent Gateway infrastructure level, making the application-level check redundant. The Agent Gateway should always be bound to the Reasoning Engine — all prompt traffic passes through Model Armor automatically via the `:streamQuery` governed endpoint.
+
+---
+
+## 🤖 5. Agent Execution Engine (Vertex AI Agent Engine & ADK Framework)
+
+### 5.1 GCP Component: Vertex AI Agent Engine (Reasoning Engines)
+* **Feature & Function**: Vertex AI managed runtime for deploying, hosting, and executing autonomous multi-agent applications packaged via Google ADK.
+* **Role in App**: Executes the root orchestrator agent and specialized sub-agents inside managed containers with Cloud Trace telemetry.
+
+### 5.2 Application Implementation
+The multi-agent system is defined in [`app/agent.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/agent.py) using `google.adk.agents.Agent`. The backend proxies prompts to the deployed Reasoning Engine via [`backend/agent_runtime_client.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/agent_runtime_client.py).
+
+#### Code Snippet: ADK Agent Definitions ([`app/agent.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/agent.py))
+
+```python
+import os
+from google.adk.agents import Agent
+from google.adk.apps import App
+from . import tools
+
+# 1. Analytics Agent (BigQuery SQL Engine)
+analytics_agent = Agent(
+    name="analytics_agent",
+    model="gemini-3.6-flash",
+    description="Executes BigQuery customer data analysis and RFM segmentation.",
+    instruction="""You are the Customer Insights & Analytics Agent.
+Write BigQuery Standard SQL queries to answer customer data questions.
+Call query_customer_data EXACTLY ONCE with your SQL query.
+Table: `agent-demo-09.marketing_analytics.customer_rfm_summary`
+""",
+    tools=[tools.query_customer_data],
+)
+
+# 2. Strategy Agent (Omnichannel Framework)
+strategy_agent = Agent(
+    name="strategy_agent",
+    model="gemini-3.6-flash",
+    description="Designs omnichannel marketing strategies and channel mix.",
+    instruction="Always use the generate_campaign_strategy tool.",
+    tools=[tools.generate_campaign_strategy],
+)
+
+# 3. Content Agent (Brand Voice Copywriter)
+content_agent = Agent(
+    name="content_agent",
+    model="gemini-3.6-flash",
+    description="Produces email templates, social media posts, and SMS copy.",
+    instruction="Always use the generate_marketing_content tool.",
+    tools=[tools.generate_marketing_content],
+)
+
+# 4. Root Orchestrator Agent
+root_agent = Agent(
+    name="marketing_orchestrator",
+    model="gemini-3.6-flash",
+    description="Marketing Campaign Supervisor — routes objectives to sub-agents.",
+    instruction="Route data queries -> analytics_agent; strategy -> analytics -> strategy_agent; campaign -> all agents.",
+    sub_agents=[analytics_agent, strategy_agent, content_agent],
+)
+
+app = App(root_agent=root_agent, name="app")
+```
+
+#### Code Snippet: Agent Runtime Client SSE Stream Processing ([`backend/agent_runtime_client.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/agent_runtime_client.py))
+
+```python
+import requests, json
+
+class AgentRuntimeClient:
+    def query(self, prompt: str, target_segment: str) -> dict:
+        user_id = "user-123"
+        session_id = self._create_session(user_id)
+        
+        # Governed endpoint URL
+        stream_url = f"{self._governed_url}:streamQuery"
+        
+        payload = {
+            "class_method": "stream_query",
+            "input": {
+                "message": f"{prompt}\n\nTarget customer segment: {target_segment}",
+                "user_id": user_id,
+                "session_id": session_id,
+            }
+        }
+        
+        resp = requests.post(stream_url, headers=self._get_auth_headers(), json=payload, stream=True)
+        
+        events = []
+        for line in resp.iter_lines(decode_unicode=True):
+            if line and line.startswith("data:"):
+                event_data = json.loads(line[5:].strip())
+                events.append(event_data)
+                
+        return self._format_response(events, prompt, target_segment)
+```
+
+### 5.3 Agent-to-Agent (A2A) Protocol Support
+
+The deployed agent is a fully compliant **A2A agent**, serving the Agent-to-Agent protocol alongside the native ADK API. This enables any A2A-compatible client (including other agents, Gemini Enterprise, or custom applications) to discover and invoke the agent via a standard protocol.
+
+#### A2A Architecture
+
+The A2A integration is built into the ADK FastAPI app via [`app/app_utils/a2a.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py) and [`app/fast_api_app.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/fast_api_app.py):
+
+```
+A2A Client
+    │
+    ├── GET  /.well-known/agent-card.json   → Agent Card (capabilities, skills, interfaces)
+    │
+    └── POST /a2a/app                       → JSON-RPC endpoint (SendMessage / SendMessageStream)
+              │
+              └── A2aAgentExecutor → Runner → root_agent (marketing_orchestrator)
+```
+
+**Key components:**
+* **Agent Card** — auto-generated from the ADK agent definition, served at the well-known path. Advertises the agent's name, description, version, skills, supported input/output modes, and JSON-RPC interfaces (v1.0 and v0.3).
+* **JSON-RPC Endpoint** — accepts `SendMessage` (sync) and `SendMessageStream` (streaming) methods via the A2A protocol.
+* **A2aAgentExecutor** — bridges the A2A request to the ADK `Runner`, sharing the same session and artifact services as the native ADK and `:streamQuery` paths.
+
+#### Code Snippet: A2A Route Registration ([`app/fast_api_app.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/fast_api_app.py))
+
+```python
+from a2a.server.tasks import InMemoryTaskStore
+from app.app_utils.a2a import attach_a2a_routes
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    from app.agent import app as adk_app
+    from app.agent import root_agent
+
+    runner = Runner(
+        app=adk_app,
+        session_service=services.get_session_service(),
+        artifact_service=services.get_artifact_service(),
+        auto_create_session=True,
+    )
+    await attach_a2a_routes(
+        app,
+        agent=root_agent,
+        runner=runner,
+        task_store=InMemoryTaskStore(),
+        rpc_path=f"/a2a/{adk_app.name}",
+    )
+    yield
+```
+
+#### Code Snippet: Calling the Agent via A2A ([`examples/a2a_client.py`](file:///Users/henrikw/Projects/agent_platform_demo/examples/a2a_client.py))
+
+```python
+import requests, json, uuid
+import google.auth, google.auth.transport.requests
+
+AGENT_CARD_URL = "https://us-central1-aiplatform.googleapis.com/reasoningEngines/v1/" \
+    "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936" \
+    "/api/a2a/app/.well-known/agent-card.json"
+
+RPC_URL = "https://us-central1-aiplatform.googleapis.com/reasoningEngines/v1/" \
+    "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936" \
+    "/api/a2a/app"
+
+# 1. Fetch the A2A agent card
+credentials, _ = google.auth.default()
+credentials.refresh(google.auth.transport.requests.Request())
+headers = {"Authorization": f"Bearer {credentials.token}", "Content-Type": "application/json"}
+
+card = requests.get(AGENT_CARD_URL, headers=headers).json()
+print(f"Agent: {card['name']} — {card['description']}")
+
+# 2. Send an A2A message via JSON-RPC
+payload = {
+    "jsonrpc": "2.0",
+    "id": str(uuid.uuid4()),
+    "method": "SendMessage",
+    "params": {
+        "message": {
+            "messageId": str(uuid.uuid4()),
+            "role": "ROLE_USER",
+            "parts": [{"text": "How many customers are in the Champions segment?"}],
+        },
+        "configuration": {"acceptedOutputModes": ["text/plain"]},
+    },
+}
+headers["A2A-Version"] = "1.0"
+response = requests.post(RPC_URL, headers=headers, json=payload).json()
+# Response: State=TASK_STATE_COMPLETED, "There are 60 customers in the Champions segment."
+```
+
+#### Agent Card Response (live)
+
+```json
+{
+  "name": "marketing_orchestrator",
+  "description": "Marketing Campaign Supervisor — routes objectives to Analytics, Strategy, and Content agents.",
+  "version": "1.3.0",
+  "capabilities": { "streaming": true },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "supportedInterfaces": [
+    { "protocolBinding": "JSONRPC", "protocolVersion": "1.0" },
+    { "protocolBinding": "JSONRPC", "protocolVersion": "0.3" }
+  ],
+  "skills": [
+    { "id": "analytics_agent", "name": "query_customer_data", "description": "Execute BigQuery SQL queries..." },
+    { "id": "strategy_pipeline", "name": "workflow", "description": "Designs omnichannel marketing strategies..." },
+    { "id": "content_pipeline", "name": "workflow", "description": "Produces email templates, social posts, ad copy..." }
+  ]
+}
+```
+
+---
+
+## 🛠️ 6. Tools Layer (`app/tools.py`)
+
+### 6.1 Function & Purpose
+Tools provide Python functions that ADK agents invoke to perform external operations (BigQuery SQL execution, LLM-based strategy generation, creative copy generation).
+
+#### Code Snippet: BigQuery SQL Execution Tool ([`app/tools.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/tools.py))
+
+```python
+import re
+from google.adk.tools import ToolContext
+from google.cloud import bigquery
+
+def query_customer_data(sql_query: str, tool_context: ToolContext) -> dict:
+    """Executes a BigQuery Standard SQL query generated by the agent."""
+    if not sql_query or "SELECT" not in sql_query.upper():
+        return {"status": "ERROR", "summary": "Invalid SQL query."}
+
+    # Clean markdown code fences generated by LLM
+    clean_sql = re.sub(r"```(?:sql)?\s*(.*?)\s*```", r"\1", sql_query, flags=re.DOTALL).strip()
+
+    client = bigquery.Client(project="agent-demo-09")
+    query_job = client.query(clean_sql)
+    results = [dict(row) for row in query_job.result()]
+
+    # Save analytics in session state for downstream strategy/content agents
+    tool_context.state["analytics_result"] = {
+        "summary": f"Query returned {len(results)} rows.",
+        "sql_executed": clean_sql,
+    }
+
+    return {
+        "status": "SUCCESS",
+        "sql_executed": clean_sql,
+        "row_count": len(results),
+        "results": results[:20],
+    }
+```
+
+---
+
+## 📊 7. Data Layer (Google BigQuery)
+
+### 7.1 GCP Component: Google BigQuery
+* **Feature & Function**: Enterprise cloud data warehouse supporting SQL queries over petabytes of data.
+* **Role in App**: Stores customer RFM segments, 360 demographic profiles, and real-time transaction streams (`agent-demo-09:marketing_analytics`).
+
+#### Code Snippet: BigQuery Data Seeder ([`deploy/seed_bigquery_data.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/seed_bigquery_data.py))
+
+```python
+from google.cloud import bigquery
+
+def seed_rfm_table(client: bigquery.Client, dataset_ref: bigquery.DatasetReference):
+    table_ref = dataset_ref.table("customer_rfm_summary")
+    
+    rows = [
+        {"customer_id": "CUST-001", "rfm_segment": "At-Risk Premium", "recency_days": 85, "frequency_orders": 12, "total_monetary": 4250.00},
+        {"customer_id": "CUST-002", "rfm_segment": "Champions", "recency_days": 5, "frequency_orders": 34, "total_monetary": 12800.50},
+    ]
+    
+    job_config = bigquery.LoadJobConfig(
+        write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+        source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+    )
+    
+    job = client.load_table_from_json(rows, table_ref, job_config=job_config)
+    job.result()
+    print("✅ Seeded customer_rfm_summary table in BigQuery!")
+```
+
+---
+
+## 📦 8. Agent Registry & Skills Store
+
+### 8.1 GCP Component: Agent Registry (`agentregistry.googleapis.com`)
+* **Feature & Function**: Centralized catalog for registering, versioning, and discovering AI agent skills and tool definitions across GCP.
+
+#### Code Snippet: Skill Registration ([`deploy/register_skills.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/register_skills.py))
+
+```python
+import subprocess
+
+def register_skill(skill_id: str, display_name: str, payload_zip: str):
+    prefixed_id = f"private-{skill_id}"
+    
+    # 1. Create skill draft
+    subprocess.run([
+        "gcloud", "alpha", "agent-registry", "skills", "create", skill_id,
+        "--location", "global",
+        "--display-name", display_name,
+        "--target-state", "draft",
+        "--project", "agent-demo-09"
+    ])
+    
+    # 2. Create revision with ZIP payload containing SKILL.md
+    subprocess.run([
+        "gcloud", "alpha", "agent-registry", "skills", "revisions", "create", "rev-1",
+        "--skill", prefixed_id,
+        "--location", "global",
+        "--payload", payload_zip,
+        "--project", "agent-demo-09"
+    ])
+    
+    # 3. Activate skill
+    subprocess.run([
+        "gcloud", "alpha", "agent-registry", "skills", "update", prefixed_id,
+        "--location", "global",
+        "--target-state", "active",
+        "--project", "agent-demo-09"
+    ])
+    print(f"✅ Skill {skill_id} registered and activated!")
+```
+
+---
+
+## 📈 9. Observability & Local Evaluation Framework
+
+### 9.1 GCP Component: Cloud Trace & Log Analytics
+* **Google Cloud Trace**: Captures distributed execution spans (`invoke_workflow` → `call_llm` → `execute_tool`).
+* **Cloud Logging & Log Analytics**: Stores logs in `_Default` bucket linked to BigQuery dataset `defaultLink`.
+
+#### Code Snippet: Observability IAM & Log Link Setup ([`deploy/enable_observability_permissions.sh`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/enable_observability_permissions.sh))
+
+```bash
+#!/usr/bin/env bash
+set -e
+
+# Enable GCP Telemetry APIs
+gcloud services enable \
+  aiplatform.googleapis.com \
+  agentregistry.googleapis.com \
+  networkservices.googleapis.com \
+  modelarmor.googleapis.com \
+  cloudtrace.googleapis.com \
+  logging.googleapis.com --project="agent-demo-09"
+
+# Enable Log Analytics on _Default log bucket
+gcloud logging buckets update _Default --location=global --project="agent-demo-09" --enable-analytics
+
+# Create linked BigQuery dataset defaultLink
+gcloud logging links create defaultLink --bucket=_Default --location=global --project="agent-demo-09"
+```
+
+#### Code Snippet: Local Evaluation Suite ([`eval/local_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/local_eval.py))
+
+```python
+def evaluate_response(prompt: str, response: dict) -> dict:
+    """Evaluates agent response for grounding, safety, and A2A trace completeness."""
+    passed_safety = response.get("status") != "BLOCKED_BY_MODEL_ARMOR"
+    has_analytics = bool(response.get("analytics"))
+    has_a2a_trace = len(response.get("a2a_trace", [])) > 0
+
+    return {
+        "prompt": prompt,
+        "metrics": {
+            "safety_passed": passed_safety,
+            "data_grounded": has_analytics,
+            "a2a_trace_complete": has_a2a_trace,
+        },
+        "score": 1.0 if (passed_safety and has_analytics and has_a2a_trace) else 0.5
+    }
+```
+
+### 9.2 Prompt-Response Logging (GCS, Cloud Trace & Cloud Logging)
+
+Full prompt-response content logging is enabled on the Agent Runtime. Every GenAI interaction (LLM call → response) is captured and stored in **three destinations simultaneously**:
+
+| Destination | What is Stored | How to Access |
+|-------------|---------------|---------------|
+| **GCS** (JSONL completions) | Full prompt/response payloads as NDJSON files | `gsutil ls gs://agent-demo-09-agent-platform-logs/completions/` |
+| **Cloud Trace** (span attributes) | Prompt/response content embedded in OTel trace spans | Cloud Console → Trace → Trace Explorer |
+| **Cloud Logging** (OTel events) | GenAI interaction events with full content | Cloud Console → Logging → Logs Explorer |
+
+#### Infrastructure Provisioned
+
+| Resource | Details |
+|----------|---------|
+| **GCS Bucket** | `gs://agent-demo-09-agent-platform-logs` — stores completion JSONL files |
+| **Bucket Location** | `us-central1` (same region as Agent Runtime) |
+| **Uniform Bucket-Level Access** | Enabled |
+
+#### IAM Bindings on the Logs Bucket
+
+Three service accounts require access to the bucket for different operations:
+
+| Service Account | Role | Purpose |
+|----------------|------|---------|
+| `service-1047232371360@gcp-sa-aiplatform-re.iam.gserviceaccount.com` | `roles/storage.admin` | **Writes** completion files (Reasoning Engine SA) |
+| `cloud-aiplatform-api-robot-prod@system.gserviceaccount.com` | `roles/storage.objectViewer` | **Reads** completions for per-trace evaluation |
+| `service-1047232371360@gcp-sa-aiplatform.iam.gserviceaccount.com` | `roles/storage.objectViewer` | **Reads** completions for Agent Engine Console session/trace viewer |
+
+> **Note**: Missing any of these IAM bindings causes specific failures:
+> - Missing RE SA → completions are not written to GCS
+> - Missing API robot SA → "Failed to run evaluation" error when evaluating individual traces
+> - Missing Vertex AI P4SA → "Failed to load GenAI data" error in the Console session conversation viewer
+
+#### Environment Variables on Agent Runtime
+
+These are set via `agents-cli deploy --update-env-vars` and control the two independent logging tiers:
+
+**Tier 1: GCS/BigQuery Completions** (full prompt/response upload)
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `LOGS_BUCKET_NAME` | `agent-demo-09-agent-platform-logs` | GCS bucket for completion files |
+| `OTEL_INSTRUMENTATION_GENAI_COMPLETION_HOOK` | `upload` | Enables completion upload to GCS |
+| `OTEL_INSTRUMENTATION_GENAI_UPLOAD_BASE_PATH` | `gs://agent-demo-09-agent-platform-logs/completions` | GCS path for uploaded files |
+| `OTEL_INSTRUMENTATION_GENAI_UPLOAD_FORMAT` | `jsonl` | Output format (NDJSON) |
+| `OTEL_SEMCONV_STABILITY_OPT_IN` | `gen_ai_latest_experimental` | Enable experimental GenAI semantic conventions |
+
+**Tier 2: Trace Spans & Cloud Logging Events** (content in observability signals)
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` | `SPAN_AND_EVENT` | Include content in both trace spans and Cloud Logging events |
+| `ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS` | `true` | ADK-level control for message content in spans |
+
+> **Content capture modes** (valid values for `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT`):
+> - `SPAN_AND_EVENT` — content in both traces and Cloud Logging events (current setting)
+> - `SPAN_ONLY` — traces only, no Cloud Logging events
+> - `EVENT_ONLY` — Cloud Logging events only, no trace spans
+> - `NO_CONTENT` — no content in either tier (GCS completions still work independently)
+> - `true` / `false` — **invalid** under experimental semconv, falls back to `NO_CONTENT`
+
+#### Verification Commands
+
+```bash
+# Check GCS completions are being written
+gsutil ls gs://agent-demo-09-agent-platform-logs/completions/
+
+# Read a specific completion file
+gsutil cat gs://agent-demo-09-agent-platform-logs/completions/<trace-id>_inputs.jsonl
+
+# Check Cloud Logging for GenAI events
+gcloud logging read 'resource.labels.reasoning_engine_id="3829020106671783936"' \
+  --project=agent-demo-09 --limit=10 --format=json
+```
+
+### 9.3 Online Evaluation — Multi-Agent Limitation
+
+> **⚠️ Known Limitation**: Online evaluation monitors do not currently work with multi-agent systems.
+
+The Agent Engine Evaluation dashboard ("Manage online monitors") reports: `"No online monitor configured, or no matching traces found to evaluate"` despite traces being correctly captured.
+
+**Root Cause**: The online evaluation monitor requires `gen_ai.system_instructions` to be **uniform** (identical) across all log entries within a single trace. In a multi-agent system, a single trace contains LLM calls from multiple agents — each with a **different system instruction**:
+
+| Agent | System Instruction (summary) |
+|-------|------------------------------|
+| `marketing_orchestrator` | "Route data queries → analytics, strategy → strategy_agent..." |
+| `analytics_agent` | "You are the Customer Insights & Analytics Agent. Write BigQuery SQL..." |
+| `strategy_agent` | "Generate a comprehensive omnichannel marketing strategy..." |
+| `content_agent` | "Draft brand-aligned marketing content..." |
+
+The evaluation monitor fails with:
+```
+ERROR [labels.error.type: INSUFFICIENT_DATA]
+Label 'gen_ai.system_instructions' is not uniform across all log entries.;
+Failed to create AgentConfig for trace: <trace-id>
+```
+
+**What works vs. what doesn't:**
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Session conversation viewer | ✅ Works | Shows full prompt/response per session |
+| Cloud Trace spans | ✅ Works | Full content in span attributes |
+| Cloud Logging events | ✅ Works | GenAI events with content |
+| GCS completions | ✅ Works | JSONL files per trace |
+| Per-trace manual evaluation | ✅ Works | Click trace → Evaluation tab → run eval |
+| Batch evaluation (local) | ✅ Works | Frontend "Run Local Evaluation Suite" button |
+| **Online evaluation monitors** | ❌ Fails | Platform expects single-agent traces |
+
+This is a platform-side limitation — the online eval would need to support per-agent-span evaluation rather than per-trace evaluation. Use per-trace manual evaluation or batch evaluation as alternatives.
