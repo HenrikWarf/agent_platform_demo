@@ -30,21 +30,22 @@ except ImportError:
 class AgentRuntimeClient:
     """Client for calling the deployed ADK Agent on Vertex AI Agent Runtime.
 
-    Uses the Agent Engine `/api` HTTP passthrough to send SSE streaming requests
-    to the container's `/run_sse` endpoint. This is the recommended calling
-    pattern for scaffolded ADK agents (v1.3.1+).
+    Uses a hybrid URL approach:
+    - /api passthrough for session management (not governed by gateway)
+    - :streamQuery for agent queries (governed by Agent Gateway + Model Armor)
 
-    Traffic flow when Agent Gateway is bound:
-      Client → API passthrough → Agent Gateway (governance) → Container (/run_sse)
+    Traffic flow for prompts:
+      Client → :streamQuery → Agent Gateway (Model Armor screening) → Container
     """
 
     def __init__(self):
         self._credentials = None
+        self._governed_url = None  # :streamQuery/:query governed endpoint
         self.runtime_id = Config.AGENT_RUNTIME_ID
         if not self.runtime_id:
             self.runtime_id = self._read_deployment_metadata()
 
-        # Build the /api passthrough base URL from the runtime ID
+        # Build URLs: _base_url for /api passthrough, _governed_url for :streamQuery
         self._base_url = self._build_passthrough_url()
 
     def _read_deployment_metadata(self) -> Optional[str]:
@@ -65,12 +66,14 @@ class AgentRuntimeClient:
         return None
 
     def _build_passthrough_url(self) -> Optional[str]:
-        """Build the Agent Engine /api passthrough URL from the runtime resource ID.
+        """Build the Agent Engine base URLs from the runtime resource ID.
 
-        The /api passthrough exposes the container's full HTTP surface:
-          https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/{resource}/api/...
+        Two URL patterns are used:
+        - _base_url: :streamQuery / :query governed endpoints (Agent Gateway + Model Armor)
+        - _passthrough_url: /api passthrough for session management (not governed)
 
-        This lets us call /run_sse, /apps/..., /a2a/... endpoints directly.
+        Agent Gateway only screens query/streamQuery methods, so session
+        management uses the /api passthrough while actual prompts use :streamQuery.
         """
         if not self.runtime_id:
             return None
@@ -78,6 +81,9 @@ class AgentRuntimeClient:
         parts = self.runtime_id.split("/")
         if len(parts) >= 6:
             location = parts[3]  # e.g. "us-central1"
+            # Governed endpoint for :streamQuery
+            self._governed_url = f"https://{location}-aiplatform.googleapis.com/v1beta1/{self.runtime_id}"
+            # /api passthrough for session management
             return f"https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/{self.runtime_id}/api"
         return None
 
@@ -94,7 +100,11 @@ class AgentRuntimeClient:
         }
 
     def _create_session(self, user_id: str) -> str:
-        """Create a new ADK session via the /api passthrough."""
+        """Create a new ADK session via the /api passthrough.
+
+        Session management doesn't need Agent Gateway governance —
+        only actual prompts need Model Armor screening.
+        """
         url = f"{self._base_url}/apps/app/users/{user_id}/sessions"
         resp = requests.post(url, headers=self._get_auth_headers(), json={}, timeout=30)
         resp.raise_for_status()
@@ -103,10 +113,10 @@ class AgentRuntimeClient:
         return session_id
 
     def query(self, prompt: str, target_segment: str = "At-Risk Premium") -> Dict[str, Any]:
-        """Send a prompt to Agent Runtime via /run_sse and return structured results.
+        """Send a prompt to Agent Runtime via :streamQuery and return structured results.
 
-        Creates a session, sends the message via SSE streaming, collects all events,
-        and formats them into the response structure the frontend expects.
+        Uses the governed :streamQuery endpoint which flows through Agent Gateway
+        and Model Armor for security screening and observability logging.
 
         Args:
             prompt: The user's marketing prompt.
@@ -115,7 +125,7 @@ class AgentRuntimeClient:
         Returns:
             Dict with status, summary, analytics, strategy, content, and a2a_trace.
         """
-        if not self._base_url:
+        if not self._governed_url:
             return {
                 "status": "ERROR",
                 "summary": "Agent Runtime is not configured. Deploy the agent first with 'agents-cli deploy'.",
@@ -127,36 +137,44 @@ class AgentRuntimeClient:
 
         try:
             user_id = f"backend-{uuid.uuid4().hex[:8]}"
+
+            # Create session via /api passthrough (not governed by gateway)
             session_id = self._create_session(user_id)
 
             # Combine prompt with segment context
             full_message = f"{prompt}\n\nTarget customer segment: {target_segment}"
 
-            # Call /run_sse via the /api passthrough
-            sse_url = f"{self._base_url}/run_sse"
+            # Call :streamQuery — governed by Agent Gateway + Model Armor
+            stream_url = f"{self._governed_url}:streamQuery"
             resp = requests.post(
-                sse_url,
+                stream_url,
                 headers=self._get_auth_headers(),
                 json={
-                    "app_name": "app",
-                    "user_id": user_id,
-                    "session_id": session_id,
-                    "new_message": {
-                        "role": "user",
-                        "parts": [{"text": full_message}],
+                    "class_method": "stream_query",
+                    "input": {
+                        "message": full_message,
+                        "user_id": user_id,
+                        "session_id": session_id,
                     },
                 },
                 stream=True,
-                timeout=(30, 300),  # 30s connect, 300s read — full campaigns chain 3 agents
+                timeout=(30, 300),  # 30s connect, 300s read
             )
             resp.raise_for_status()
 
-            # Collect SSE events
+            # Collect streaming response chunks
             events = []
             for line in resp.iter_lines(decode_unicode=True):
-                if line and line.startswith("data:"):
+                if not line:
+                    continue
+                # streamQuery returns JSON chunks (one per line)
+                # or SSE-style data: prefixed lines
+                text_line = line.strip()
+                if text_line.startswith("data:"):
+                    text_line = text_line[5:].strip()
+                if text_line:
                     try:
-                        event = json.loads(line[5:].strip())
+                        event = json.loads(text_line)
                         events.append(event)
                     except json.JSONDecodeError:
                         continue
@@ -179,8 +197,9 @@ class AgentRuntimeClient:
     ) -> Dict[str, Any]:
         """Format ADK SSE events into the frontend response structure.
 
-        Extracts the final agent text response and any tool call results
-        (analytics, strategy, content) from the event stream.
+        Extracts the final agent text response and any structured data from:
+        - Tool functionResponse events (analytics from query_customer_data)
+        - Text events from formatter agents with output_schema (strategy, content)
         """
         analytics = {}
         strategy = {}
@@ -200,39 +219,65 @@ class AgentRuntimeClient:
             if author:
                 current_agent = author
 
-            # Extract text content — only keep the very LAST text event as the summary.
-            # Earlier text events come from sub-agents and duplicate the structured
-            # card data (strategy/content). The orchestrator always speaks last.
+            # Extract text content
             text = self._extract_text(event_content)
             if text:
+                # Check if this is a formatter agent emitting structured JSON
+                if author in ("strategy_formatter", "strategy_agent") and not strategy:
+                    parsed = self._try_parse_json(text)
+                    if parsed and ("campaign_title" in parsed or "campaign_pillars" in parsed):
+                        strategy = parsed
+                        continue
+                elif author in ("content_formatter", "content_agent") and not content:
+                    parsed = self._try_parse_json(text)
+                    if parsed and ("email_template" in parsed or "social_posts" in parsed):
+                        content = {"generated_assets": parsed}
+                        continue
+
+                # Keep as summary text (orchestrator speaks last)
                 last_text = text
 
-            # Extract tool results (analytics, strategy, content)
+            # Extract tool results (analytics from query_customer_data)
             tool_results = self._extract_tool_results(event_content)
-            tool_name = self._extract_tool_name(event_content)
             if tool_results:
                 if "cohort_details" in tool_results or "sql_executed" in tool_results or "results" in tool_results:
                     analytics = tool_results
                     sql_executed = tool_results.get("sql_executed", sql_executed)
-                elif "strategy" in tool_results:
+                elif "strategy" in tool_results and not strategy:
+                    # Legacy: tool-based strategy (backward compat)
                     strategy = tool_results.get("strategy", {})
-                elif "generated_assets" in tool_results:
+                elif "generated_assets" in tool_results and not content:
+                    # Legacy: tool-based content (backward compat)
                     content = tool_results
 
             # Track agent sequence for A2A trace
-            # In SSE events: 'author' is at the event top level, not inside 'content'
             transfer_to = event.get("actions", {}).get("transferToAgent", "")
             if author and (not seen_agents or seen_agents[-1] != author):
                 seen_agents.append(author)
             if transfer_to and (not seen_agents or seen_agents[-1] != transfer_to):
                 seen_agents.append(transfer_to)
 
-        # Build A2A trace as sender→receiver pairs from the agent sequence
-        # Also infer the skill used based on the agent name
+        # If strategy/content weren't found from specific authors, try parsing from any text
+        if not strategy or not content:
+            for event in events:
+                text = self._extract_text(event.get("content", {}))
+                if text:
+                    parsed = self._try_parse_json(text)
+                    if parsed:
+                        if not strategy and ("campaign_title" in parsed or "campaign_pillars" in parsed):
+                            strategy = parsed
+                        elif not content and ("email_template" in parsed or "social_posts" in parsed):
+                            content = {"generated_assets": parsed}
+
+        # Build A2A trace as sender→receiver pairs
+        # Filter out internal formatter agents from the trace display
+        display_agents = [a for a in seen_agents if "formatter" not in a]
         skill_map = {
             "analytics_agent": "bigquery_customer_analytics",
             "strategy_agent": "omnichannel_strategy",
+            "strategy_pipeline": "omnichannel_strategy",
             "content_agent": "brand_voice",
+            "content_pipeline": "brand_voice",
         }
         intent = "ANALYTICS_ONLY"
         if any("strategy" in a for a in seen_agents):
@@ -240,9 +285,9 @@ class AgentRuntimeClient:
         if any("content" in a for a in seen_agents):
             intent = "FULL_CAMPAIGN"
 
-        for i in range(len(seen_agents) - 1):
-            sender = seen_agents[i]
-            receiver = seen_agents[i + 1]
+        for i in range(len(display_agents) - 1):
+            sender = display_agents[i]
+            receiver = display_agents[i + 1]
             a2a_trace.append({
                 "sender_id": sender,
                 "receiver_id": receiver,
@@ -273,6 +318,26 @@ class AgentRuntimeClient:
             for part in parts:
                 if isinstance(part, dict) and "text" in part:
                     return part["text"]
+        return None
+
+    @staticmethod
+    def _try_parse_json(text: str) -> Optional[Dict[str, Any]]:
+        """Try to parse a text string as JSON. Returns None if parsing fails."""
+        if not text or not text.strip():
+            return None
+        text = text.strip()
+        # Handle markdown code fences around JSON
+        if text.startswith("```"):
+            lines = text.split("\n")
+            # Remove first and last lines (```json and ```)
+            lines = [l for l in lines if not l.strip().startswith("```")]
+            text = "\n".join(lines).strip()
+        try:
+            parsed = json.loads(text)
+            if isinstance(parsed, dict):
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            pass
         return None
 
     @staticmethod

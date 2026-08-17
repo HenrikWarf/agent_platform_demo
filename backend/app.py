@@ -1,6 +1,6 @@
 """
 Google Cloud Agent Platform Demo - FastAPI Server
-Exposes Model Armor safety, Agent Runtime proxy, Agent Registry Skills, BigQuery, and Evaluation endpoints.
+Exposes Agent Runtime proxy, Agent Registry Skills, BigQuery, and Evaluation endpoints.
 
 The backend is a thin API layer — all agent orchestration is delegated to the
 deployed ADK Agent on Vertex AI Agent Runtime via AgentRuntimeClient.
@@ -19,13 +19,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 try:
     from backend.config import Config
     from backend.bq_client import BigQueryClient
-    from backend.safety import PromptSafetyGuard as AgentGateway
     from backend.skill_registry import SkillRegistry
     from backend.agent_runtime_client import AgentRuntimeClient
 except ImportError:
     from config import Config
     from bq_client import BigQueryClient
-    from safety import PromptSafetyGuard as AgentGateway
     from skill_registry import SkillRegistry
     from agent_runtime_client import AgentRuntimeClient
 
@@ -50,7 +48,7 @@ except Exception as e:
 
 app = FastAPI(
     title="Google Cloud Agent Platform API",
-    description="Backend API for Vertex AI Agent Runtime, Agent Registry Skills, Model Armor, BigQuery, and OpenTelemetry.",
+    description="Backend API for Vertex AI Agent Runtime, Agent Registry Skills, BigQuery, and OpenTelemetry.",
     version="1.0.0"
 )
 
@@ -72,11 +70,7 @@ app.add_middleware(
 # Initialize Services
 bq_client = BigQueryClient()
 runtime_client = AgentRuntimeClient()
-gateway = AgentGateway()
 skill_registry = SkillRegistry()
-
-# Global simulator state
-simulator_state = {"active": False, "generated_count": 0}
 
 class ChatRequest(BaseModel):
     prompt: str
@@ -84,6 +78,152 @@ class ChatRequest(BaseModel):
 
 class SimulatorToggleRequest(BaseModel):
     active: bool
+
+# ─── Synthetic Traffic Simulator ──────────────────────────────────────────────
+
+import threading
+import time as _time
+
+SYNTHETIC_PROMPTS = [
+    {"prompt": "What is the average monetary value for Champions segment?", "segment": "Champions", "agent": "analytics"},
+    {"prompt": "Show customer distribution by RFM segment.", "segment": "All Cohorts (Full Dataset)", "agent": "analytics"},
+    {"prompt": "What are the top 5 customer segments by total revenue?", "segment": "All Cohorts (Full Dataset)", "agent": "analytics"},
+    {"prompt": "How many customers have recency over 90 days?", "segment": "All Cohorts (Full Dataset)", "agent": "analytics"},
+    {"prompt": "Analyze churn risk for At-Risk Premium customers and recommend retention tactics.", "segment": "At-Risk Premium", "agent": "strategy"},
+    {"prompt": "Create a VIP loyalty rewards strategy for Champions.", "segment": "Champions", "agent": "strategy"},
+    {"prompt": "Generate a win-back email campaign for Hibernating customers.", "segment": "Hibernating", "agent": "full_campaign"},
+    {"prompt": "Draft a re-engagement SMS sequence for At-Risk customers.", "segment": "At-Risk Premium", "agent": "full_campaign"},
+]
+
+_AGENT_LABELS = {
+    "analytics": "Analytics Agent",
+    "strategy": "Strategy Agent",
+    "full_campaign": "Full Campaign (Content Agent)",
+}
+
+def _new_agent_stats():
+    return {"requests": 0, "successful": 0, "failed": 0, "avg_latency_ms": 0, "_latencies": []}
+
+simulator_state = {
+    "active": False,
+    "total_requests": 0,
+    "successful": 0,
+    "failed": 0,
+    "avg_latency_ms": 0,
+    "recent_requests": [],
+    "per_agent": {
+        "analytics": {**_new_agent_stats(), "label": _AGENT_LABELS["analytics"]},
+        "strategy": {**_new_agent_stats(), "label": _AGENT_LABELS["strategy"]},
+        "full_campaign": {**_new_agent_stats(), "label": _AGENT_LABELS["full_campaign"]},
+    },
+}
+_simulator_thread = None
+_simulator_lock = threading.Lock()
+
+
+def _run_simulator_loop():
+    """Background loop: sends synthetic prompts to Agent Runtime until stopped."""
+    idx = 0
+    latencies = []
+    while simulator_state["active"]:
+        prompt_data = SYNTHETIC_PROMPTS[idx % len(SYNTHETIC_PROMPTS)]
+        idx += 1
+        agent_key = prompt_data["agent"]
+        start = _time.time()
+        entry = {
+            "prompt": prompt_data["prompt"][:60] + "...",
+            "segment": prompt_data["segment"],
+            "agent": agent_key,
+            "agent_label": _AGENT_LABELS.get(agent_key, agent_key),
+            "status": "PENDING",
+            "latency_ms": 0,
+            "timestamp": _time.strftime("%H:%M:%S"),
+        }
+        try:
+            result = runtime_client.query(
+                prompt=prompt_data["prompt"],
+                target_segment=prompt_data["segment"],
+            )
+            elapsed_ms = round((_time.time() - start) * 1000)
+            entry["latency_ms"] = elapsed_ms
+            entry["status"] = "SUCCESS" if result.get("summary") else "EMPTY"
+            latencies.append(elapsed_ms)
+
+            with _simulator_lock:
+                simulator_state["total_requests"] += 1
+                simulator_state["successful"] += 1
+                simulator_state["avg_latency_ms"] = round(sum(latencies) / len(latencies))
+                simulator_state["recent_requests"] = ([entry] + simulator_state["recent_requests"])[:15]
+                # Per-agent tracking
+                ag = simulator_state["per_agent"][agent_key]
+                ag["requests"] += 1
+                ag["successful"] += 1
+                ag["_latencies"].append(elapsed_ms)
+                ag["avg_latency_ms"] = round(sum(ag["_latencies"]) / len(ag["_latencies"]))
+
+            logger.info(f"Simulator [{idx}] {entry['status']} [{agent_key}] in {elapsed_ms}ms: {prompt_data['prompt'][:50]}")
+        except Exception as e:
+            elapsed_ms = round((_time.time() - start) * 1000)
+            entry["latency_ms"] = elapsed_ms
+            entry["status"] = "ERROR"
+            entry["error"] = str(e)[:100]
+
+            with _simulator_lock:
+                simulator_state["total_requests"] += 1
+                simulator_state["failed"] += 1
+                simulator_state["recent_requests"] = ([entry] + simulator_state["recent_requests"])[:15]
+                ag = simulator_state["per_agent"][agent_key]
+                ag["requests"] += 1
+                ag["failed"] += 1
+
+            logger.warning(f"Simulator [{idx}] ERROR [{agent_key}] in {elapsed_ms}ms: {e}")
+
+        # Wait 5 seconds between requests (if still active)
+        for _ in range(50):
+            if not simulator_state["active"]:
+                break
+            _time.sleep(0.1)
+
+    logger.info("Simulator loop stopped.")
+
+
+@app.get("/api/simulator/status")
+def get_simulator_status():
+    with _simulator_lock:
+        # Return a clean copy without internal _latencies lists
+        state = dict(simulator_state)
+        state["per_agent"] = {}
+        for key, ag in simulator_state["per_agent"].items():
+            state["per_agent"][key] = {k: v for k, v in ag.items() if not k.startswith("_")}
+        return state
+
+
+@app.post("/api/simulator/toggle")
+def toggle_simulator(req: SimulatorToggleRequest):
+    global _simulator_thread
+
+    if req.active and not simulator_state["active"]:
+        # Start — reset all metrics
+        simulator_state["active"] = True
+        simulator_state["total_requests"] = 0
+        simulator_state["successful"] = 0
+        simulator_state["failed"] = 0
+        simulator_state["avg_latency_ms"] = 0
+        simulator_state["recent_requests"] = []
+        simulator_state["per_agent"] = {
+            "analytics": {**_new_agent_stats(), "label": _AGENT_LABELS["analytics"]},
+            "strategy": {**_new_agent_stats(), "label": _AGENT_LABELS["strategy"]},
+            "full_campaign": {**_new_agent_stats(), "label": _AGENT_LABELS["full_campaign"]},
+        }
+        _simulator_thread = threading.Thread(target=_run_simulator_loop, daemon=True)
+        _simulator_thread.start()
+        logger.info("Synthetic Traffic Simulator STARTED")
+    elif not req.active and simulator_state["active"]:
+        # Stop
+        simulator_state["active"] = False
+        logger.info("Synthetic Traffic Simulator STOPPED")
+
+    return {"status": "SUCCESS", "simulator_active": simulator_state["active"]}
 
 @app.get("/health")
 @app.get("/api/health")
@@ -174,34 +314,23 @@ def get_bigquery_sample(table_name: str = "customer_rfm_summary"):
 
 @app.post("/api/chat")
 def process_chat(req: ChatRequest):
-    """Processes user marketing prompts through Model Armor and Agent Runtime via Agent Gateway.
+    """Processes user marketing prompts via Agent Gateway → Agent Runtime.
 
-    Traffic flow: Client → Backend → Agent Gateway (governance) → Agent Runtime (Reasoning Engine).
-    The Agent Gateway enforces Model Armor security policies and governed access at the infrastructure level.
-    The local PromptSafetyGuard provides an additional application-level pre-flight safety check.
+    Traffic flow: Client → Backend → Agent Gateway (Model Armor governance) → Agent Runtime.
+    Model Armor security screening is enforced at the Agent Gateway infrastructure level
+    via the :streamQuery governed endpoint — no application-level pre-flight needed.
     """
     logger.info(f"Received chat request: '{req.prompt}' for segment '{req.target_segment}'")
-    
-    # 1. Application-level pre-flight safety check (PII masking, injection patterns)
-    armor_res = gateway.inspect_and_sanitize(req.prompt)
-    if not armor_res["passed"]:
-        return {
-            "status": "BLOCKED_BY_MODEL_ARMOR",
-            "model_armor": armor_res,
-            "summary": f"Security Alert: Request blocked by Model Armor. Reason: {armor_res['filter_reason']}",
-            "a2a_trace": []
-        }
 
-    # 2. Proxy to Agent Runtime (traffic routes through Agent Gateway when bound)
     result = runtime_client.query(
-        prompt=armor_res["sanitized_prompt"],
+        prompt=req.prompt,
         target_segment=req.target_segment
     )
-    result["model_armor"] = armor_res
     result["agent_gateway"] = {
         "resource": Config.AGENT_GATEWAY_URL,
         "governed_access_path": "CLIENT_TO_AGENT",
-        "status": "ROUTED" if Config.AGENT_GATEWAY_URL else "NOT_CONFIGURED",
+        "model_armor_enforcement": "AGENT_GATEWAY",
+        "model_armor_floor_id": Config.MODEL_ARMOR_FLOOR_ID,
     }
     return result
 
@@ -212,33 +341,99 @@ def stream_reasoning_engine(request: Dict[str, Any]):
     input_data = request.get("input", {})
     prompt = input_data.get("prompt") or request.get("prompt", "Analyze customer segment performance")
     segment = input_data.get("target_segment") or request.get("target_segment", "All Cohorts (Full Dataset)")
-    
-    # Check Model Armor
-    armor_res = gateway.inspect_and_sanitize(prompt)
-    if not armor_res["passed"]:
-        return {
-            "status": "BLOCKED_BY_MODEL_ARMOR",
-            "model_armor": armor_res,
-            "summary": f"Security Alert: Request blocked by Model Armor. Reason: {armor_res['filter_reason']}",
-            "a2a_trace": []
-        }
 
-    result = runtime_client.query(
-        prompt=armor_res["sanitized_prompt"],
+    return runtime_client.query(
+        prompt=prompt,
         target_segment=segment
     )
-    result["model_armor"] = armor_res
-    return result
 
-@app.get("/api/simulator/status")
-def get_simulator_status():
-    return simulator_state
+# ─── A2A Protocol Proxy Endpoints ────────────────────────────────────────────
 
-@app.post("/api/simulator/toggle")
-def toggle_simulator(req: SimulatorToggleRequest):
-    simulator_state["active"] = req.active
-    logger.info(f"Traffic Simulator state set to: {req.active}")
-    return {"status": "SUCCESS", "simulator_active": simulator_state["active"]}
+class A2AMessageRequest(BaseModel):
+    prompt: str
+
+@app.get("/api/a2a/agent-card")
+def get_a2a_agent_card():
+    """Proxy the A2A agent card from the deployed Agent Runtime."""
+    import requests as http_requests
+    if not runtime_client._base_url:
+        raise HTTPException(status_code=503, detail="Agent Runtime not configured")
+    card_url = f"{runtime_client._base_url}/a2a/app/.well-known/agent-card.json"
+    resp = http_requests.get(card_url, headers=runtime_client._get_auth_headers(), timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+@app.post("/api/a2a/send-message")
+def send_a2a_message(req: A2AMessageRequest):
+    """Send a message to the agent via the A2A JSON-RPC protocol."""
+    import requests as http_requests
+    import uuid
+    if not runtime_client._base_url:
+        raise HTTPException(status_code=503, detail="Agent Runtime not configured")
+    rpc_url = f"{runtime_client._base_url}/a2a/app"
+    payload = {
+        "jsonrpc": "2.0",
+        "id": str(uuid.uuid4()),
+        "method": "SendMessage",
+        "params": {
+            "message": {
+                "messageId": str(uuid.uuid4()),
+                "role": "ROLE_USER",
+                "parts": [{"text": req.prompt}],
+            },
+            "configuration": {"acceptedOutputModes": ["text/plain"]},
+        },
+    }
+    headers = runtime_client._get_auth_headers()
+    headers["A2A-Version"] = "1.0"
+    resp = http_requests.post(rpc_url, headers=headers, json=payload, timeout=120)
+    resp.raise_for_status()
+    raw = resp.json()
+    # Parse the A2A response
+    result = raw.get("result", raw)
+    status = result.get("status", {})
+    state = status.get("state", "")
+    if not state and "task" in result:
+        task = result["task"]
+        status = task.get("status", {})
+        state = status.get("state", "")
+        result = task
+    # Extract response text
+    response_text = ""
+    for artifact in result.get("artifacts", []):
+        for part in artifact.get("parts", []):
+            if part.get("text"):
+                response_text += part["text"]
+    if not response_text:
+        message = status.get("message", {})
+        if message:
+            for part in message.get("parts", []):
+                if part.get("text"):
+                    response_text += part["text"]
+    return {
+        "state": state or "COMPLETED",
+        "response_text": response_text,
+        "raw_response": raw,
+    }
+
+# ─── Evaluation Endpoint ─────────────────────────────────────────────────────
+
+@app.post("/api/eval/run")
+def run_evaluation():
+    """Runs the local evaluation suite against the deployed Agent Runtime.
+
+    Sends golden prompts from eval/dataset/golden_marketing_prompts.json to the
+    Agent Runtime and evaluates safety correctness and response quality.
+    """
+    try:
+        from eval.local_eval import run_local_evaluation
+        logger.info("Starting local evaluation suite...")
+        result = run_local_evaluation()
+        logger.info(f"Evaluation complete: {result.get('benchmark_score_pct', 0)}% ({result.get('passed_cases', 0)}/{result.get('total_cases', 0)})")
+        return result
+    except Exception as e:
+        logger.error(f"Evaluation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
