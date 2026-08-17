@@ -1,22 +1,20 @@
-import React, { useState } from 'react';
-import { Send, Sparkles, Shield, Cpu, Layers, FileText, CheckCircle2, Share2, Mail, MessageSquare, Target, TrendingUp, HelpCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Sparkles, Shield, Cpu, Layers, FileText, CheckCircle2, Share2, Mail, MessageSquare, Target, TrendingUp, HelpCircle, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import AgentGraphVisualizer from './AgentGraphVisualizer';
 
-export default function ChatInterface() {
+export default function ChatInterface({ messages, setMessages, clearMessages }) {
   const [prompt, setPrompt] = useState('');
   const [segment, setSegment] = useState('All Cohorts (Full Dataset)');
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Welcome to the **Google Cloud Agent Platform**! Ask me to analyze customer data from BigQuery, craft omnichannel marketing strategies, or generate high-converting creative copy. I will coordinate specialized agents via **Agent-to-Agent (A2A) protocol** protected by **Model Armor**.',
-      a2a_trace: [],
-      model_armor: { passed: true }
-    }
-  ]);
   const [currentTrace, setCurrentTrace] = useState([]);
   const [currentArmor, setCurrentArmor] = useState({ passed: true });
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   const samplePrompts = [
     "Analyze churn risk for At-Risk Premium customers and generate win-back strategy + email copy.",
@@ -106,6 +104,31 @@ export default function ChatInterface() {
               <option value="Champions" style={{ background: 'var(--dropdown-bg)', color: 'var(--text-main)' }}>Champions</option>
               <option value="Recent Explorers" style={{ background: 'var(--dropdown-bg)', color: 'var(--text-main)' }}>Recent Explorers</option>
             </select>
+            <button
+              onClick={clearMessages}
+              disabled={loading || messages.length <= 1}
+              title="Clear chat history"
+              style={{
+                background: 'var(--chip-bg)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-muted)',
+                padding: '0.35rem 0.65rem',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: messages.length <= 1 ? 'not-allowed' : 'pointer',
+                opacity: messages.length <= 1 ? 0.4 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                transition: 'all 0.15s'
+              }}
+              onMouseEnter={e => { if (messages.length > 1) e.currentTarget.style.borderColor = 'var(--color-danger)'; e.currentTarget.style.color = 'var(--color-danger)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <Trash2 size={13} />
+              Clear Chat
+            </button>
           </div>
         </div>
 
@@ -286,6 +309,7 @@ export default function ChatInterface() {
               <span>Orchestrating agents via A2A protocol (Analytics ➔ Strategy ➔ Content)...</span>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Quick Sample Prompts — Collapsible Accordion (closed by default) */}
@@ -423,6 +447,7 @@ function MarkdownRenderer({ content, isUser }) {
 
   return (
     <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
       components={{
         h1: ({ children }) => (
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0.8rem 0 0.4rem', color: isUser ? '#fff' : 'var(--text-main)', borderBottom: isUser ? 'none' : '1px solid var(--border-color)', paddingBottom: '0.3rem' }}>{children}</h3>
@@ -466,43 +491,49 @@ function MarkdownRenderer({ content, isUser }) {
           }
           const lang = (className || '').replace('language-', '');
           const isSql = lang === 'sql' || codeStr.toUpperCase().includes('SELECT');
-          const title = isSql ? '🔍 View Executed BigQuery SQL Query' : '💻 View Code Snippet';
-          const cleanCode = dedentCode(codeStr);
-          return (
-            <details style={{
-              background: 'var(--code-bg)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              marginTop: '0.6rem',
-              marginBottom: '0.6rem',
-              overflow: 'hidden'
-            }}>
-              <summary style={{
-                padding: '0.6rem 0.9rem',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans)',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                color: 'var(--color-primary)',
-                background: 'var(--chip-bg)',
-                userSelect: 'none',
-                outline: 'none'
+          // Only SQL gets the collapsible accordion
+          if (isSql) {
+            const cleanCode = dedentCode(codeStr);
+            return (
+              <details style={{
+                background: 'var(--code-bg)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                marginTop: '0.6rem',
+                marginBottom: '0.6rem',
+                overflow: 'hidden'
               }}>
-                {title}
-              </summary>
-              <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid var(--border-color)', overflowX: 'auto' }}>
-                <pre style={{
-                  margin: 0,
-                  fontFamily: 'var(--font-mono)',
+                <summary style={{
+                  padding: '0.6rem 0.9rem',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '0.82rem',
-                  color: 'var(--text-main)',
-                  whiteSpace: 'pre',
-                  textAlign: 'left'
+                  fontWeight: 600,
+                  color: 'var(--color-primary)',
+                  background: 'var(--chip-bg)',
+                  userSelect: 'none',
+                  outline: 'none'
                 }}>
-                  <code>{cleanCode}</code>
-                </pre>
-              </div>
-            </details>
+                  🔍 View Executed BigQuery SQL Query
+                </summary>
+                <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid var(--border-color)', overflowX: 'auto' }}>
+                  <pre style={{
+                    margin: 0,
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-main)',
+                    whiteSpace: 'pre',
+                    textAlign: 'left'
+                  }}>
+                    <code>{cleanCode}</code>
+                  </pre>
+                </div>
+              </details>
+            );
+          }
+          // Non-SQL code: render as simple styled inline code
+          return (
+            <code style={{ background: 'var(--chip-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.84rem', color: 'var(--color-primary)' }}>{codeStr}</code>
           );
         },
         table: ({ children }) => (

@@ -1,13 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { MessageSquare, BookOpen, Database, Activity, Cpu, Sun, Moon } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { MessageSquare, BookOpen, Database, Activity, Cpu, Sun, Moon, Globe } from 'lucide-react';
 import ChatInterface from './components/ChatInterface';
 import SkillsInspector from './components/SkillsInspector';
 import BigQueryDataViewer from './components/BigQueryDataViewer';
+import A2AExplorer from './components/A2AExplorer';
 import SimulatorControls from './components/SimulatorControls';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('chat');
   const [theme, setTheme] = useState('light');
+
+  // Lift chat messages to App so they persist across tab switches
+  const welcomeMsg = {
+    role: 'assistant',
+    content: 'Welcome to the **Google Cloud Agent Platform**! Ask me to analyze customer data from BigQuery, craft omnichannel marketing strategies, or generate high-converting creative copy. I will coordinate specialized agents via **Agent-to-Agent (A2A) protocol** protected by **Model Armor**.',
+    a2a_trace: [],
+    model_armor: { passed: true }
+  };
+  const [messages, setMessages] = useState([welcomeMsg]);
+  const clearMessages = useCallback(() => setMessages([welcomeMsg]), []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -63,6 +74,14 @@ export default function App() {
           </button>
 
           <button
+            className={`tab-btn ${activeTab === 'a2a' ? 'active' : ''}`}
+            onClick={() => setActiveTab('a2a')}
+          >
+            <Globe size={15} />
+            A2A Protocol Explorer
+          </button>
+
+          <button
             className={`tab-btn ${activeTab === 'simulator' ? 'active' : ''}`}
             onClick={() => setActiveTab('simulator')}
           >
@@ -87,9 +106,12 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        {activeTab === 'chat' && <ChatInterface />}
+        <div style={{ display: activeTab === 'chat' ? 'contents' : 'none' }}>
+          <ChatInterface messages={messages} setMessages={setMessages} clearMessages={clearMessages} />
+        </div>
         {activeTab === 'skills' && <SkillsInspector />}
         {activeTab === 'bigquery' && <BigQueryDataViewer />}
+        {activeTab === 'a2a' && <A2AExplorer />}
         {activeTab === 'simulator' && <SimulatorControls />}
       </main>
     </div>
