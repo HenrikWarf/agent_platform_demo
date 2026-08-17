@@ -29,7 +29,7 @@ LOCATION = os.getenv("AGENT_REGISTRY_LOCATION", "global")
 # Skills to register: maps skill directory name -> registry metadata
 SKILLS = [
     {
-        "dir": "marketing_analytics",
+        "dir": "bigquery-customer-analytics",
         "skill_id": "bigquery-customer-analytics",
         "display_name": "BigQuery Customer Analytics",
         "description": (
@@ -39,8 +39,8 @@ SKILLS = [
         ),
     },
     {
-        "dir": "omnichannel_strategy",
-        "skill_id": "omnichannel-strategy",
+        "dir": "campaign-framework",
+        "skill_id": "campaign-framework",
         "display_name": "Omnichannel Strategy Framework",
         "description": (
             "Generates multi-channel marketing strategies, campaign "
@@ -48,8 +48,8 @@ SKILLS = [
         ),
     },
     {
-        "dir": "brand_voice",
-        "skill_id": "brand-voice-content",
+        "dir": "brand-voice-craft",
+        "skill_id": "brand-voice-craft",
         "display_name": "Brand Voice & Creative Copy",
         "description": (
             "Drafts brand-aligned subject lines, email templates, "

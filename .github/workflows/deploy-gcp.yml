@@ -194,6 +194,18 @@ jobs:
             --project=${{ env.GCP_PROJECT_ID }} \
             --quiet || echo "Agent Gateway provisioned or updated."
 
+      - name: Verify Model Armor Template Configuration
+        if: needs.changes.outputs.infra == 'true'
+        run: |
+          echo "🛡️ Verifying Model Armor template..."
+          TEMPLATE=$(curl -s -H "Authorization: Bearer $(gcloud auth application-default print-access-token 2>/dev/null || gcloud auth print-access-token)" \
+            "https://modelarmor.${{ env.GCP_REGION }}.rep.googleapis.com/v1/projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/templates/marketing-security-template" 2>/dev/null)
+          if echo "$TEMPLATE" | python3 -c "import sys,json; t=json.load(sys.stdin); assert t.get('filterConfig',{}).get('piAndJailbreakFilterSettings',{}).get('filterEnforcement')=='ENABLED'; print('✅ Model Armor template verified: PI/Jailbreak filter ENABLED')" 2>/dev/null; then
+            echo "Model Armor template is properly configured."
+          else
+            echo "⚠️ Model Armor template not found or misconfigured. Create it in Cloud Console → Model Armor."
+          fi
+
       # --- 4. ADK Agent Runtime Deployment ---
       - name: Install uv (required by agents-cli)
         if: needs.changes.outputs.agents == 'true'
@@ -208,6 +220,29 @@ jobs:
             --project ${{ env.GCP_PROJECT_ID }} \
             --region ${{ env.GCP_REGION }} \
             --no-confirm-project
+
+      - name: Smoke Test Governed Endpoint
+        if: needs.changes.outputs.agents == 'true'
+        continue-on-error: true
+        run: |
+          echo "🔍 Smoke testing governed :streamQuery endpoint..."
+          RE_ID=$(cat deployment_metadata.json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('resource_name',''))" 2>/dev/null || echo "")
+          if [ -z "$RE_ID" ]; then
+            echo "⚠️ No deployment_metadata.json found. Skipping smoke test."
+            exit 0
+          fi
+          RESP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+            -H "Content-Type: application/json" \
+            "https://${{ env.GCP_REGION }}-aiplatform.googleapis.com/v1beta1/${RE_ID}:streamQuery" \
+            -d '{"class_method":"stream_query","input":{"app_name":"app","user_id":"ci-smoke-test","new_message":{"role":"user","parts":[{"text":"health check"}]}}}' \
+            --max-time 30 || echo "000")
+          echo "Governed endpoint response code: $RESP"
+          if [ "$RESP" = "200" ] || [ "$RESP" = "403" ]; then
+            echo "✅ Governed path is reachable (403 = Model Armor screened, which is correct)"
+          else
+            echo "⚠️ Unexpected response code: $RESP"
+          fi
 
       # --- 5. Publish Agent to Gemini Enterprise ---
       - name: Publish Agent to Gemini Enterprise

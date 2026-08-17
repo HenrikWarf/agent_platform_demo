@@ -20,11 +20,13 @@ agents/
 deploy/
 terraform/
 
+# Skills (local reference only - registered separately in Agent Registry)
+skills/
+
 # Documentation
 docs/
 *.md
 !README.md
-!skills/**/SKILL.md
 LICENSE
 
 # Development

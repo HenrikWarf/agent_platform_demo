@@ -29,6 +29,12 @@ echo "📊 Enabling Log Analytics on Cloud Logging _Default Bucket..."
 echo "======================================================================"
 gcloud logging buckets update _Default --location=global --project="${PROJECT_ID}" --enable-analytics || true
 
+echo "======================================================================"
+echo "🔗 Creating Log Analytics Linked BigQuery Dataset..."
+echo "======================================================================"
+gcloud logging links create defaultLink \
+  --bucket=_Default --location=global --project="${PROJECT_ID}" 2>/dev/null || echo "  (Linked dataset 'defaultLink' already exists)"
+
 
 echo "======================================================================"
 echo "🔐 Granting Observability & Metric Writer IAM Roles to Service Accounts..."
@@ -38,13 +44,11 @@ TARGET_PRINCIPALS=(
   "serviceAccount:agent-platform-sa@${PROJECT_ID}.iam.gserviceaccount.com"
   "serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
   "serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform.iam.gserviceaccount.com"
-  "principal://agents.global.org-481945953452.system.id.goog/resources/aiplatform/projects/${PROJECT_NUMBER}/locations/us-central1/reasoningEngines/4762742973165207552"
-  "principal://agents.global.org-481945953452.system.id.goog/resources/aiplatform/projects/${PROJECT_NUMBER}/locations/us-central1/reasoningEngines/1358021654873112576"
-  "principal://agents.global.org-481945953452.system.id.goog/resources/aiplatform/projects/${PROJECT_NUMBER}/locations/us-central1/reasoningEngines/2731619541221113856"
-  "principal://agents.global.org-481945953452.system.id.goog/resources/aiplatform/projects/${PROJECT_NUMBER}/locations/us-central1/reasoningEngines/5406757719879188480"
 )
 
 OBSERVABILITY_ROLES=(
+  "roles/observability.admin"
+  "roles/logging.viewAccessor"
   "roles/cloudtrace.agent"
   "roles/logging.logWriter"
   "roles/monitoring.metricWriter"
@@ -64,5 +68,21 @@ for PRINCIPAL in "${TARGET_PRINCIPALS[@]}"; do
       --quiet 2>/dev/null || echo "  (IAM binding applied or checked)"
   done
 done
+
+echo "======================================================================"
+echo "🛡️ Granting Model Armor IAM Roles for Agent Gateway Governance..."
+echo "======================================================================"
+
+# Reasoning Engine service agent needs Model Armor access to screen prompts/responses
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.user" \
+  --quiet 2>/dev/null || echo "  (RE service agent: modelarmor.user applied)"
+
+# Dep service agent manages gateway-to-Model Armor integration
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.calloutUser" \
+  --quiet 2>/dev/null || echo "  (Dep service agent: modelarmor.calloutUser applied)"
 
 echo "✅ Observability APIs & Service Account IAM Permissions Successfully Enabled!"

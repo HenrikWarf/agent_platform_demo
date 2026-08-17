@@ -11,7 +11,19 @@ IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/agent-platform/backend:latest"
 echo "======================================================================"
 echo "📦 Building Backend Image via Cloud Build..."
 echo "======================================================================"
-gcloud builds submit --tag "${IMAGE_TAG}" -f deploy/Dockerfile.backend .
+
+# Create a temporary build context with backend code + required files
+# (gcloudignore excludes backend/ and deploy/ from the root context)
+BUILD_DIR=$(mktemp -d)
+trap 'rm -rf "${BUILD_DIR}"' EXIT
+
+cp deploy/Dockerfile.backend "${BUILD_DIR}/Dockerfile"
+cp -r backend "${BUILD_DIR}/backend"
+cp -r skills "${BUILD_DIR}/skills"
+[ -d eval ] && cp -r eval "${BUILD_DIR}/eval"
+[ -f deployment_metadata.json ] && cp deployment_metadata.json "${BUILD_DIR}/"
+
+gcloud builds submit --tag "${IMAGE_TAG}" "${BUILD_DIR}"
 
 echo "======================================================================"
 echo "🚀 Deploying Backend to Cloud Run (agent-platform-backend)..."
