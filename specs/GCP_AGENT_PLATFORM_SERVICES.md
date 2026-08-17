@@ -83,9 +83,53 @@ gcloud run deploy "agent-platform-backend" \
 
 ## 2. GCP Agent Gateway & Vertex AI Model Armor (`networkservices` & `modelarmor`)
 
-### 2.1 GCP Service Features & Capabilities
-* **GCP Agent Gateway** (`networkservices.googleapis.com`): Enterprise network proxy providing governed access control (`CLIENT_TO_AGENT` ingress mode) and protocol translation (MCP & HTTP/JSON).
-* **Vertex AI Model Armor** (`modelarmor.googleapis.com`): In-line prompt and response sanitization filtering jailbreaks, toxic language, and masking sensitive PII (emails, SSNs).
+### 2.1 GCP Agent Gateway: Why Use It & Enterprise Value Proposition
+
+**GCP Agent Gateway** (`networkservices.googleapis.com`) is a managed security and networking control plane purpose-built for enterprise AI agent systems. 
+
+As enterprises move from single-turn chatbots to multi-agent architectures executing database queries and automated actions, traditional web API gateways fall short. Agent Gateway solves the core governance challenges of autonomous agent systems:
+
+```
+                  ┌─────────────────────────────────────────────────────────────┐
+                  │                 WITHOUT AGENT GATEWAY                       │
+                  │  Ungoverned "Spaghetti" Access & Security Blindspots        │
+                  │  Client ──> Agent ──> Direct Unrestricted DB/API Access     │
+                  └──────────────────────────────┬──────────────────────────────┘
+                                                 │
+                                                 v
+                  ┌─────────────────────────────────────────────────────────────┐
+                  │                  WITH GCP AGENT GATEWAY                     │
+                  │  Governed Security Perimeter & Zero-Trust Control Plane     │
+                  │  Client ──> Agent Gateway (Model Armor & IAM) ──> Agent     │
+                  └─────────────────────────────────────────────────────────────┘
+```
+
+#### Core Enterprise Values & Benefits:
+
+1. **Centralized Security Perimeter & Zero-Trust Access Control**:
+   - Without an Agent Gateway, agents communicate directly with internal tools, LLMs, and external databases in an ungoverned network.
+   - **Agent Gateway** creates a single, governed security perimeter enforcing Zero-Trust access policies for both client-to-agent ingress (`CLIENT_TO_AGENT`) and agent-to-tools egress (`AGENT_TO_ANYWHERE`).
+
+2. **In-Line Model Armor Interception**:
+   - Intercepts incoming prompts and outgoing model responses to enforce **Vertex AI Model Armor** safety policies automatically.
+   - Blocks prompt injection / jailbreak attacks, masks sensitive PII (emails, SSNs, credit cards) in-flight, and enforces Responsible AI safety thresholds before requests reach the LLM runtime.
+
+3. **AI-Native Protocol Standardization (MCP & REST)**:
+   - Provides native proxying and governance for the **Model Context Protocol (MCP)** and HTTP/JSON streaming (`:streamQuery`).
+   - Standardizes tool execution protocols, allowing agents to invoke remote MCP tools securely across different clouds or internal networks with identity translation.
+
+4. **Agent Identity & Non-Repudiation (`AGENT_IDENTITY`)**:
+   - Integrates with **Identity-Aware Proxy (IAP)** and GCP IAM to validate caller identities (users, IDEs, web apps) and enforce specialized **Agent Identity service accounts**.
+   - Guarantees non-repudiation: every agent action, tool call, or prompt is cryptographically bound to a verified principal identity.
+
+5. **Centralized Compliance & Audit Log Stream**:
+   - Eliminates blind spots by emitting uniform audit logs directly to Cloud Audit Logs (`cloudaudit.googleapis.com`), Cloud Logging (`_Default` bucket), and Cloud Trace.
+   - Provides full compliance reporting (GDPR, HIPAA, SOC2) for AI interactions, capturing exact prompt inputs, Model Armor sanitization results, and egress tool calls.
+
+6. **Decoupling Security Governance from Agent Development**:
+   - Enables Enterprise Security Operations (SecOps) teams to update security policies, DLP scanners, or Model Armor templates globally in declarative YAML specs (`agent_gateway.yaml`) without requiring AI developers to re-deploy or re-compile agent Python code.
+
+---
 
 ### 2.2 Code & Implementation Details
 
@@ -323,56 +367,124 @@ Google BigQuery provides serverless enterprise data warehousing. In this platfor
 
 ### 5.2 Centralized Observability View: `agent_events_v2`
 
-The `agent_events_v2` view structures execution logs for **ALL AGENTS** in the GCP project into a single queryable table:
+The `agent_events_v2` view structures high-value **user requests**, **agent responses**, **activity/span operations**, **tool calls**, **Model Armor safety audits**, **token usage metrics**, **execution latencies (`latency_ms`)**, and **OpenTelemetry trace spans** across all agents in the project:
 
 ```sql
 CREATE OR REPLACE VIEW `agent-demo-09.agent_analytics.agent_events_v2` AS
-SELECT
-  insert_id AS event_id,
-  timestamp,
-  receive_timestamp,
-  resource.type AS resource_type,
-  COALESCE(
-    JSON_VALUE(json_payload.session_id),
-    REGEXP_EXTRACT(http_request.request_url, r'session_id=([^&]+)'),
-    JSON_VALUE(labels.session_id),
-    JSON_VALUE(labels.instanceId),
-    'session-default'
-  ) AS session_id,
-  COALESCE(
-    JSON_VALUE(json_payload.user_id),
-    proto_payload.audit_log.authentication_info.principal_email,
-    'user-123'
-  ) AS user_id,
-  COALESCE(
-    JSON_VALUE(json_payload.agent_name),
-    JSON_VALUE(resource.labels.reasoning_engine_id),
-    REGEXP_EXTRACT(proto_payload.audit_log.resource_name, r'agentGateways/([^/]+)'),
-    REGEXP_EXTRACT(proto_payload.audit_log.resource_name, r'templates/([^/]+)'),
-    'marketing_orchestrator'
-  ) AS agent_name,
-  COALESCE(
-    proto_payload.audit_log.method_name,
-    JSON_VALUE(json_payload.event_type),
-    http_request.request_method,
-    log_name
-  ) AS event_type,
-  COALESCE(
-    text_payload,
-    JSON_VALUE(json_payload.message),
-    JSON_VALUE(json_payload.prompt),
-    TO_JSON_STRING(proto_payload.audit_log.request)
-  ) AS prompt,
-  COALESCE(
-    JSON_VALUE(json_payload.text),
-    JSON_VALUE(json_payload.response),
-    TO_JSON_STRING(proto_payload.audit_log.response)
-  ) AS response,
-  json_payload
-FROM `agent-demo-09.defaultLink._AllLogs`
-WHERE resource.type IN ('aiplatform.googleapis.com/ReasoningEngine', 'cloud_run_revision', 'audited_resource', 'bigquery_project', 'bigquery_resource')
-   OR log_name LIKE '%modelarmor%'
-   OR log_name LIKE '%cloudaudit%';
+WITH trace_spans AS (
+  SELECT
+    span_id AS event_id,
+    start_time AS timestamp,
+    end_time AS receive_timestamp,
+    'opentelemetry_span' AS resource_type,
+    COALESCE(
+      JSON_VALUE(attributes['gen_ai.conversation.id']),
+      JSON_VALUE(attributes['gcp.vertex.agent.session_id']),
+      JSON_VALUE(attributes['session_id']),
+      'session-default'
+    ) AS session_id,
+    COALESCE(
+      JSON_VALUE(attributes['enduser.id']),
+      JSON_VALUE(attributes['user_id']),
+      'user-123'
+    ) AS user_id,
+    COALESCE(
+      JSON_VALUE(attributes['gen_ai.agent.name']),
+      JSON_VALUE(attributes['agent_name']),
+      'marketing_orchestrator'
+    ) AS agent_name,
+    CASE
+      WHEN name LIKE '%llm%' OR name LIKE '%generate%' THEN 'MODEL_CALLING'
+      WHEN name LIKE '%tool%' OR name LIKE '%query%' THEN 'TOOL_EXECUTION'
+      WHEN name LIKE '%workflow%' OR name LIKE '%agent%' THEN 'AGENT_DELEGATION'
+      ELSE 'TRACE_SPAN'
+    END AS event_type,
+    name AS activity_name,
+    JSON_VALUE(attributes['gen_ai.tool.name']) AS tool_name,
+    COALESCE(
+      JSON_VALUE(attributes['gen_ai.prompt']),
+      JSON_VALUE(attributes['gcp.vertex.agent.llm_request'])
+    ) AS user_prompt,
+    COALESCE(
+      JSON_VALUE(attributes['gen_ai.completion']),
+      JSON_VALUE(attributes['gcp.vertex.agent.llm_response'])
+    ) AS agent_response,
+    REGEXP_EXTRACT(JSON_VALUE(attributes['db.statement']), r'(?i)(SELECT\s+.*)') AS sql_executed,
+    TIMESTAMP_DIFF(end_time, start_time, MILLISECOND) AS latency_ms,
+    SAFE_CAST(JSON_VALUE(attributes['gen_ai.usage.input_tokens']) AS INT64) AS input_tokens,
+    SAFE_CAST(JSON_VALUE(attributes['gen_ai.usage.output_tokens']) AS INT64) AS output_tokens,
+    CASE
+      WHEN name LIKE '%analytics%' OR name LIKE '%query%' OR JSON_VALUE(attributes['gen_ai.tool.name']) LIKE '%bigquery%' THEN 'bigquery-customer-analytics'
+      WHEN name LIKE '%strategy%' THEN 'campaign-framework'
+      WHEN name LIKE '%content%' OR name LIKE '%brand%' THEN 'brand-voice-craft'
+      ELSE 'omnichannel-orchestration'
+    END AS skills_used,
+    trace_id,
+    span_id
+  FROM `agent-demo-09.traceLink._AllSpans`
+),
+log_audit_events AS (
+  SELECT
+    insert_id AS event_id,
+    timestamp,
+    receive_timestamp,
+    resource.type AS resource_type,
+    COALESCE(
+      JSON_VALUE(json_payload.session_id),
+      REGEXP_EXTRACT(http_request.request_url, r'session_id=([^&]+)'),
+      JSON_VALUE(labels.session_id),
+      'session-default'
+    ) AS session_id,
+    COALESCE(
+      JSON_VALUE(json_payload.user_id),
+      proto_payload.audit_log.authentication_info.principal_email,
+      'user-123'
+    ) AS user_id,
+    COALESCE(
+      JSON_VALUE(json_payload.agent_name),
+      JSON_VALUE(resource.labels.reasoning_engine_id),
+      REGEXP_EXTRACT(proto_payload.audit_log.resource_name, r'agentGateways/([^/]+)'),
+      REGEXP_EXTRACT(proto_payload.audit_log.resource_name, r'templates/([^/]+)'),
+      'marketing_orchestrator'
+    ) AS agent_name,
+    CASE
+      WHEN proto_payload.audit_log.method_name LIKE '%ModelArmor%' THEN 'MODEL_ARMOR_SAFETY'
+      WHEN http_request.request_url LIKE '%/api/chat%' THEN 'USER_CHAT_REQUEST'
+      WHEN proto_payload.audit_log.method_name LIKE '%InsertJob%' THEN 'BIGQUERY_SQL_QUERY'
+      ELSE COALESCE(proto_payload.audit_log.method_name, JSON_VALUE(json_payload.event_type), 'AUDIT_EVENT')
+    END AS event_type,
+    proto_payload.audit_log.method_name AS activity_name,
+    CAST(NULL AS STRING) AS tool_name,
+    COALESCE(
+      JSON_VALUE(json_payload.message),
+      JSON_VALUE(json_payload.prompt),
+      TO_JSON_STRING(proto_payload.audit_log.request)
+    ) AS user_prompt,
+    COALESCE(
+      JSON_VALUE(json_payload.text),
+      JSON_VALUE(json_payload.response),
+      TO_JSON_STRING(proto_payload.audit_log.response)
+    ) AS agent_response,
+    CAST(NULL AS STRING) AS sql_executed,
+    CAST(NULL AS INT64) AS latency_ms,
+    CAST(NULL AS INT64) AS input_tokens,
+    CAST(NULL AS INT64) AS output_tokens,
+    CASE
+      WHEN JSON_VALUE(json_payload.agent_name) = 'analytics_agent' THEN 'bigquery-customer-analytics'
+      WHEN JSON_VALUE(json_payload.agent_name) = 'strategy_agent' THEN 'campaign-framework'
+      WHEN JSON_VALUE(json_payload.agent_name) = 'content_agent' THEN 'brand-voice-craft'
+      ELSE 'omnichannel-orchestration'
+    END AS skills_used,
+    trace AS trace_id,
+    span_id
+  FROM `agent-demo-09.defaultLink._AllLogs`
+  WHERE proto_payload.audit_log.service_name IS NOT NULL
+     OR log_name LIKE '%modelarmor%'
+     OR http_request.request_url LIKE '%/api/chat%'
+)
+SELECT * FROM trace_spans
+UNION ALL
+SELECT * FROM log_audit_events;
 ```
 
 ---
