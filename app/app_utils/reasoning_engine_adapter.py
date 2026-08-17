@@ -51,6 +51,7 @@ def attach_reasoning_engine_routes(app: FastAPI) -> None:
             # visible to the adk_api and A2A paths, and vice versa (see services.py).
             runtime = AdkApp(
                 app=adk_app,
+                enable_tracing=True,
                 session_service_builder=services.get_session_service,
                 artifact_service_builder=services.get_artifact_service,
                 instrumentor_builder=_no_op_instrumentor_builder,
@@ -81,8 +82,13 @@ def attach_reasoning_engine_routes(app: FastAPI) -> None:
         method = resolve_method(body["class_method"], streaming=True)
 
         async def generator():
-            async for event in method(**(body.get("input") or {})):
-                yield json.dumps(event) + "\n"
+            result = method(**(body.get("input") or {}))
+            if inspect.isasyncgen(result):
+                async for event in result:
+                    yield json.dumps(event) + "\n"
+            else:
+                for event in result:
+                    yield json.dumps(event) + "\n"
 
         return responses.StreamingResponse(
             content=generator(), media_type="application/json"

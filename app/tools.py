@@ -79,336 +79,59 @@ def _clean_generated_sql(text: str) -> str:
     return sql
 
 
-# ─── Tool: Run Custom BigQuery SQL ─────────────────────────────────────────────
+# ─── Tool: Execute BigQuery SQL ────────────────────────────────────────────────
 
-def run_bigquery_sql(user_question: str, tool_context: ToolContext) -> dict:
-    """Execute a natural language question against BigQuery by generating and running SQL.
+def query_customer_data(sql_query: str, tool_context: ToolContext) -> dict:
+    """Execute a BigQuery SQL query and return the results.
 
-    Converts any user data question into a BigQuery SQL query using Gemini,
-    then executes it against the customer analytics tables and returns results.
-    Use this for any data question: counts, averages, listings, comparisons, etc.
+    Runs the provided SQL query against BigQuery and returns the results.
+    The agent must generate the SQL query itself using the table schema
+    provided in its instructions.
 
     Args:
-        user_question: The user's natural language data question, e.g. 'How many customers are in the Champions segment?' or 'Show the top 5 customers by total spend'.
+        sql_query: A valid BigQuery Standard SQL query to execute. Must use fully qualified table names.
 
     Returns:
         dict with 'status', 'summary', 'sql_executed', 'row_count', and 'results' keys.
     """
-    project_id, dataset_id = _get_project_and_dataset()
+    if not sql_query or "SELECT" not in sql_query.upper():
+        return {
+            "status": "ERROR",
+            "summary": "Invalid SQL: query must contain a SELECT statement.",
+            "sql_executed": sql_query or "",
+            "row_count": 0,
+            "results": [],
+        }
+
+    # Clean any markdown formatting the LLM may have wrapped around the SQL
+    clean_sql = _clean_generated_sql(sql_query)
 
     try:
-        from google import genai
-        from google.genai import types
-
-        location = os.environ.get("GOOGLE_CLOUD_LOCATION", os.environ.get("GEMINI_LOCATION", "global"))
-        client = genai.Client(vertexai=True, project=project_id, location=location)
-        model_name = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
-
-        sql_gen_prompt = f"""
-You are a BigQuery SQL Expert for Google Cloud Marketing Analytics.
-Generate a single, valid BigQuery Standard SQL query to answer: '{user_question}'
-
-Available tables in dataset '{project_id}.{dataset_id}':
-
-1. `{project_id}.{dataset_id}.customer_rfm_summary`:
-   - customer_id (STRING), rfm_segment (STRING), recency_days (INT64),
-     frequency_orders (INT64), total_monetary (NUMERIC)
-   - Segments: 'At-Risk Premium', 'Champions', 'Loyal Customers', 'Recent Buyers', 'Lost Customers'
-
-2. `{project_id}.{dataset_id}.customer_demographics_360`:
-   - customer_id (STRING), full_name (STRING), email (STRING), age (INT64),
-     location_city (STRING), location_country (STRING), income_bracket (STRING),
-     preferred_communication_channel (STRING), favorite_product_features (STRING),
-     churn_risk_score (NUMERIC), lifetime_value_tier (STRING)
-
-3. `{project_id}.{dataset_id}.customer_transactions`:
-   - transaction_id (STRING), customer_id (STRING), customer_name (STRING),
-     email (STRING), segment (STRING), amount (NUMERIC), transaction_date (TIMESTAMP)
-
-Rules:
-1. Return ONLY the raw SQL query inside a ```sql markdown block.
-2. Use fully qualified table names as listed above.
-3. Add LIMIT 20 for row listings to avoid returning too many results.
-4. Use JOINs on customer_id when combining tables.
-"""
-        res = client.models.generate_content(
-            model=model_name,
-            contents=sql_gen_prompt,
-            config=types.GenerateContentConfig(temperature=0.0, max_output_tokens=512)
-        )
-
-        generated_text = res.text or ""
-        custom_sql = _clean_generated_sql(generated_text)
-
-        if not custom_sql or "SELECT" not in custom_sql.upper():
-            return {"status": "ERROR", "summary": "Failed to generate valid SQL from your question.", "sql_executed": "", "row_count": 0, "results": []}
-
-        rows = _run_bq_query(custom_sql)
+        rows = _run_bq_query(clean_sql)
 
         # Store in session state for downstream agents
         tool_context.state["analytics_result"] = {
             "summary": f"Query returned {len(rows)} rows.",
             "total_customers_analyzed": len(rows),
-            "sql_executed": custom_sql,
+            "sql_executed": clean_sql,
         }
 
         return {
             "status": "SUCCESS",
             "summary": f"Query executed successfully. Returned {len(rows)} rows.",
-            "sql_executed": custom_sql,
+            "sql_executed": clean_sql,
             "row_count": len(rows),
             "results": rows[:20],
         }
 
     except Exception as e:
         logger.error(f"BigQuery query failed: {e}")
-        return {"status": "ERROR", "summary": f"BigQuery Error: {e}", "sql_executed": "", "row_count": 0, "results": []}
-
-
-# ─── Tool: BigQuery Customer Analytics ─────────────────────────────────────────
-
-def query_customer_cohorts(segment_filter: str, user_prompt: str, tool_context: ToolContext) -> dict:
-    """Query BigQuery customer data for RFM segmentation analytics.
-
-    Analyzes customer cohorts using RFM (Recency, Frequency, Monetary) metrics from BigQuery.
-    For natural language data questions, generates and executes custom BigQuery SQL.
-    For segment-specific queries, retrieves pre-aggregated RFM segment summaries.
-
-    Args:
-        segment_filter: The customer segment to analyze, e.g. 'At-Risk Premium', 'Champions', 'All Cohorts (Full Dataset)'.
-        user_prompt: The user's original natural language data question or campaign objective.
-
-    Returns:
-        dict with 'status', 'summary', 'cohort_details', and 'sql_executed' keys.
-    """
-    project_id, dataset_id = _get_project_and_dataset()
-
-    # For natural-language data questions, generate custom SQL via Gemini
-    if user_prompt and len(user_prompt.strip()) > 10 and not user_prompt.lower().startswith("analyze marketing"):
-        try:
-            from google import genai
-            from google.genai import types
-
-            location = os.environ.get("GOOGLE_CLOUD_LOCATION", os.environ.get("GEMINI_LOCATION", "global"))
-            client = genai.Client(vertexai=True, project=project_id, location=location)
-            model_name = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
-
-            sql_gen_prompt = f"""
-You are a BigQuery SQL Expert for Google Cloud Marketing Analytics.
-Generate a single, valid BigQuery Standard SQL query to answer this user request: '{user_prompt}'
-Target Segment Context: '{segment_filter}'
-
-Available BigQuery Tables in dataset '{project_id}.{dataset_id}':
-1. `{project_id}.{dataset_id}.customer_rfm_summary`:
-   - customer_id (STRING), rfm_segment (STRING), recency_days (INT64),
-     frequency_orders (INT64), total_monetary (NUMERIC)
-
-2. `{project_id}.{dataset_id}.customer_demographics_360`:
-   - customer_id (STRING), full_name (STRING), email (STRING), age (INT64),
-     location_city (STRING), location_country (STRING), income_bracket (STRING),
-     preferred_communication_channel (STRING), churn_risk_score (NUMERIC), lifetime_value_tier (STRING)
-
-3. `{project_id}.{dataset_id}.customer_transactions`:
-   - transaction_id (STRING), customer_id (STRING), customer_name (STRING),
-     email (STRING), segment (STRING), amount (NUMERIC), transaction_date (TIMESTAMP)
-
-Rules:
-1. Return ONLY the raw SQL query inside ```sql markdown block.
-2. Use exact table names listed above.
-3. Keep LIMIT 20 if retrieving row listings.
-"""
-            res = client.models.generate_content(
-                model=model_name,
-                contents=sql_gen_prompt,
-                config=types.GenerateContentConfig(temperature=0.0, max_output_tokens=512)
-            )
-
-            generated_text = res.text or ""
-            custom_sql = _clean_generated_sql(generated_text)
-
-            if custom_sql and "SELECT" in custom_sql.upper():
-                custom_rows = _run_bq_query(custom_sql)
-                summary_text = f"Query returned {len(custom_rows)} records for segment '{segment_filter}'."
-
-                # Store in session state for downstream agents
-                tool_context.state["analytics_result"] = {
-                    "summary": summary_text,
-                    "total_customers_analyzed": len(custom_rows),
-                    "target_segment": segment_filter,
-                    "sql_executed": custom_sql,
-                }
-                return {
-                    "status": "SUCCESS",
-                    "summary": summary_text,
-                    "cohort_details": {
-                        "total_customers_analyzed": len(custom_rows),
-                        "target_segment": segment_filter,
-                        "count_in_segment": len(custom_rows),
-                        "sql_executed": custom_sql,
-                        "custom_results": custom_rows[:10],
-                    },
-                }
-        except Exception as e:
-            logger.error(f"Gemini SQL generation failed: {e}")
-            return {"status": "ERROR", "summary": f"BigQuery Execution Error: {e}", "cohort_details": {"error": str(e)}}
-
-    # Default: aggregate RFM query
-    from google.cloud import bigquery as bq
-    if segment_filter.startswith("All") or segment_filter.upper() == "ALL":
-        sql = textwrap.dedent(f"""
-        SELECT 'All Cohorts (Full Dataset)' AS rfm_segment,
-               COUNT(customer_id) AS customer_count,
-               ROUND(AVG(recency_days), 1) AS avg_recency,
-               ROUND(AVG(total_monetary), 2) AS avg_monetary,
-               ROUND(SUM(total_monetary), 2) AS total_revenue_at_risk
-        FROM `{project_id}.{dataset_id}.customer_rfm_summary`
-        """).strip()
-        job_config = None
-    else:
-        sql = textwrap.dedent(f"""
-        SELECT rfm_segment,
-               COUNT(customer_id) AS customer_count,
-               ROUND(AVG(recency_days), 1) AS avg_recency,
-               ROUND(AVG(total_monetary), 2) AS avg_monetary,
-               ROUND(SUM(total_monetary), 2) AS total_revenue_at_risk
-        FROM `{project_id}.{dataset_id}.customer_rfm_summary`
-        WHERE rfm_segment = @segment
-        GROUP BY rfm_segment
-        """).strip()
-        job_config = bq.QueryJobConfig(
-            query_parameters=[bq.ScalarQueryParameter("segment", "STRING", segment_filter)]
-        )
-
-    rows = _run_bq_query(sql, job_config)
-    if rows:
-        row = rows[0]
-        result = {
-            "total_customers_analyzed": int(row.get("customer_count", 0)),
-            "target_segment": row.get("rfm_segment", segment_filter),
-            "count_in_segment": int(row.get("customer_count", 0)),
-            "avg_recency_days": float(row.get("avg_recency", 0)),
-            "avg_monetary_val": float(row.get("avg_monetary", 0)),
-            "total_segment_revenue_at_risk": float(row.get("total_revenue_at_risk", 0)),
-            "sql_executed": sql,
+        return {
+            "status": "ERROR",
+            "summary": f"BigQuery Error: {e}",
+            "sql_executed": clean_sql,
+            "row_count": 0,
+            "results": [],
         }
-        tool_context.state["analytics_result"] = result
-        return {"status": "SUCCESS", "summary": f"Identified {result['count_in_segment']} customers in '{segment_filter}' with ${result['total_segment_revenue_at_risk']:,.2f} revenue at risk.", "cohort_details": result}
-    else:
-        return {"status": "NO_DATA", "summary": f"No customer records found for segment '{segment_filter}'.", "cohort_details": {"target_segment": segment_filter, "count_in_segment": 0, "sql_executed": sql}}
 
 
-# ─── Tool: Generate Marketing Strategy ──────────────────────────────────────
-
-def generate_campaign_strategy(campaign_goal: str, target_segment: str, analytics_summary: str, tool_context: ToolContext) -> dict:
-    """Generate an omnichannel marketing strategy with campaign pillars, channel mix, and A/B testing hypotheses.
-
-    Creates a comprehensive marketing campaign framework based on the campaign goal,
-    target customer segment, and any available analytics data.
-
-    Args:
-        campaign_goal: The business objective for the campaign, e.g. 'Re-engage churn-risk enterprise customers'.
-        target_segment: The customer segment being targeted, e.g. 'At-Risk Premium'.
-        analytics_summary: Summary of analytics data to inform the strategy.
-
-    Returns:
-        dict with 'status' and 'strategy' keys containing campaign_title, business_goal,
-        campaign_pillars, channel_mix, and ab_testing_hypotheses.
-    """
-    try:
-        from google import genai
-        from google.genai import types
-
-        project_id = os.environ.get("GCP_PROJECT_ID", "agent-demo-09")
-        location = os.environ.get("GOOGLE_CLOUD_LOCATION", os.environ.get("GEMINI_LOCATION", "global"))
-        client = genai.Client(vertexai=True, project=project_id, location=location)
-        model_name = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
-
-        prompt = f"""
-Goal: {campaign_goal}
-Target Cohort: {target_segment}
-Analytics Context: {analytics_summary}
-
-Return a concise JSON marketing strategy with these keys:
-- campaign_title (string, max 10 words)
-- business_goal (string, 1 sentence)
-- target_cohort (string)
-- projected_revenue_recovery (string, e.g. "$1.2M")
-- campaign_pillars (exactly 3 objects with keys: pillar, description (1 sentence), channels (list of 2-3 strings))
-- channel_mix (exactly 4 objects with keys: channel, weight, cadence)
-- ab_testing_hypotheses (exactly 3 short strings)
-
-Be concise. No explanations outside the JSON.
-"""
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction="Expert Omnichannel Marketing Strategist. Return ONLY valid JSON. Be concise.",
-                response_mime_type="application/json",
-                temperature=0.5,
-                max_output_tokens=1024,
-            ),
-        )
-        strategy = json.loads(response.text)
-        tool_context.state["strategy_result"] = strategy
-        return {"status": "SUCCESS", "strategy": strategy}
-
-    except Exception as e:
-        logger.error(f"Strategy generation failed: {e}")
-        return {"status": "ERROR", "strategy": {}, "error": f"Strategy generation failed: {str(e)}"}
-
-
-# ─── Tool: Generate Marketing Content ──────────────────────────────────────
-
-def generate_marketing_content(campaign_title: str, target_segment: str, strategy_summary: str, tool_context: ToolContext) -> dict:
-    """Generate high-converting marketing creative assets: email templates, social media posts, and SMS copy.
-
-    Creates brand-aligned marketing content based on the campaign strategy, following
-    brand voice guidelines for tone, style, and messaging.
-
-    Args:
-        campaign_title: The name of the campaign, e.g. 'VIP Retention Campaign'.
-        target_segment: The customer segment being targeted, e.g. 'At-Risk Premium'.
-        strategy_summary: Summary of the campaign strategy to inform content creation.
-
-    Returns:
-        dict with 'status', 'campaign_title', and 'generated_assets' keys containing
-        email_template, social_posts, and sms_copy.
-    """
-    try:
-        from google import genai
-        from google.genai import types
-
-        project_id = os.environ.get("GCP_PROJECT_ID", "agent-demo-09")
-        location = os.environ.get("GOOGLE_CLOUD_LOCATION", os.environ.get("GEMINI_LOCATION", "global"))
-        client = genai.Client(vertexai=True, project=project_id, location=location)
-        model_name = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
-
-        prompt = f"""
-Campaign: {campaign_title}
-Cohort: {target_segment}
-Strategy: {strategy_summary}
-
-Return a concise JSON with these keys:
-- email_template (object: subject (max 10 words), preview_text (1 sentence), body (3-4 sentences), cta_button (max 5 words))
-- social_posts (exactly 2 objects: platform, copy (max 2 sentences each))
-- sms_copy (1 sentence, max 160 chars)
-
-Be concise and punchy. No filler.
-"""
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction="Expert Copywriter. Return ONLY valid JSON. Be concise and punchy.",
-                response_mime_type="application/json",
-                temperature=0.6,
-                max_output_tokens=768,
-            ),
-        )
-        assets = json.loads(response.text)
-        return {"status": "SUCCESS", "campaign_title": campaign_title, "generated_assets": assets}
-
-    except Exception as e:
-        logger.error(f"Content generation failed: {e}")
-        return {"status": "ERROR", "campaign_title": campaign_title, "generated_assets": {}, "error": f"Content generation failed: {str(e)}"}

@@ -39,6 +39,7 @@ class AgentEngineApp(AdkApp):
 
 agent_runtime = AgentEngineApp(
     app=adk_app,
+    enable_tracing=True,
     artifact_service_builder=lambda: (
         GcsArtifactService(bucket_name=logs_bucket_name)
         if logs_bucket_name
