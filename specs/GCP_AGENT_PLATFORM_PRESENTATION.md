@@ -6,18 +6,38 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ## 📑 Slide Deck Table of Contents
 
-1. [Slide 1: End-to-End Enterprise Architecture Overview](#slide-1-end-to-end-enterprise-architecture-overview)
-2. [Slide 2: Multi-Agent Orchestration with Google ADK & A2A Protocol](#slide-2-multi-agent-orchestration-with-google-adk--a2a-protocol)
-3. [Slide 3: Zero-Trust Security Perimeter — Agent Gateway & Model Armor](#slide-3-zero-trust-security-perimeter--agent-gateway--model-armor)
-4. [Slide 4: Agent Engine & Managed Runtime Services](#slide-4-agent-engine--managed-runtime-services)
-5. [Slide 5: Model Context Protocol (MCP) — Managed & Custom Enterprise Services](#slide-5-model-context-protocol-mcp--managed--custom-enterprise-services)
-6. [Slide 6: Continuous Quality Flywheel, Agent Evaluation & Online Monitors](#slide-6-continuous-quality-flywheel-agent-evaluation--online-monitors)
-7. [Slide 7: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent](#slide-7-4-tier-observability-cloud-trace--bigquery-analytics-agent)
-8. [Slide 8: Agent Registry & Gemini Enterprise Workplace Publishing](#slide-8-agent-registry--gemini-enterprise-workplace-publishing)
+1. [Slide 1: Gemini Enterprise Agent Platform (Title Cover)](#slide-1-gemini-enterprise-agent-platform-title-cover)
+2. [Slide 2: End-to-End Enterprise Architecture Overview](#slide-2-end-to-end-enterprise-architecture-overview)
+3. [Slide 3: Multi-Agent Orchestration with Google ADK & A2A Protocol](#slide-3-multi-agent-orchestration-with-google-adk--a2a-protocol)
+4. [Slide 4: Zero-Trust Security Perimeter — Agent Gateway & Model Armor](#slide-4-zero-trust-security-perimeter--agent-gateway--model-armor)
+5. [Slide 5: Agent Engine & Managed Runtime Services](#slide-5-agent-engine--managed-runtime-services)
+6. [Slide 6: Model Context Protocol (MCP) — Managed & Custom Enterprise Services](#slide-6-model-context-protocol-mcp--managed--custom-enterprise-services)
+7. [Slide 7: Continuous Quality Flywheel, Agent Evaluation & Online Monitors](#slide-7-continuous-quality-flywheel-agent-evaluation--online-monitors)
+8. [Slide 8: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent](#slide-8-4-tier-observability-cloud-trace--bigquery-analytics-agent)
+9. [Slide 9: Agent Registry & Gemini Enterprise Workplace Publishing](#slide-9-agent-registry--gemini-enterprise-workplace-publishing)
 
 ---
 
-## Slide 1: End-to-End Enterprise Architecture Overview
+## Slide 1: Gemini Enterprise Agent Platform (Title Cover)
+
+> **Key Takeaway:** A comprehensive reference architecture and enterprise guide for building, governing, evaluating, and operating autonomous multi-agent AI systems on Google Cloud Platform.
+
+![Gemini Enterprise Agent Platform Title Cover](architecture/00_title_starter_slide.jpg)
+
+### 🎙️ Speaker Notes & Key Points:
+* **Enterprise Architecture Deep-Dive**: Navigates the paradigm shift from single-turn chatbots to production-grade autonomous multi-agent systems.
+* **The 7 Core Engineering Pillars**:
+  1. **Agent Development**: Google ADK (`google-adk`), Sequential pipelines, and A2A Protocol federation.
+  2. **AI Firewall**: Agent Gateway and Model Armor zero-trust inspection across prompts, completions, and tools.
+  3. **Managed Runtime**: Agent Engine serverless container runtime, Session Service, and Memory Bank.
+  4. **Unified Tool Ecosystem**: Google Managed MCPs (BigQuery, AlloyDB) & Custom enterprise microservices.
+  5. **Continuous Quality**: Synthetic golden eval datasets, LLM-as-judge scoring, and 10-min production online monitors.
+  6. **Observability**: Cloud Trace distributed span trees and conversational BigQuery Analytics Agent.
+  7. **Fleet Distribution**: Centralized Agent Registry and 1-click publishing to corporate Gemini Enterprise chat.
+
+---
+
+## Slide 2: End-to-End Enterprise Architecture Overview
 
 > **Key Takeaway:** A production-grade multi-agent platform on Google Cloud combines agent development frameworks (ADK), edge security (Model Armor), serverless runtime (Agent Engine), enterprise data, continuous evaluation, and workplace distribution (Gemini Enterprise).
 
@@ -30,7 +50,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 2: Multi-Agent Orchestration with Google ADK & A2A Protocol
+## Slide 3: Multi-Agent Orchestration with Google ADK & A2A Protocol
 
 > **Key Takeaway:** Google ADK (`google-adk`) and the open Agent-to-Agent (A2A) protocol provide standard primitives for hierarchical routing, deterministic reasoning pipelines, and cross-boundary agent federation.
 
@@ -46,7 +66,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 3: Zero-Trust Security Perimeter — Agent Gateway & Model Armor
+## Slide 4: Zero-Trust Security Perimeter — Agent Gateway & Model Armor
 
 > **Key Takeaway:** GCP Agent Gateway and Model Armor deliver a multi-layered AI Firewall inspecting ingress prompts, egress completions, and tool transactions without latency bottlenecks.
 
@@ -63,7 +83,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 4: Agent Engine & Managed Runtime Services
+## Slide 5: Agent Engine & Managed Runtime Services
 
 > **Key Takeaway:** Agent Engine (`reasoningEngines`) provides a fully managed, autoscaling container runtime equipped with turnkey session persistence, semantic memory, and artifact storage.
 
@@ -77,7 +97,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 5: Model Context Protocol (MCP) — Managed & Custom Enterprise Services
+## Slide 6: Model Context Protocol (MCP) — Managed & Custom Enterprise Services
 
 > **Key Takeaway:** Standardized Agent-to-Tool interoperability via the Model Context Protocol (MCP) seamlessly integrates first-party Google-managed data stores and custom self-hosted enterprise microservices under unified Agent Gateway security.
 
@@ -102,7 +122,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 6: Continuous Quality Flywheel, Agent Evaluation & Online Monitors
+## Slide 7: Continuous Quality Flywheel, Agent Evaluation & Online Monitors
 
 > **Key Takeaway:** The Agent Platform Evaluation Service closes the quality gap through a continuous 5-step Quality Flywheel spanning local rapid grading, CI/CD batch evals, and 10-minute production online monitors.
 
@@ -119,7 +139,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 7: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent
+## Slide 8: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent
 
 > **Key Takeaway:** End-to-end distributed observability unites OpenTelemetry span tracing with a pre-built BigQuery Analytics Agent for natural-language telemetry inspection.
 
@@ -135,7 +155,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 8: Agent Registry & Gemini Enterprise Workplace Publishing
+## Slide 9: Agent Registry & Gemini Enterprise Workplace Publishing
 
 > **Key Takeaway:** Deployed agents are governed in the Agent Registry catalog and published directly into Gemini Enterprise Apps for friction-free corporate workplace adoption.
 

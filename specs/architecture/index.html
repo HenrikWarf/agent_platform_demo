@@ -159,7 +159,7 @@
       cursor: pointer;
       outline: none;
       transition: border-color 0.2s ease;
-      max-width: 320px;
+      max-width: 330px;
     }
 
     .slide-jump-select:focus {
@@ -215,7 +215,7 @@
     .progress-bar-fill {
       height: 100%;
       background: linear-gradient(90deg, #4285f4, #1a73e8);
-      width: 12.5%;
+      width: 11.1%;
       transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -759,7 +759,7 @@
       <select id="slideJumpSelect" class="slide-jump-select" aria-label="Jump to Slide">
         <!-- Injected via JavaScript -->
       </select>
-      <span class="slide-counter" id="slideCounterDisplay">1 / 8</span>
+      <span class="slide-counter" id="slideCounterDisplay">1 / 9</span>
       <button class="icon-btn" id="wideModeBtn" title="Toggle Wide Presenter Mode (W)">↔</button>
       <button class="icon-btn" id="swapLayoutBtn" title="Swap Left/Right Layout (S)">⇄</button>
       <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme (T)">☀️</button>
@@ -783,15 +783,15 @@
         <div class="image-overlay-tools">
           <span class="tool-badge">🔍 Click to Zoom (Z)</span>
         </div>
-        <img src="00_overview_gcp_agent_platform_architecture.jpg" alt="Architecture Diagram" class="slide-img" id="slideImage" />
+        <img src="00_title_starter_slide.jpg" alt="Architecture Diagram" class="slide-img" id="slideImage" />
       </div>
     </section>
 
     <!-- Right Column: Rich Synchronized Technical Content & Talking Points -->
     <section class="content-panel" id="contentPanel">
       <div class="slide-badge-row">
-        <span class="section-pill" id="sectionPill">Section 00</span>
-        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 8</span>
+        <span class="section-pill" id="sectionPill">Overview</span>
+        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 9</span>
       </div>
 
       <h1 class="slide-title" id="slideTitle">Loading Slide...</h1>
@@ -865,10 +865,34 @@
   </div>
 
   <script>
-    // ─── Complete 8-Slide Data Model (Strictly Synchronized with GCP_AGENT_PLATFORM_SERVICES.md) ─
+    // ─── Complete 9-Slide Data Model (Strictly Synchronized with GCP_AGENT_PLATFORM_SERVICES.md) ─
     const SLIDES_DATA = [
       {
         id: 1,
+        sectionNum: "Cover",
+        sectionBadge: "Title Slide",
+        title: "Gemini Enterprise Agent Platform",
+        subtitle: "Autonomous Multi-Agent Architecture, Enterprise Security & Reference Implementation",
+        image: "00_title_starter_slide.jpg",
+        takeaway: "A comprehensive reference architecture for building, securing, evaluating, and operating autonomous multi-agent systems on Google Cloud Platform.",
+        points: [
+          {
+            title: "Purpose of the Architecture Deep-Dive",
+            desc: "Designed for enterprise engineering leaders, solution architects, and AI developers transitioning from experimental single-turn chatbots to production-grade autonomous multi-agent systems."
+          },
+          {
+            title: "7 Core Technical Pillars Covered",
+            desc: "<ul><li><strong>1. Agent Development:</strong> Google ADK, Sequential reasoning pipelines, and A2A Protocol.</li><li><strong>2. AI Firewall:</strong> Agent Gateway & Model Armor zero-trust inspection.</li><li><strong>3. Managed Runtime:</strong> Agent Engine serverless container runtime, Session Service, and Memory Bank.</li><li><strong>4. Tool Ecosystem:</strong> Managed BigQuery/AlloyDB MCPs & custom enterprise microservices.</li><li><strong>5. Continuous Quality:</strong> Synthetic eval datasets, LLM-as-judge, and 10-min online monitors.</li><li><strong>6. Observability:</strong> Cloud Trace distributed span trees and BigQuery telemetry agent.</li><li><strong>7. Fleet Distribution:</strong> Agent Registry and Gemini Enterprise workplace publishing.</li></ul>"
+          },
+          {
+            title: "Production Demonstration Application",
+            desc: "Backed by an operational marketing multi-agent platform automating customer RFM analytics, omnichannel strategy formulation, and creative copywriting on live BigQuery customer datasets."
+          }
+        ],
+        services: ["google-adk", "A2A Protocol", "Agent Gateway", "Model Armor", "Agent Engine", "Model Context Protocol", "Cloud Trace", "Gemini Enterprise"]
+      },
+      {
+        id: 2,
         sectionNum: "Section 00",
         sectionBadge: "GCP Platform Overview",
         title: "End-to-End Enterprise Agent Architecture",
@@ -896,7 +920,7 @@
         services: ["google-adk", "Cloud Run", "Agent Gateway", "Model Armor", "Agent Engine", "BigQuery", "Agent Registry", "Gemini Enterprise"]
       },
       {
-        id: 2,
+        id: 3,
         sectionNum: "Section 01",
         sectionBadge: "Layer 1: Orchestration & Framework",
         title: "Multi-Agent Orchestration with Google ADK & A2A Protocol",
@@ -920,7 +944,7 @@
         services: ["google-adk", "agents-cli", "A2A Protocol (JSON-RPC)", "Gemini 2.5/3.0 Models", "Pydantic Schemas", "SkillToolset"]
       },
       {
-        id: 3,
+        id: 4,
         sectionNum: "Section 03",
         sectionBadge: "Layer 3: Security & Governance",
         title: "Zero-Trust Security Perimeter — Agent Gateway & Model Armor",
@@ -940,7 +964,7 @@
         services: ["networkservices (Agent Gateway)", "modelarmor (Model Armor)", "Cloud DLP / SDP", "Google Safe Browsing", "IAM Policies"]
       },
       {
-        id: 4,
+        id: 5,
         sectionNum: "Section 04",
         sectionBadge: "Layer 4: Managed Runtime",
         title: "Agent Engine & Managed Platform Runtime Services",
@@ -968,7 +992,7 @@
         services: ["aiplatform/reasoningEngines", "Session Service", "MemoryBankConfig", "Cloud Storage (GCS)", "agents-cli deploy"]
       },
       {
-        id: 5,
+        id: 6,
         sectionNum: "Section 05",
         sectionBadge: "Layer 5: Tools & Interoperability",
         title: "Enterprise Model Context Protocol (MCP) Ecosystem",
@@ -992,7 +1016,7 @@
         services: ["Model Context Protocol (MCP)", "McpToolset", "BigQuery MCP", "AlloyDB pgvector MCP", "Enterprise Search MCP", "Agent Gateway Proxy"]
       },
       {
-        id: 6,
+        id: 7,
         sectionNum: "Section 08",
         sectionBadge: "Layer 6: Continuous Evaluation",
         title: "Continuous Quality Flywheel, Agent Evaluation & Online Monitors",
@@ -1012,7 +1036,7 @@
         services: ["aiplatform (Evaluation API)", "Agent Platform Experiments", "agents-cli eval", "Cloud Monitoring", "Online Monitors"]
       },
       {
-        id: 7,
+        id: 8,
         sectionNum: "Section 09",
         sectionBadge: "Layer 7: Observability & Telemetry",
         title: "4-Tier Observability Stack & BigQuery Analytics Agent",
@@ -1032,7 +1056,7 @@
         services: ["Cloud Trace (cloudtrace.googleapis.com)", "Cloud Logging", "BigQuery Log Analytics", "Cloud Storage (GCS)", "OpenTelemetry (OTel)"]
       },
       {
-        id: 8,
+        id: 9,
         sectionNum: "Section 10",
         sectionBadge: "Layer 8: Fleet Governance & Distribution",
         title: "Agent Registry & Gemini Enterprise Workplace Publishing",
@@ -1310,7 +1334,7 @@
           openLightbox();
           break;
         case "1": case "2": case "3": case "4":
-        case "5": case "6": case "7": case "8":
+        case "5": case "6": case "7": case "8": case "9":
           const slideNum = parseInt(e.key, 10) - 1;
           if (slideNum >= 0 && slideNum < totalSlides) {
             goToSlide(slideNum);
