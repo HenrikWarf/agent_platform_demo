@@ -97,7 +97,7 @@ PYTHONPATH=. ./venv/bin/python deploy/seed_bigquery_data.py
 ## 3. Agent Runtime Deployment
 
 ### 3.1 Deploy Agent to Agent Runtime
-The ADK agent deploys to Vertex AI Agent Runtime as a container-based Reasoning Engine:
+The ADK agent deploys to Agent Runtime as a container-based Reasoning Engine:
 
 ```bash
 # Deploy (creates or updates the Reasoning Engine instance)

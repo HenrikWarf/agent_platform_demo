@@ -28,16 +28,16 @@ It details the core **GCP Services** and **Agent Platform Infrastructure Compone
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ 3. SECURITY & GOVERNANCE LAYER                                                         │
 │    • GCP Agent Gateway (networkservices.googleapis.com) ──> Ingress Access Policies     │
-│    • Vertex AI Model Armor (modelarmor.googleapis.com) ──> PII Masking & Jailbreak Defense │
+│    • Model Armor (modelarmor.googleapis.com) ──> PII Masking & Jailbreak Defense │
 └───────────────────────────────────────────┬────────────────────────────────────────────┘
                                             │
                                             v (Governed :streamQuery API)
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ 4. AGENT ENGINE RUNTIME & MANAGED PLATFORM SERVICES                                    │
-│    • Vertex AI Agent Engine (aiplatform.googleapis.com/reasoningEngines)               │
+│    • Agent Engine (aiplatform.googleapis.com/reasoningEngines)               │
 │      ├── Agent Runtime Container ──> Hosts Google ADK Multi-Agent Executable             │
-│      ├── Vertex AI Session Service ──> Stateful Session Persistence                      │
-│      ├── Vertex AI Memory Service (MemoryBankConfig) ──> Semantic Memory Bank           │
+│      ├── Session Service ──> Stateful Session Persistence                      │
+│      ├── Memory Service (MemoryBankConfig) ──> Semantic Memory Bank           │
 │      └── GCS Artifact Service ──> Campaign Asset & Document Storage                      │
 │    • Agent Registry & Skills (agentregistry.googleapis.com) ──> Dynamic Skill Binding   │
 └───────────────────────────────────────────┬────────────────────────────────────────────┘
@@ -47,7 +47,7 @@ It details the core **GCP Services** and **Agent Platform Infrastructure Compone
                       v                     v                     v
 ┌──────────────────────────┐  ┌──────────────────────────┐  ┌──────────────────────────┐
 │ 5. TOOLS & DATA LAYER    │  │ 6. EVALUATION & FLYWHEEL │  │ 7. OBSERVABILITY & FLEET │
-│  • Tools & Managed MCP   │  │  • Vertex AI GenAI Eval  │  │  • OpenTelemetry Traces  │
+│  • Tools & Managed MCP   │  │  • GenAI Evaluation  │  │  • OpenTelemetry Traces  │
 │  • Google BigQuery       │  │  • Experiments Tracking  │  │  • Cloud Logging & Sinks │
 │    (marketing_analytics) │  │  • agents-cli eval Suite │  │  • BigQuery Agent Events │
 │  • Agent Registry Skills │  │  • 10-min Online Monitor │  │  • Gemini Enterprise Pub │
@@ -64,13 +64,13 @@ The **Google Agent Development Kit (ADK)** (`google-adk`) is Google's official, 
 
 ADK provides enterprise-grade abstractions that eliminate boilerplate and enforce software engineering discipline across agent development:
 
-* **Native Vertex AI & Gemini Integration**: Optimized for Gemini models (`gemini-3.6-flash`, `gemini-3.7-flash`), taking full advantage of native function calling, thinking budgets, and multimodality.
+* **Native Gemini Model Integration**: Optimized for Gemini models (`gemini-3.6-flash`, `gemini-3.7-flash`), taking full advantage of native function calling, thinking budgets, and multimodality.
 * **First-Class Multi-Agent Patterns**: Built-in orchestration primitives including hierarchical supervisor routing (`sub_agents`), sequential pipelines (`SequentialAgent`), parallel fan-outs (`ParallelAgent`), and iterative evaluation loops (`LoopAgent`).
 * **Open Skills Standard (`SKILL.md`)**: Encapsulates domain expertise, execution instructions, and reference schemas into modular directory bundles loaded via `SkillToolset`.
-* **Stateful Sessions & Memory**: Standardized session state access via `ToolContext.state`, supporting state propagation across pipeline stages and long-term memory via Vertex AI Memory Service.
+* **Stateful Sessions & Memory**: Standardized session state access via `ToolContext.state`, supporting state propagation across pipeline stages and long-term memory via Memory Service.
 * **Standardized Protocol Interoperability**: Direct integration with the **Model Context Protocol (MCP)** via `McpToolset` and **Agent-to-Agent (A2A)** discovery protocols.
 * **Schema-Enforced Outputs**: Enforces strict Pydantic JSON validation (`output_schema`, `output_key`), guaranteeing deterministic contracts for downstream consumers and frontends.
-* **Turnkey Packaging (`App`)**: Wraps the multi-agent hierarchy into an `App` executable that runs identically in local CLI tests, FastAPI web servers, and Vertex AI Agent Engine.
+* **Turnkey Packaging (`App`)**: Wraps the multi-agent hierarchy into an `App` executable that runs identically in local CLI tests, FastAPI web servers, and Agent Engine.
 
 ---
 
@@ -415,7 +415,7 @@ The **Agent-to-Agent (A2A) Protocol** is an open, standardized communication and
 | **Run Eval** | `agents-cli eval run --dataset <path>` | Executes test datasets against the agent and captures structured OpenTelemetry execution traces. |
 | **Grade Eval**| `agents-cli eval grade --config <yaml>` | Grades execution traces using built-in raters and custom LLM-as-a-judge rubrics. |
 | **CI/CD Eval**| `agents-cli eval run-and-grade` | Combines trace execution and grading in a single CI/CD pipeline step with pass/fail exit codes. |
-| **Deploy** | `agents-cli deploy` | Packages and deploys the ADK `App` to **Vertex AI Agent Engine** (`reasoningEngines`) or Cloud Run. |
+| **Deploy** | `agents-cli deploy` | Packages and deploys the ADK `App` to **Agent Engine** (`reasoningEngines`) or Cloud Run. |
 | **Publish** | `agents-cli publish gemini-enterprise` | Registers and exposes the deployed agent inside **Gemini Enterprise Apps** for corporate users. |
 | **Registry** | `agents-cli registry list` | Inspects and manages registered skills and agent revisions in the Google Agent Registry. |
 
@@ -434,7 +434,7 @@ agents-cli eval run-and-grade \
   --config tests/eval/eval_config.yaml \
   --project agent-demo-09
 
-# 4. Deploy agent to Vertex AI Agent Engine runtime
+# 4. Deploy agent to Agent Engine runtime
 agents-cli deploy \
   --project agent-demo-09 \
   --region us-central1 \
@@ -486,7 +486,7 @@ gcloud run deploy "agent-platform-backend" \
 
 ---
 
-## 3. GCP Agent Gateway & Vertex AI Model Armor (`networkservices` & `modelarmor`)
+## 3. GCP Agent Gateway & Model Armor (`networkservices` & `modelarmor`)
 
 ### 3.1 GCP Agent Gateway: Purpose & Enterprise Architecture
 
@@ -517,9 +517,9 @@ As enterprises transition from single-turn conversational chatbots to autonomous
 
 ---
 
-### 3.2 Vertex AI Model Armor (`modelarmor.googleapis.com`): The AI Firewall
+### 3.2 Model Armor (`modelarmor.googleapis.com`): The AI Firewall
 
-**Vertex AI Model Armor** is Google Cloud's managed security service that operates as an intelligent **AI Firewall** across user prompts (ingress) and model responses (egress). It intercepts and neutralizes threats before they can compromise the LLM runtime or exfiltrate sensitive corporate data.
+**Model Armor** is Google Cloud's managed security service that operates as an intelligent **AI Firewall** across user prompts (ingress) and model responses (egress). It intercepts and neutralizes threats before they can compromise the LLM runtime or exfiltrate sensitive corporate data.
 
 ```
                                     ┌───────────────────────────────────┐
@@ -528,7 +528,7 @@ As enterprises transition from single-turn conversational chatbots to autonomous
                                                       │
                                                       v
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ GCP AGENT GATEWAY / VERTEX AI MODEL ARMOR (Ingress Interception)                                     │
+│ GCP AGENT GATEWAY / MODEL ARMOR (Ingress Interception)                                     │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ 🛡️ 1. PROMPT INJECTION & JAILBREAK DEFENSE                                                          │
 │    • ML-based classifiers detect instruction overrides, roleplay escapes & system manipulation       │
@@ -548,13 +548,13 @@ As enterprises transition from single-turn conversational chatbots to autonomous
                                                │
                                                v (Sanitized Prompt / Verified Identity)
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ VERTEX AI AGENT ENGINE RUNTIME (ADK Multi-Agent Execution)                                           │
+│ AGENT ENGINE RUNTIME (ADK Multi-Agent Execution)                                           │
 │  • marketing_orchestrator ──> analytics_agent (BigQuery) ──> strategy_pipeline ──> content_pipeline   │
 └──────────────────────────────────────────────┬───────────────────────────────────────────────────────┘
                                                │
                                                v (Raw Model Generation)
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ GCP AGENT GATEWAY / VERTEX AI MODEL ARMOR (Egress Interception)                                      │
+│ GCP AGENT GATEWAY / MODEL ARMOR (Egress Interception)                                      │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ 🛡️ 1. DATA EXFILTRATION & PII LEAKAGE DEFENSE (Redacts unintended sensitive database records)        │
 │ 🛡️ 2. OUTPUT SAFETY & BRAND REPUTATION ASSURANCE (Enforces corporate tone & safety boundaries)       │
@@ -651,7 +651,7 @@ googleManaged:
 #### B. Model Armor Security Template Spec (`deploy/model_armor_template.yaml`)
 
 ```yaml
-# Vertex AI Model Armor Template Definition
+# Model Armor Template Definition
 name: projects/agent-demo-09/locations/us-central1/templates/marketing-agent-armor-policy
 description: Production Model Armor policy enforcing prompt injection defense, PII masking, and RAI safety.
 
@@ -753,22 +753,22 @@ class PromptSafetyGuard:
 
 ---
 
-## 4. Vertex AI Agent Engine & Managed Runtime Services (`aiplatform.googleapis.com/reasoningEngines`)
+## 4. Agent Engine & Managed Runtime Services (`aiplatform.googleapis.com/reasoningEngines`)
 
 ### 4.1 GCP Service Features & Capabilities
 
-![Vertex AI Agent Engine & Managed Platform Services](architecture/04_agent_engine_runtime_services.jpg)
+![Agent Engine & Managed Platform Services](architecture/04_agent_engine_runtime_services.jpg)
 
-**Vertex AI Agent Engine** (managed resource `reasoningEngines`) is Google Cloud's enterprise runtime for hosting, autoscaling, and executing autonomous multi-agent applications built with the **Google Agent Development Kit (ADK)**:
+**Agent Engine** (managed resource `reasoningEngines`) is Google Cloud's enterprise runtime for hosting, autoscaling, and executing autonomous multi-agent applications built with the **Google Agent Development Kit (ADK)**:
 1. **Agent Runtime Container**: Managed serverless container environment with container concurrency (8) and `AGENT_IDENTITY` validation.
-2. **Vertex AI Session Service (`VertexAiSessionService`)**: Stateful session persistence (`/apps/{app}/users/{user}/sessions`).
-3. **Vertex AI Memory Service (`MemoryBankConfig`)**: Semantic memory bank for long-term customer context.
+2. **Session Service (`VertexAiSessionService`)**: Stateful session persistence (`/apps/{app}/users/{user}/sessions`).
+3. **Memory Service (`MemoryBankConfig`)**: Semantic memory bank for long-term customer context.
 4. **Artifact Service (`GcsArtifactService`)**: Cloud Storage persistence for generated documents and images.
 
 ### 4.2 Agent Deployment & Runtime Invocation Workflow
 
-#### A. Deploying ADK Agent to Vertex AI Agent Engine
-ADK applications are packaged and deployed directly to Vertex AI Agent Engine using `agents-cli deploy`:
+#### A. Deploying ADK Agent to Agent Engine
+ADK applications are packaged and deployed directly to Agent Engine using `agents-cli deploy`:
 
 ```bash
 agents-cli deploy \
@@ -788,7 +788,7 @@ import google.auth
 import google.auth.transport.requests
 
 class AgentRuntimeClient:
-    """Client for communicating with deployed Vertex AI Agent Engine."""
+    """Client for communicating with deployed Agent Engine."""
     
     def __init__(self):
         self.project_id = os.getenv("GCP_PROJECT_ID", "agent-demo-09")
@@ -1051,11 +1051,11 @@ def register_skill(skill_id: str, display_name: str, payload_zip: str):
 
 ---
 
-## 8. Vertex AI GenAI Evaluation Service, Experiments & Online Monitors (`aiplatform.googleapis.com` & `agents-cli eval`)
+## 8. GenAI Evaluationuation Service, Experiments & Online Monitors (`aiplatform.googleapis.com` & `agents-cli eval`)
 
 ### 8.1 GCP Evaluation Service Architecture & The Quality Flywheel
 
-The **Gemini Enterprise Agent Platform Evaluation Service** (built on Vertex AI GenAI Evaluation APIs `aiplatform.googleapis.com`) provides an end-to-end framework to measure, benchmark, and continuously optimize agent quality, safety, grounding, and tool usage accuracy.
+The **Gemini Enterprise Agent Platform Evaluation Service** (built on GenAI Evaluationuation APIs `aiplatform.googleapis.com`) provides an end-to-end framework to measure, benchmark, and continuously optimize agent quality, safety, grounding, and tool usage accuracy.
 
 Enterprise agent evaluation is structured into **three distinct operational modalities**:
 
@@ -1068,7 +1068,7 @@ Enterprise agent evaluation is structured into **three distinct operational moda
 ├─────────────────────────┼─────────────────────────────┼────────────────────────────────┤
 │ • Interactive feedback  │ • Batch test case grading   │ • Automated 10-min sampling    │
 │ • Single-turn / prompt  │ • Multi-turn trajectories   │ • Evaluates live traces in-situ│
-│ • Local LLM-as-judge    │ • Vertex AI Experiments     │ • Streams to Cloud Monitoring  │
+│ • Local LLM-as-judge    │ • Agent Platform Experiments     │ • Streams to Cloud Monitoring  │
 │ • Fast prompt iteration │ • Baseline vs Candidate     │ • Detects drift, PII & errors  │
 └─────────────────────────┴─────────────────────────────┴────────────────────────────────┘
 ```
@@ -1079,9 +1079,9 @@ Agent evaluation is not a one-time gate but a continuous closed-loop cycle:
 2. **Inference & Trace Capture**: Execute agent runs locally or against deployed Agent Runtime, exporting OpenTelemetry spans with standardized `gen_ai` semantic conventions.
 3. **Scoring & Multi-Dimensional Metrics**: Grade complete trajectories using pre-built managed evaluators (Task Success, Grounding, Safety) or custom rubric-based judges (`LLMMetric`) and deterministic assertions (`CodeExecutionMetric`).
 4. **Failure Clustering & Loss Analysis**: Automatically group failures into loss clusters (e.g. tool parameter errors, hallucinated facts, instruction non-compliance) to identify systemic weaknesses.
-5. **Prompt & Tool Optimization**: Optimize system instructions and tool definitions, then verify gains against tracked Vertex AI Experiments.
+5. **Prompt & Tool Optimization**: Optimize system instructions and tool definitions, then verify gains against tracked Agent Platform Experiments.
 
-![Vertex AI Agent Evaluation Quality Flywheel](architecture/08_evaluation_flywheel.jpg)
+![Agent Platform Quality Flywheel](architecture/08_evaluation_flywheel.jpg)
 
 ```
                   ┌──────────────────────────────────────────────┐
@@ -1115,16 +1115,16 @@ Agent evaluation is not a one-time gate but a continuous closed-loop cycle:
                   ┌──────────────────────────────────────────────┐
                   │ 5. OPTIMIZATION & EXPERIMENT COMPARISON      │
                   │    • Prompt refinement & tool adjustment     │
-                  │    • Compare runs in Vertex AI Experiments   │
+                  │    • Compare runs in Agent Platform Experiments   │
                   └──────────────────────────────────────────────┘
 ```
 
 ---
 
-### 8.2 Offline Evaluation & Vertex AI Experiments Tracking
+### 8.2 Offline Evaluation & Agent Platform Experiments Tracking
 
 #### 1. Experiment Tracking & Run Comparison (`aiplatform.Experiment`)
-During model selection and prompt engineering, every evaluation run is logged to **Vertex AI Experiments**:
+During model selection and prompt engineering, every evaluation run is logged to **Agent Platform Experiments**:
 * **Parameters Tracked**: Model name (`gemini-3.6-flash`), temperature, prompt hash, system instruction revision, active skills (`bigquery-customer-analytics`, `campaign-framework`).
 * **Summary Metrics**: `final_response_quality`, `grounding_score`, `tool_selection_quality`, `hallucination_rate`, `latency_p95_ms`, `total_token_cost`.
 * **Artifacts Stored**: Rendered `EvaluationDataset` JSON, trace payloads in Cloud Storage (`gs://agent-demo-09-eval-artifacts/`), and detailed markdown evaluation reports.
@@ -1276,12 +1276,12 @@ custom_metrics:
           return {"score": 1.0 if has_sql else 0.0, "explanation": "Validated SQL query presence in trace"}
 ```
 
-#### B. Vertex AI Experiments & Offline Evaluation Script ([`eval/vertex_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/vertex_eval.py))
+#### B. Agent Platform Experiments & Offline Evaluation Script ([`eval/vertex_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/vertex_eval.py))
 
 ```python
 """
-Vertex AI Experiments & Evaluation Service Integration
-Logs parameters, metrics, and trace artifacts to Vertex AI Experiments.
+Agent Platform Experiments & Evaluation Service Integration
+Logs parameters, metrics, and trace artifacts to Agent Platform Experiments.
 """
 import os
 import json
@@ -1306,7 +1306,7 @@ class VertexAgentEvaluator:
         self.client = genai.Client()
 
     def run_experiment_evaluation(self, run_name: str, dataset_path: str, model_version: str = "gemini-3.6-flash") -> dict:
-        """Runs batch evaluation and logs run parameters and metrics to Vertex AI Experiments."""
+        """Runs batch evaluation and logs run parameters and metrics to Agent Platform Experiments."""
         with aiplatform.start_run(run=run_name):
             # 1. Log Experiment Parameters
             aiplatform.log_params({
@@ -1328,7 +1328,7 @@ class VertexAgentEvaluator:
             avg_quality = sum(s["quality"] for s in scores) / len(scores)
             safety_rate = sum(1 for s in scores if s["safety"]) / len(scores)
 
-            # 2. Log Summary Metrics to Vertex AI Experiment Dashboard
+            # 2. Log Summary Metrics to Agent Platform Experiment Dashboard
             summary_metrics = {
                 "grounding_score": round(avg_grounding, 3),
                 "response_quality": round(avg_quality, 3),
@@ -1337,7 +1337,7 @@ class VertexAgentEvaluator:
             }
             aiplatform.log_metrics(summary_metrics)
             
-            logger.info(f"✅ Logged evaluation run '{run_name}' to Vertex AI Experiment '{EXPERIMENT_NAME}'")
+            logger.info(f"✅ Logged evaluation run '{run_name}' to Agent Platform Experiment '{EXPERIMENT_NAME}'")
             return summary_metrics
 
     def _evaluate_case(self, case: dict) -> dict:
@@ -1349,7 +1349,7 @@ class VertexAgentEvaluator:
 
 ```python
 """
-Configures a Vertex AI Agent Engine Online Monitor for continuous production evaluation.
+Configures a Agent Engine Online Monitor for continuous production evaluation.
 """
 import os
 import requests
@@ -1518,20 +1518,20 @@ invoke_workflow (trace_id: 4bf92f3577b34da6a3ce929d0e0e4736, duration: 2.84s)
   │
   ├── invoke_agent (agent: marketing_orchestrator, role: supervisor)
   │     └── call_llm (model: gemini-3.6-flash, operation: chat, tokens: 420 in / 65 out)
-  │           └── generate_content (Vertex AI Gemini API)
+  │           └── generate_content (Gemini API)
   │
   ├── invoke_agent (agent: analytics_agent)
   │     ├── call_llm (model: gemini-3.6-flash, operation: sql_synthesis)
-  │     │     └── generate_content (Vertex AI Gemini API)
+  │     │     └── generate_content (Gemini API)
   │     └── execute_tool (tool: query_customer_data, target: BigQuery, duration: 412ms)
   │
   └── invoke_agent (agent: strategy_pipeline, type: SequentialAgent)
         ├── invoke_agent (agent: strategy_reasoner)
         │     └── call_llm (model: gemini-3.6-flash, operation: reasoning)
-        │           └── generate_content (Vertex AI Gemini API)
+        │           └── generate_content (Gemini API)
         └── invoke_agent (agent: strategy_formatter)
               └── call_llm (model: gemini-3.6-flash, schema: StrategySchema)
-                    └── generate_content (Vertex AI Gemini API)
+                    └── generate_content (Gemini API)
 ```
 
 #### Standardized OpenTelemetry Span Attributes:

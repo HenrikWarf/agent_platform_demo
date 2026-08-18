@@ -5,7 +5,7 @@
 
 ## 1. High-Level Architecture Topology
 
-The application follows a microservice multi-agent topology powered by the **Google Agent Development Kit (ADK)**, **Agent Runtime (Vertex AI Reasoning Engine)**, React (Vite), Google BigQuery, Model Armor, Agent Gateway, and Gemini Enterprise.
+The application follows a microservice multi-agent topology powered by the **Google Agent Development Kit (ADK)**, **Agent Runtime (Agent Engine Reasoning Engine)**, React (Vite), Google BigQuery, Model Armor, Agent Gateway, and Gemini Enterprise.
 
 ```
 +-------------------------------------------------------------------------+
@@ -17,12 +17,12 @@ The application follows a microservice multi-agent topology powered by the **Goo
 +-------------------------------------------------------------------------+
 |                       CLOUD RUN BACKEND (API Layer)                     |
 |                     (backend/app.py — Port 8080)                        |
-|              AgentRuntimeClient → Vertex AI Agent Runtime               |
+|              AgentRuntimeClient → Agent Runtime               |
 +------------------------------------+------------------------------------+
                                      |
                                      v
 +-------------------------------------------------------------------------+
-|                    VERTEX AI AGENT RUNTIME (Container)                   |
+|                    AGENT RUNTIME (Container)                   |
 |          app/fast_api_app.py → ADK FastAPI + Reasoning Engine           |
 |       :streamQuery / :query ← Gemini Enterprise / Console Playground    |
 +------------------------------------+------------------------------------+

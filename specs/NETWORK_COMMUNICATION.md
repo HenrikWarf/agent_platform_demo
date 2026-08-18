@@ -31,7 +31,7 @@ This document details the network communication architecture, protocol routing, 
                       |                                                   |
                       v (In-Line Policy Mode)                             v (Proxy Host Mode)
         +---------------------------+                       +---------------------------+
-        | Vertex AI Control Plane   |                       | Custom Application Proxy  |
+        | Agent Platform Control Plane   |                       | Custom Application Proxy  |
         | aiplatform.googleapis.com |                       | agent-gateway.example.com |
         +-------------+-------------+                       +-------------+-------------+
                       |                                                   |

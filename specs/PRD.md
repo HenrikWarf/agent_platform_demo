@@ -5,7 +5,7 @@
 
 ## 1. Executive Summary & Vision
 
-The **GCP Multi-Agent Marketing Platform** is an enterprise-grade AI solution that automates customer data analytics, omnichannel strategy formulation, and creative copywriting for marketing teams. Built on the **Google Agent Development Kit (ADK)** with a scaffolded project structure (`agents-cli 1.3.1`), it deploys to **Vertex AI Agent Runtime** as a container-based Reasoning Engine and integrates with **Gemini Enterprise**, **Model Armor**, **Agent Gateway**, and **Google BigQuery**.
+The **GCP Multi-Agent Marketing Platform** is an enterprise-grade AI solution that automates customer data analytics, omnichannel strategy formulation, and creative copywriting for marketing teams. Built on the **Google Agent Development Kit (ADK)** with a scaffolded project structure (`agents-cli 1.3.1`), it deploys to **Agent Runtime** as a container-based Reasoning Engine and integrates with **Gemini Enterprise**, **Model Armor**, **Agent Gateway**, and **Google BigQuery**.
 
 The platform processes marketing objectives through an intent-classified multi-agent workflow, runs live BigQuery NL2SQL analytics, formulates campaign frameworks, and generates brand-aligned content — all governed by prompt safety guardrails.
 

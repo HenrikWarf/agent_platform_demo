@@ -29,9 +29,9 @@ This document outlines the end-to-end system architecture and GCP deployment top
 
 ### 3. Security & Governance Layer (GCP Infrastructure)
 * **GCP Agent Gateway** (`networkservices.googleapis.com`): Governed ingress routing enforcing client-to-agent access policies.
-* **Vertex AI Model Armor** (`modelarmor.googleapis.com`): Enterprise security guardrails enforcing hate speech, harassment, PII masking, and jailbreak protection on both user inputs and agent responses.
+* **Model Armor** (`modelarmor.googleapis.com`): Enterprise security guardrails enforcing hate speech, harassment, PII masking, and jailbreak protection on both user inputs and agent responses.
 
-### 4. Agent Orchestration Engine (Vertex AI Agent Engine)
+### 4. Agent Orchestration Engine (Agent Engine)
 Built with **Google Agent Development Kit (ADK)** and powered by **Gemini 3.6 Flash**:
 * **Root Orchestrator Agent (`marketing_orchestrator`)**: Intent classifier delegating via Agent-to-Agent (A2A) protocol.
 * **Customer Insights & Analytics Agent (`analytics_agent`)**: Direct BigQuery Standard SQL generator and query executor.
@@ -53,4 +53,4 @@ Built with **Google Agent Development Kit (ADK)** and powered by **Gemini 3.6 Fl
 ### 7. Observability & Evaluation Layer
 * **OpenTelemetry Cloud Trace**: Distributed tracing capturing span hierarchies (`invoke_workflow` → `call_llm` → `execute_tool`).
 * **Cloud Logging & Log Analytics**: Centralized log bucket (`_Default`) and linked BigQuery dataset (`defaultLink`).
-* **Evaluation Engine**: Local evaluation suite ([`eval/local_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/local_eval.py)) and Vertex AI Rapid Evaluation API integration ([`eval/vertex_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/vertex_eval.py)).
+* **Evaluation Engine**: Local evaluation suite ([`eval/local_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/local_eval.py)) and Agent Platform Rapid Evaluation API integration ([`eval/vertex_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/vertex_eval.py)).

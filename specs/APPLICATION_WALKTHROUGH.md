@@ -113,7 +113,7 @@ export default function App() {
 
 ### 3.1 GCP Component: FastAPI + OpenTelemetry Cloud Trace Exporter
 * **Feature & Function**: Provides lightweight, asynchronous REST API endpoints while exporting OpenTelemetry span traces directly to **Google Cloud Trace**.
-* **Role in App**: Receives user prompts from the frontend, proxies requests to Vertex AI Agent Runtime via the governed `:streamQuery` endpoint (where Agent Gateway enforces Model Armor), and surfaces BigQuery customer data tables.
+* **Role in App**: Receives user prompts from the frontend, proxies requests to Agent Runtime via the governed `:streamQuery` endpoint (where Agent Gateway enforces Model Armor), and surfaces BigQuery customer data tables.
 
 ### 3.2 Application Implementation
 The backend entry point is [`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py). It initializes OpenTelemetry tracing and defines `/api/chat`, `/health`, and `/api/version` endpoints.
@@ -160,9 +160,9 @@ def process_chat(req: ChatRequest):
 
 ## 🛡️ 4. Security & Governance Layer (GCP Agent Gateway & Model Armor)
 
-### 4.1 GCP Component: GCP Agent Gateway & Vertex AI Model Armor
+### 4.1 GCP Component: GCP Agent Gateway & Model Armor
 * **GCP Agent Gateway** (`networkservices.googleapis.com`): Programmable network proxy providing governed ingress/egress access policies for AI agents.
-* **Vertex AI Model Armor** (`modelarmor.googleapis.com`): Security engine filtering prompt injections, masking sensitive PII (emails, SSNs), and enforcing Responsible AI safety thresholds.
+* **Model Armor** (`modelarmor.googleapis.com`): Security engine filtering prompt injections, masking sensitive PII (emails, SSNs), and enforcing Responsible AI safety thresholds.
 
 ### 4.2 Application Implementation
 Model Armor security screening is enforced **exclusively at the Agent Gateway infrastructure level** via the `:streamQuery` governed endpoint. The backend does **not** perform any application-level pre-flight safety checks — all prompt injection detection, PII masking, and Responsible AI filtering is handled by the managed Agent Gateway and its bound Model Armor floor policy.
@@ -212,9 +212,9 @@ def bind_gateway(engine_resource: str, gateway_resource: str, token: str):
 
 ---
 
-## 🤖 5. Agent Execution Engine (Vertex AI Agent Engine & ADK Framework)
+## 🤖 5. Agent Execution Engine (Agent Engine & ADK Framework)
 
-### 5.1 GCP Component: Vertex AI Agent Engine (Reasoning Engines)
+### 5.1 GCP Component: Agent Engine (Reasoning Engines)
 * **Feature & Function**: Vertex AI managed runtime for deploying, hosting, and executing autonomous multi-agent applications packaged via Google ADK.
 * **Role in App**: Executes the root orchestrator agent and specialized sub-agents inside managed containers with Cloud Trace telemetry.
 
