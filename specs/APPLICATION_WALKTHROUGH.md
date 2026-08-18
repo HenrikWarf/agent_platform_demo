@@ -18,18 +18,23 @@ This document provides an end-to-end, detailed technical walkthrough of every la
                                     |   (Cloud Run / Local) |
                                     +-----------+-----------+
                                                 |
-                                                v
+                                                v (:streamQuery)
                                     +-----------------------+
                                     |    Agent Gateway      |
                                     | (Model Armor Enforce) |
                                     +-----------+-----------+
                                                 |
+                                    +-----------------------+
+                                    | Agent Engine (ADK)    |
+                                    | marketing_orchestrator|
+                                    +-----------+-----------+
+                                                |
                       +-------------------------+-------------------------+
-                      | (A2A Protocol)          | (A2A Protocol)          | (A2A Protocol)
+                      | (LLM delegation)        | (LLM delegation)       | (LLM delegation)
                       v                         v                         v
           +-----------------------+ +-----------------------+ +-----------------------+
-          |    Analytics Agent    | |    Strategy Agent     | |     Content Agent     |
-          | (bigquery_analytics)  | | (omnichannel_strat)  | |     (brand_voice)     |
+          |    Analytics Agent    | |  Strategy Pipeline    | |  Content Pipeline     |
+          | (BigQuery SQL tool)   | | (SequentialAgent)     | | (SequentialAgent)     |
           +-----------+-----------+ +-----------------------+ +-----------------------+
                       |
                       v
@@ -48,7 +53,7 @@ This document provides an end-to-end, detailed technical walkthrough of every la
 * **Role in App**: Hosts the compiled static React/Vite single-page application inside an Nginx container.
 
 ### 2.2 Application Implementation
-The frontend is built with **React 18**, **Vite**, and **Lucide Icons**. It uses CSS custom properties for instant light/dark mode theme toggling without page reloads.
+The frontend is built with **React 18**, **Vite**, and **Lucide Icons**. It uses CSS custom properties for instant light/dark mode theme toggling without page reloads. The application has 6 tabs: **Chat**, **Agent Graph**, **Skills Inspector**, **BigQuery Data**, **A2A Explorer**, and **Traffic Simulator & OTel**.
 
 #### Code Snippet: State & Theme Switching ([`frontend/src/App.jsx`](file:///Users/henrikw/Projects/agent_platform_demo/frontend/src/App.jsx))
 
