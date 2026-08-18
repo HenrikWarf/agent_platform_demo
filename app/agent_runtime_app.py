@@ -20,7 +20,7 @@ from app.app_utils.telemetry import setup_telemetry
 load_dotenv()
 
 # Module-level config (must be defined before AgentEngineApp references them)
-gemini_location = os.environ.get("GOOGLE_CLOUD_LOCATION")
+gemini_location = os.environ.get("GEMINI_LOCATION", "global")
 logs_bucket_name = os.environ.get("LOGS_BUCKET_NAME")
 
 

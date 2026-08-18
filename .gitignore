@@ -12,3 +12,4 @@ agent_engine_manifest.json
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/*.tfvars
+.adk/

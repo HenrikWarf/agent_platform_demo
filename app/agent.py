@@ -20,9 +20,9 @@ from app.company_context import COMPANY_CONTEXT
 # ─── Vertex AI configuration ──────────────────────────────────────────────────
 
 _, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id or "agent-demo-09")
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
+os.environ["GOOGLE_CLOUD_PROJECT"] = os.environ.get("GOOGLE_CLOUD_PROJECT") or project_id or "agent-demo-09"
+os.environ["GOOGLE_CLOUD_LOCATION"] = os.environ.get("GEMINI_LOCATION", "global")
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 # ─── Managed MCP BigQuery Server (Agent Registry) ─────────────────────────────
 

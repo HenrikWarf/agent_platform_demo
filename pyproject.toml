@@ -6,7 +6,7 @@ authors = [
     {name = "Henrik Warfvinge", email = "henrikw@google.com"},
 ]
 dependencies = [
-    "google-adk[gcp,otel-gcp]>=2.5.0,<3.0.0",
+    "google-adk[a2a,agent-identity,gcp,mcp,otel-gcp]>=2.5.0,<3.0.0",
     "opentelemetry-exporter-otlp-proto-http",
     "opentelemetry-exporter-gcp-trace",
     "opentelemetry-exporter-gcp-logging",
