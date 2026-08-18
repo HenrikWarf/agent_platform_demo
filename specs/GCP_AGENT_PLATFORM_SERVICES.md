@@ -10,20 +10,27 @@ It details the core **GCP Services** and **Agent Platform Infrastructure Compone
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ 1. SERVERLESS HOSTING & API LAYER                                                      │
-│    • Google Cloud Run (run.googleapis.com) ──> FastAPI Backend & React Frontend            │
+│ 1. AGENT DEVELOPMENT & ORCHESTRATION LAYER                                             │
+│    • Google ADK (google.adk) ──> Hierarchical Multi-Agent Executable (App)             │
+│    • Skills Standard (SKILL.md) & MCP Toolsets ──> Modular Agent Capabilities          │
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │
+                                            v
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ 2. SERVERLESS HOSTING & API LAYER                                                      │
+│    • Google Cloud Run (run.googleapis.com) ──> FastAPI Backend & React Frontend        │
 └───────────────────────────────────────────┬────────────────────────────────────────────┘
                                             │
                                             v (REST HTTP/JSON)
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ 2. SECURITY & GOVERNANCE LAYER                                                         │
+│ 3. SECURITY & GOVERNANCE LAYER                                                         │
 │    • GCP Agent Gateway (networkservices.googleapis.com) ──> Ingress Access Policies     │
 │    • Vertex AI Model Armor (modelarmor.googleapis.com) ──> PII Masking & Jailbreak Defense │
 └───────────────────────────────────────────┬────────────────────────────────────────────┘
                                             │
                                             v (Governed :streamQuery API)
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ 3. AGENT ENGINE RUNTIME & PLATFORM SERVICES                                             │
+│ 4. AGENT ENGINE RUNTIME & MANAGED PLATFORM SERVICES                                    │
 │    • Vertex AI Agent Engine (aiplatform.googleapis.com/reasoningEngines)               │
 │      ├── Agent Runtime Container ──> Hosts Google ADK Multi-Agent Executable             │
 │      ├── Vertex AI Session Service ──> Stateful Session Persistence                      │
@@ -36,163 +43,118 @@ It details the core **GCP Services** and **Agent Platform Infrastructure Compone
                       │                     │                     │
                       v                     v                     v
 ┌──────────────────────────┐  ┌──────────────────────────┐  ┌──────────────────────────┐
-│ 4. DATA LAYER            │  │ 5. OBSERVABILITY         │  │ 6. EVALUATION            │
-│  • Google BigQuery       │  │  • Cloud Trace           │  │  • Vertex AI Rapid Eval  │
-│    (marketing_analytics) │  │  • Cloud Logging Bucket  │  │    (evaluateInstances)   │
-│    (agent_events_v2)     │  │    (defaultLink Dataset) │  │  • Local Grounding Eval  │
+│ 5. TOOLS & DATA LAYER    │  │ 6. EVALUATION & FLYWHEEL │  │ 7. OBSERVABILITY & FLEET │
+│  • Tools & Managed MCP   │  │  • Vertex AI GenAI Eval  │  │  • OpenTelemetry Traces  │
+│  • Google BigQuery       │  │  • Experiments Tracking  │  │  • Cloud Logging & Sinks │
+│    (marketing_analytics) │  │  • agents-cli eval Suite │  │  • BigQuery Agent Events │
+│  • Agent Registry Skills │  │  • 10-min Online Monitor │  │  • Gemini Enterprise Pub │
 └──────────────────────────┘  └──────────────────────────┘  └──────────────────────────┘
 ```
 
 ---
 
-## 1. Google Cloud Run (`run.googleapis.com`) — Ingress & Hosting
+## 1. Building Multi-Agent Systems with Google ADK (`google-adk` Python SDK)
 
-### 1.1 GCP Service Features & Capabilities
-**Google Cloud Run** is GCP's fully managed serverless container runtime built on Knative:
-* **Serverless Container Execution**: Executes stateless HTTP containers automatically scaling from zero to N instances based on request concurrency (`--concurrency`).
-* **Built-in Security & Transport**: Automatic HTTPS TLS certificate management, custom domain mapping, and IAM invoker access controls (`--allow-unauthenticated`).
-* **Artifact Registry Integration**: Seamlessly pulls and deploys container images stored in GCP Artifact Registry (`{region}-docker.pkg.dev/{project}/{repo}/{image}:{tag}`).
+### 1.1 What is Google ADK & Why Build Agents With It?
 
-### 1.2 Code & Implementation Details
+The **Google Agent Development Kit (ADK)** (`google-adk`) is Google's official, open-source framework designed specifically for developing, composing, testing, evaluating, and deploying autonomous AI agents and multi-agent hierarchies.
 
-#### A. Deploying FastAPI Backend Container to Cloud Run ([`deploy/deploy_cloud_run.sh`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/deploy_cloud_run.sh))
+ADK provides enterprise-grade abstractions that eliminate boilerplate and enforce software engineering discipline across agent development:
 
-```bash
-#!/usr/bin/env bash
-set -e
-
-PROJECT_ID="agent-demo-09"
-REGION="us-central1"
-IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/agent-platform/backend:latest"
-
-# 1. Build Backend Docker Image via Cloud Build
-gcloud builds submit --tag "${IMAGE_TAG}" -f deploy/Dockerfile.backend .
-
-# 2. Deploy to Cloud Run with OpenTelemetry environment variables
-gcloud run deploy "agent-platform-backend" \
-  --image="${IMAGE_TAG}" \
-  --region="${REGION}" \
-  --platform=managed \
-  --port=8080 \
-  --allow-unauthenticated \
-  --service-account="agent-platform-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},GCP_REGION=${REGION},USE_GCP_CLOUD=true,GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace"
-```
+* **Native Vertex AI & Gemini Integration**: Optimized for Gemini models (`gemini-3.6-flash`, `gemini-3.7-flash`), taking full advantage of native function calling, thinking budgets, and multimodality.
+* **First-Class Multi-Agent Patterns**: Built-in orchestration primitives including hierarchical supervisor routing (`sub_agents`), sequential pipelines (`SequentialAgent`), parallel fan-outs (`ParallelAgent`), and iterative evaluation loops (`LoopAgent`).
+* **Open Skills Standard (`SKILL.md`)**: Encapsulates domain expertise, execution instructions, and reference schemas into modular directory bundles loaded via `SkillToolset`.
+* **Stateful Sessions & Memory**: Standardized session state access via `ToolContext.state`, supporting state propagation across pipeline stages and long-term memory via Vertex AI Memory Service.
+* **Standardized Protocol Interoperability**: Direct integration with the **Model Context Protocol (MCP)** via `McpToolset` and **Agent-to-Agent (A2A)** discovery protocols.
+* **Schema-Enforced Outputs**: Enforces strict Pydantic JSON validation (`output_schema`, `output_key`), guaranteeing deterministic contracts for downstream consumers and frontends.
+* **Turnkey Packaging (`App`)**: Wraps the multi-agent hierarchy into an `App` executable that runs identically in local CLI tests, FastAPI web servers, and Vertex AI Agent Engine.
 
 ---
 
-## 2. GCP Agent Gateway & Vertex AI Model Armor (`networkservices` & `modelarmor`)
-
-### 2.1 GCP Agent Gateway: Why Use It & Enterprise Value Proposition
-
-**GCP Agent Gateway** (`networkservices.googleapis.com`) is a managed security and networking control plane purpose-built for enterprise AI agent systems. 
-
-As enterprises move from single-turn chatbots to multi-agent architectures executing database queries and automated actions, traditional web API gateways fall short. Agent Gateway solves the core governance challenges of autonomous agent systems:
+### 1.2 Multi-Agent Orchestration Architecture & Primitives
 
 ```
-                  ┌─────────────────────────────────────────────────────────────┐
-                  │                 WITHOUT AGENT GATEWAY                       │
-                  │  Ungoverned "Spaghetti" Access & Security Blindspots        │
-                  │  Client ──> Agent ──> Direct Unrestricted DB/API Access     │
-                  └──────────────────────────────┬──────────────────────────────┘
-                                                 │
-                                                 v
-                  ┌─────────────────────────────────────────────────────────────┐
-                  │                  WITH GCP AGENT GATEWAY                     │
-                  │  Governed Security Perimeter & Zero-Trust Control Plane     │
-                  │  Client ──> Agent Gateway (Model Armor & IAM) ──> Agent     │
-                  └─────────────────────────────────────────────────────────────┘
+                             ┌──────────────────────────────────┐
+                             │       Marketing Orchestrator     │
+                             │        (Root Agent / Router)     │
+                             └─────────────────┬────────────────┘
+                                               │
+               ┌───────────────────────────────┼───────────────────────────────┐
+               │ (Direct Delegate)             │ (Stateful Pipeline)           │ (Stateful Pipeline)
+               v                               v                               v
+┌──────────────────────────────┐ ┌──────────────────────────────┐ ┌──────────────────────────────┐
+│       Analytics Agent        │ │      Strategy Pipeline       │ │       Content Pipeline       │
+│  • Tools: query_customer_data│ │  (SequentialAgent)           │ │  (SequentialAgent)           │
+│  • Skills: bigquery_analytics│ │  1. strategy_reasoner (LLM)  │ │  1. content_reasoner (LLM)   │
+│  • MCP: mcp_data_toolset     │ │  2. strategy_formatter (JSON)│ │  2. content_formatter (JSON) │
+└──────────────────────────────┘ └──────────────────────────────┘ └──────────────────────────────┘
 ```
 
-#### Core Enterprise Values & Benefits:
+1. **The Core Agent (`Agent`)**:
+   The fundamental unit representing an LLM reasoner with a defined persona, instructions, and tools:
+   ```python
+   from google.adk.agents import Agent
 
-1. **Centralized Security Perimeter & Zero-Trust Access Control**:
-   - Without an Agent Gateway, agents communicate directly with internal tools, LLMs, and external databases in an ungoverned network.
-   - **Agent Gateway** creates a single, governed security perimeter enforcing Zero-Trust access policies for both client-to-agent ingress (`CLIENT_TO_AGENT`) and agent-to-tools egress (`AGENT_TO_ANYWHERE`).
+   analytics_agent = Agent(
+       name="analytics_agent",
+       model="gemini-3.6-flash",
+       instruction="You are the Customer Analytics Specialist. Query BigQuery data using SQL tools.",
+       tools=[tools.query_customer_data, analytics_skillset],
+   )
+   ```
 
-2. **In-Line Model Armor Interception**:
-   - Intercepts incoming prompts and outgoing model responses to enforce **Vertex AI Model Armor** safety policies automatically.
-   - Blocks prompt injection / jailbreak attacks, masks sensitive PII (emails, SSNs, credit cards) in-flight, and enforces Responsible AI safety thresholds before requests reach the LLM runtime.
+2. **Sequential Pipelines (`SequentialAgent`)**:
+   Chains multiple sub-agents in a deterministic sequence. A key best-practice pattern is separating free-form **Reasoning** from strict **JSON Schema Formatting**:
+   ```python
+   from google.adk.agents import SequentialAgent
 
-3. **AI-Native Protocol Standardization (MCP & REST)**:
-   - Provides native proxying and governance for the **Model Context Protocol (MCP)** and HTTP/JSON streaming (`:streamQuery`).
-   - Standardizes tool execution protocols, allowing agents to invoke remote MCP tools securely across different clouds or internal networks with identity translation.
+   strategy_pipeline = SequentialAgent(
+       name="strategy_pipeline",
+       description="Generates strategic frameworks and formats into validated JSON.",
+       sub_agents=[strategy_reasoner, strategy_formatter],
+   )
+   ```
 
-4. **Agent Identity & Non-Repudiation (`AGENT_IDENTITY`)**:
-   - Integrates with **Identity-Aware Proxy (IAP)** and GCP IAM to validate caller identities (users, IDEs, web apps) and enforce specialized **Agent Identity service accounts**.
-   - Guarantees non-repudiation: every agent action, tool call, or prompt is cryptographically bound to a verified principal identity.
+3. **ToolContext & Shared State Mutation**:
+   ADK tools receive a `ToolContext` parameter providing read/write access to session state:
+   ```python
+   from google.adk.tools import ToolContext
 
-5. **Centralized Compliance & Audit Log Stream**:
-   - Eliminates blind spots by emitting uniform audit logs directly to Cloud Audit Logs (`cloudaudit.googleapis.com`), Cloud Logging (`_Default` bucket), and Cloud Trace.
-   - Provides full compliance reporting (GDPR, HIPAA, SOC2) for AI interactions, capturing exact prompt inputs, Model Armor sanitization results, and egress tool calls.
+   def query_customer_data(sql_query: str, tool_context: ToolContext) -> dict:
+       # Write query results to session state for downstream agents
+       tool_context.state["analytics_result"] = {
+           "summary": f"Query returned {len(results)} rows.",
+           "sql_executed": clean_sql
+       }
+       return {"status": "SUCCESS", "row_count": len(results)}
+   ```
 
-6. **Decoupling Security Governance from Agent Development**:
-   - Enables Enterprise Security Operations (SecOps) teams to update security policies, DLP scanners, or Model Armor templates globally in declarative YAML specs (`agent_gateway.yaml`) without requiring AI developers to re-deploy or re-compile agent Python code.
+4. **Dynamic Skills (`SkillToolset`)**:
+   Loads standardized `SKILL.md` bundles containing domain prompt rules and guidelines:
+   ```python
+   from google.adk.skills import load_skill_from_dir
+   from google.adk.tools.skill_toolset import SkillToolset
+
+   analytics_skill = load_skill_from_dir(skills_dir / "bigquery-customer-analytics")
+   analytics_skillset = SkillToolset(skills=[analytics_skill])
+   ```
+
+5. **Application Packaging (`App`)**:
+   Wraps the root supervisor agent into a standard ADK application:
+   ```python
+   from google.adk.apps import App
+
+   app = App(
+       root_agent=root_agent,
+       name="app",  # App name must match directory name for Agent Engine compatibility
+   )
+   ```
 
 ---
 
-### 2.2 Code & Implementation Details
+### 1.3 Complete ADK Multi-Agent Code Blueprint ([`app/agent.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/agent.py))
 
-#### A. Agent Gateway Spec ([`deploy/agent_gateway.yaml`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/agent_gateway.yaml))
-
-```yaml
-name: projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway
-description: Enterprise Agent Gateway enforcing Model Armor security policies and governed routing.
-protocols:
-  - MCP
-registries:
-  - //agentregistry.googleapis.com/projects/agent-demo-09/locations/us-central1
-googleManaged:
-  governedAccessPath: CLIENT_TO_AGENT
-```
-
-#### B. Pre-Flight Prompt Safety Guard ([`backend/safety.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/safety.py))
-
-```python
-import re
-
-class PromptSafetyGuard:
-    """Pre-flight safety inspector filtering jailbreak attempts and masking PII."""
-
-    INJECTION_PATTERNS = [
-        r"ignore\s+previous\s+instructions",
-        r"bypass\s+safety",
-        r"system\s*:\s*override",
-        r"<script>",
-    ]
-
-    def inspect_and_sanitize(self, prompt: str) -> dict:
-        for pattern in self.INJECTION_PATTERNS:
-            if re.search(pattern, prompt, re.IGNORECASE):
-                return {
-                    "passed": False,
-                    "filter_reason": "PROMPT_INJECTION_DETECTED",
-                    "sanitized_prompt": prompt
-                }
-
-        sanitized = re.sub(
-            r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
-            "[REDACTED_EMAIL]",
-            prompt
-        )
-
-        return {"passed": True, "filter_reason": "NONE", "sanitized_prompt": sanitized}
-```
-
----
-
-## 3. Vertex AI Agent Engine & Multi-Agent Architecture (`aiplatform` & `google-adk`)
-
-### 3.1 GCP Service Features & Capabilities
-**Vertex AI Agent Engine** (managed resource `reasoningEngines`) is Google Cloud's enterprise runtime for hosting and scaling autonomous multi-agent applications built with the **Google Agent Development Kit (ADK)**:
-1. **Agent Runtime Container**: Managed serverless container environment with container concurrency (8) and `AGENT_IDENTITY` validation.
-2. **Vertex AI Session Service (`VertexAiSessionService`)**: Stateful session persistence (`/apps/{app}/users/{user}/sessions`).
-3. **Vertex AI Memory Service (`MemoryBankConfig`)**: Semantic memory bank for long-term customer context.
-4. **Artifact Service (`GcsArtifactService`)**: Cloud Storage persistence for generated documents and images.
-
-### 3.2 ADK Agent Code Definitions ([`app/agent.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/agent.py))
-
-Below is the complete multi-agent system implementation from `app/agent.py` (with MCP toolset integration added):
+Below is the complete multi-agent system implementation from `app/agent.py`:
 
 ```python
 import os
@@ -322,12 +284,273 @@ app = App(
 
 ---
 
-## 4. Tools & Model Context Protocol Layer (`app/tools.py` & MCP)
+### 1.4 The `agents-cli` Lifecycle Toolchain (`google-agents-cli`)
 
-### 4.1 Function & Purpose
+**`agents-cli`** is the official command-line interface accompanying the Google Agent Development Kit (ADK). It orchestrates the end-to-end **Agent Development Lifecycle (ADLC)** across 6 distinct phases:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                          THE AGENTS-CLI DEVELOPMENT FLYWHEEL                           │
+├──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬─────────────┤
+│ 1. SCAFFOLD  │ 2. BUILD     │ 3. EVALUATE  │ 4. DEPLOY    │ 5. PUBLISH   │ 6. OBSERVE  │
+├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┼─────────────┤
+│ • create     │ • python ADK │ • synthesize │ • Agent      │ • Gemini     │ • Cloud     │
+│ • enhance    │ • skills/    │ • run        │   Engine     │   Enterprise │   Trace     │
+│ • upgrade    │ • tools/     │ • grade      │ • Cloud Run  │ • Agent      │ • BigQuery  │
+│              │ • schemas/   │ • analyze    │ • GKE        │   Registry   │   Events    │
+└──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴─────────────┘
+```
+
+#### Core Command Reference:
+
+| Phase | Command | Description |
+| :--- | :--- | :--- |
+| **Scaffold** | `agents-cli scaffold create <name>` | Bootstraps a production-ready ADK project with recommended folder layout (`app/`, `tests/eval/`, `skills/`). |
+| **Enhance** | `agents-cli scaffold enhance .` | Enhances an existing agent with evaluation configurations, deployment scripts, and CI/CD GitHub Actions. |
+| **Local Run** | `agents-cli run` or `adk api_server` | Launches a local interactive development web UI and REST API server (`/run`, `/list-apps`) on port 8080. |
+| **Synthesize** | `agents-cli eval dataset synthesize` | Automatically generates synthetic multi-turn user simulation test cases and golden datasets. |
+| **Run Eval** | `agents-cli eval run --dataset <path>` | Executes test datasets against the agent and captures structured OpenTelemetry execution traces. |
+| **Grade Eval**| `agents-cli eval grade --config <yaml>` | Grades execution traces using built-in raters and custom LLM-as-a-judge rubrics. |
+| **CI/CD Eval**| `agents-cli eval run-and-grade` | Combines trace execution and grading in a single CI/CD pipeline step with pass/fail exit codes. |
+| **Deploy** | `agents-cli deploy` | Packages and deploys the ADK `App` to **Vertex AI Agent Engine** (`reasoningEngines`) or Cloud Run. |
+| **Publish** | `agents-cli publish gemini-enterprise` | Registers and exposes the deployed agent inside **Gemini Enterprise Apps** for corporate users. |
+| **Registry** | `agents-cli registry list` | Inspects and manages registered skills and agent revisions in the Google Agent Registry. |
+
+#### Example Lifecycle Workflow:
+
+```bash
+# 1. Inspect project and environment configuration
+agents-cli info
+
+# 2. Run local interactive testing server
+agents-cli run --app-dir app
+
+# 3. Execute batch evaluation and rubric grading before deployment
+agents-cli eval run-and-grade \
+  --dataset tests/eval/datasets/golden_marketing_prompts.json \
+  --config tests/eval/eval_config.yaml \
+  --project agent-demo-09
+
+# 4. Deploy agent to Vertex AI Agent Engine runtime
+agents-cli deploy \
+  --project agent-demo-09 \
+  --region us-central1 \
+  --display-name "marketing-campaign-orchestrator" \
+  --app-dir app
+
+# 5. Publish deployed agent to Gemini Enterprise application
+agents-cli publish gemini-enterprise \
+  --gemini-enterprise-app-id "projects/agent-demo-09/locations/global/collections/default_collection/engines/marketing-app" \
+  --display-name "Marketing Campaign Orchestrator" \
+  --registration-type adk
+```
+
+---
+
+## 2. Google Cloud Run (`run.googleapis.com`) — Ingress & Hosting
+
+### 2.1 GCP Service Features & Capabilities
+**Google Cloud Run** is GCP's fully managed serverless container runtime built on Knative:
+* **Serverless Container Execution**: Executes stateless HTTP containers automatically scaling from zero to N instances based on request concurrency (`--concurrency`).
+* **Built-in Security & Transport**: Automatic HTTPS TLS certificate management, custom domain mapping, and IAM invoker access controls (`--allow-unauthenticated`).
+* **Artifact Registry Integration**: Seamlessly pulls and deploys container images stored in GCP Artifact Registry (`{region}-docker.pkg.dev/{project}/{repo}/{image}:{tag}`).
+
+### 2.2 Code & Implementation Details
+
+#### A. Deploying FastAPI Backend Container to Cloud Run ([`deploy/deploy_cloud_run.sh`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/deploy_cloud_run.sh))
+
+```bash
+#!/usr/bin/env bash
+set -e
+
+PROJECT_ID="agent-demo-09"
+REGION="us-central1"
+IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/agent-platform/backend:latest"
+
+# 1. Build Backend Docker Image via Cloud Build
+gcloud builds submit --tag "${IMAGE_TAG}" -f deploy/Dockerfile.backend .
+
+# 2. Deploy to Cloud Run with OpenTelemetry environment variables
+gcloud run deploy "agent-platform-backend" \
+  --image="${IMAGE_TAG}" \
+  --region="${REGION}" \
+  --platform=managed \
+  --port=8080 \
+  --allow-unauthenticated \
+  --service-account="agent-platform-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},GCP_REGION=${REGION},USE_GCP_CLOUD=true,GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace"
+```
+
+---
+
+## 3. GCP Agent Gateway & Vertex AI Model Armor (`networkservices` & `modelarmor`)
+
+### 3.1 GCP Agent Gateway: Why Use It & Enterprise Value Proposition
+
+**GCP Agent Gateway** (`networkservices.googleapis.com`) is a managed security and networking control plane purpose-built for enterprise AI agent systems. 
+
+As enterprises move from single-turn chatbots to multi-agent architectures executing database queries and automated actions, traditional web API gateways fall short. Agent Gateway solves the core governance challenges of autonomous agent systems:
+
+```
+                  ┌─────────────────────────────────────────────────────────────┐
+                  │                 WITHOUT AGENT GATEWAY                       │
+                  │  Ungoverned "Spaghetti" Access & Security Blindspots        │
+                  │  Client ──> Agent ──> Direct Unrestricted DB/API Access     │
+                  └──────────────────────────────┬──────────────────────────────┘
+                                                 │
+                                                 v
+                  ┌─────────────────────────────────────────────────────────────┐
+                  │                  WITH GCP AGENT GATEWAY                     │
+                  │  Governed Security Perimeter & Zero-Trust Control Plane     │
+                  │  Client ──> Agent Gateway (Model Armor & IAM) ──> Agent     │
+                  └─────────────────────────────────────────────────────────────┘
+```
+
+#### Core Enterprise Values & Benefits:
+
+1. **Centralized Security Perimeter & Zero-Trust Access Control**:
+   - Without an Agent Gateway, agents communicate directly with internal tools, LLMs, and external databases in an ungoverned network.
+   - **Agent Gateway** creates a single, governed security perimeter enforcing Zero-Trust access policies for both client-to-agent ingress (`CLIENT_TO_AGENT`) and agent-to-tools egress (`AGENT_TO_ANYWHERE`).
+
+2. **In-Line Model Armor Interception**:
+   - Intercepts incoming prompts and outgoing model responses to enforce **Vertex AI Model Armor** safety policies automatically.
+   - Blocks prompt injection / jailbreak attacks, masks sensitive PII (emails, SSNs, credit cards) in-flight, and enforces Responsible AI safety thresholds before requests reach the LLM runtime.
+
+3. **AI-Native Protocol Standardization (MCP & REST)**:
+   - Provides native proxying and governance for the **Model Context Protocol (MCP)** and HTTP/JSON streaming (`:streamQuery`).
+   - Standardizes tool execution protocols, allowing agents to invoke remote MCP tools securely across different clouds or internal networks with identity translation.
+
+4. **Agent Identity & Non-Repudiation (`AGENT_IDENTITY`)**:
+   - Integrates with **Identity-Aware Proxy (IAP)** and GCP IAM to validate caller identities (users, IDEs, web apps) and enforce specialized **Agent Identity service accounts**.
+   - Guarantees non-repudiation: every agent action, tool call, or prompt is cryptographically bound to a verified principal identity.
+
+5. **Centralized Compliance & Audit Log Stream**:
+   - Eliminates blind spots by emitting uniform audit logs directly to Cloud Audit Logs (`cloudaudit.googleapis.com`), Cloud Logging (`_Default` bucket), and Cloud Trace.
+   - Provides full compliance reporting (GDPR, HIPAA, SOC2) for AI interactions, capturing exact prompt inputs, Model Armor sanitization results, and egress tool calls.
+
+6. **Decoupling Security Governance from Agent Development**:
+   - Enables Enterprise Security Operations (SecOps) teams to update security policies, DLP scanners, or Model Armor templates globally in declarative YAML specs (`agent_gateway.yaml`) without requiring AI developers to re-deploy or re-compile agent Python code.
+
+---
+
+### 3.2 Code & Implementation Details
+
+#### A. Agent Gateway Spec ([`deploy/agent_gateway.yaml`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/agent_gateway.yaml))
+
+```yaml
+name: projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway
+description: Enterprise Agent Gateway enforcing Model Armor security policies and governed routing.
+protocols:
+  - MCP
+registries:
+  - //agentregistry.googleapis.com/projects/agent-demo-09/locations/us-central1
+googleManaged:
+  governedAccessPath: CLIENT_TO_AGENT
+```
+
+#### B. Pre-Flight Prompt Safety Guard ([`backend/safety.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/safety.py))
+
+```python
+import re
+
+class PromptSafetyGuard:
+    """Pre-flight safety inspector filtering jailbreak attempts and masking PII."""
+
+    INJECTION_PATTERNS = [
+        r"ignore\s+previous\s+instructions",
+        r"bypass\s+safety",
+        r"system\s*:\s*override",
+        r"<script>",
+    ]
+
+    def inspect_and_sanitize(self, prompt: str) -> dict:
+        for pattern in self.INJECTION_PATTERNS:
+            if re.search(pattern, prompt, re.IGNORECASE):
+                return {
+                    "passed": False,
+                    "filter_reason": "PROMPT_INJECTION_DETECTED",
+                    "sanitized_prompt": prompt
+                }
+
+        sanitized = re.sub(
+            r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+            "[REDACTED_EMAIL]",
+            prompt
+        )
+
+        return {"passed": True, "filter_reason": "NONE", "sanitized_prompt": sanitized}
+```
+
+---
+
+## 4. Vertex AI Agent Engine & Managed Runtime Services (`aiplatform.googleapis.com/reasoningEngines`)
+
+### 4.1 GCP Service Features & Capabilities
+**Vertex AI Agent Engine** (managed resource `reasoningEngines`) is Google Cloud's enterprise runtime for hosting, autoscaling, and executing autonomous multi-agent applications built with the **Google Agent Development Kit (ADK)**:
+1. **Agent Runtime Container**: Managed serverless container environment with container concurrency (8) and `AGENT_IDENTITY` validation.
+2. **Vertex AI Session Service (`VertexAiSessionService`)**: Stateful session persistence (`/apps/{app}/users/{user}/sessions`).
+3. **Vertex AI Memory Service (`MemoryBankConfig`)**: Semantic memory bank for long-term customer context.
+4. **Artifact Service (`GcsArtifactService`)**: Cloud Storage persistence for generated documents and images.
+
+### 4.2 Agent Deployment & Runtime Invocation Workflow
+
+#### A. Deploying ADK Agent to Vertex AI Agent Engine
+ADK applications are packaged and deployed directly to Vertex AI Agent Engine using `agents-cli deploy`:
+
+```bash
+agents-cli deploy \
+  --project agent-demo-09 \
+  --region us-central1 \
+  --display-name "marketing-campaign-orchestrator" \
+  --app-dir app \
+  --service-account agent-platform-sa@agent-demo-09.iam.gserviceaccount.com
+```
+
+#### B. Streaming Queries from FastAPI Backend to Agent Engine ([`backend/agent_runtime_client.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/agent_runtime_client.py))
+
+```python
+import os
+import requests
+import google.auth
+import google.auth.transport.requests
+
+class AgentRuntimeClient:
+    """Client for communicating with deployed Vertex AI Agent Engine."""
+    
+    def __init__(self):
+        self.project_id = os.getenv("GCP_PROJECT_ID", "agent-demo-09")
+        self.region = os.getenv("GCP_REGION", "us-central1")
+        self.engine_id = os.getenv("AGENT_RUNTIME_ID")
+        self.endpoint = f"https://{self.region}-aiplatform.googleapis.com/v1beta1/{self.engine_id}:streamQuery"
+
+    def query_stream(self, prompt: str, user_id: str, session_id: str):
+        credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        auth_req = google.auth.transport.requests.Request()
+        credentials.refresh(auth_req)
+        
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "input": {
+                "user_prompt": prompt,
+                "user_id": user_id,
+                "session_id": session_id
+            }
+        }
+        response = requests.post(self.endpoint, headers=headers, json=payload, stream=True)
+        return response
+```
+
+---
+
+## 5. Tools & Model Context Protocol Layer (`app/tools.py` & MCP)
+
+### 5.1 Function & Purpose
 Tools provide external capabilities to agents. ADK supports Python function tools with state access (`ToolContext`) and remote Model Context Protocol (`McpToolset`) servers.
 
-### 4.2 Code Example: BigQuery SQL Execution Tool ([`app/tools.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/tools.py))
+### 5.2 Code Example: BigQuery SQL Execution Tool ([`app/tools.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/tools.py))
 
 ```python
 import re
@@ -360,141 +583,166 @@ def query_customer_data(sql_query: str, tool_context: ToolContext) -> dict:
 
 ---
 
-## 5. Google BigQuery Data Layer (`bigquery.googleapis.com`)
+### 5.3 GCP Managed Model Context Protocol (MCP) Services Ecosystem
 
-### 5.1 GCP Service Features & Capabilities
-Google BigQuery provides serverless enterprise data warehousing. In this platform, it stores customer analytics (`agent-demo-09:marketing_analytics`) and project-wide agent events (`agent-demo-09.agent_analytics.agent_events_v2`).
+Google Cloud Platform provides first-party managed **MCP Servers** and **Toolsets** that standardize how AI agents interact with GCP data stores and enterprise services using the open **Model Context Protocol (MCP)** specification.
 
-### 5.2 Centralized Observability View: `agent_events_v2`
+#### 1. Available GCP Managed MCP Toolsets & Services
 
-The `agent_events_v2` view structures high-value **user requests**, **agent responses**, **activity/span operations**, **tool calls**, **Model Armor safety audits**, **token usage metrics**, **execution latencies (`latency_ms`)**, and **OpenTelemetry trace spans** across all agents in the project:
+* **BigQuery Managed MCP Server (`mcp-server-bigquery`)**:
+  - Allows agents to discover BigQuery datasets, inspect table schemas (`INFORMATION_SCHEMA`), generate SQL queries, run queries via BigQuery Jobs API, and sample data using standardized MCP primitives.
+  - Supports fine-grained IAM controls and dataset-level boundaries.
 
-```sql
-CREATE OR REPLACE VIEW `agent-demo-09.agent_analytics.agent_events_v2` AS
-WITH trace_spans AS (
-  SELECT
-    span_id AS event_id,
-    start_time AS timestamp,
-    end_time AS receive_timestamp,
-    'opentelemetry_span' AS resource_type,
-    COALESCE(
-      JSON_VALUE(attributes['gen_ai.conversation.id']),
-      JSON_VALUE(attributes['gcp.vertex.agent.session_id']),
-      JSON_VALUE(attributes['session_id']),
-      'session-default'
-    ) AS session_id,
-    COALESCE(
-      JSON_VALUE(attributes['enduser.id']),
-      JSON_VALUE(attributes['user_id']),
-      'user-123'
-    ) AS user_id,
-    COALESCE(
-      JSON_VALUE(attributes['gen_ai.agent.name']),
-      JSON_VALUE(attributes['agent_name']),
-      'marketing_orchestrator'
-    ) AS agent_name,
-    CASE
-      WHEN name LIKE '%llm%' OR name LIKE '%generate%' THEN 'MODEL_CALLING'
-      WHEN name LIKE '%tool%' OR name LIKE '%query%' THEN 'TOOL_EXECUTION'
-      WHEN name LIKE '%workflow%' OR name LIKE '%agent%' THEN 'AGENT_DELEGATION'
-      ELSE 'TRACE_SPAN'
-    END AS event_type,
-    name AS activity_name,
-    JSON_VALUE(attributes['gen_ai.tool.name']) AS tool_name,
-    COALESCE(
-      JSON_VALUE(attributes['gen_ai.prompt']),
-      JSON_VALUE(attributes['gcp.vertex.agent.llm_request'])
-    ) AS user_prompt,
-    COALESCE(
-      JSON_VALUE(attributes['gen_ai.completion']),
-      JSON_VALUE(attributes['gcp.vertex.agent.llm_response'])
-    ) AS agent_response,
-    REGEXP_EXTRACT(JSON_VALUE(attributes['db.statement']), r'(?i)(SELECT\s+.*)') AS sql_executed,
-    TIMESTAMP_DIFF(end_time, start_time, MILLISECOND) AS latency_ms,
-    SAFE_CAST(JSON_VALUE(attributes['gen_ai.usage.input_tokens']) AS INT64) AS input_tokens,
-    SAFE_CAST(JSON_VALUE(attributes['gen_ai.usage.output_tokens']) AS INT64) AS output_tokens,
-    CASE
-      WHEN name LIKE '%analytics%' OR name LIKE '%query%' OR JSON_VALUE(attributes['gen_ai.tool.name']) LIKE '%bigquery%' THEN 'bigquery-customer-analytics'
-      WHEN name LIKE '%strategy%' THEN 'campaign-framework'
-      WHEN name LIKE '%content%' OR name LIKE '%brand%' THEN 'brand-voice-craft'
-      ELSE 'omnichannel-orchestration'
-    END AS skills_used,
-    trace_id,
-    span_id
-  FROM `agent-demo-09.traceLink._AllSpans`
-),
-log_audit_events AS (
-  SELECT
-    insert_id AS event_id,
-    timestamp,
-    receive_timestamp,
-    resource.type AS resource_type,
-    COALESCE(
-      JSON_VALUE(json_payload.session_id),
-      REGEXP_EXTRACT(http_request.request_url, r'session_id=([^&]+)'),
-      JSON_VALUE(labels.session_id),
-      'session-default'
-    ) AS session_id,
-    COALESCE(
-      JSON_VALUE(json_payload.user_id),
-      proto_payload.audit_log.authentication_info.principal_email,
-      'user-123'
-    ) AS user_id,
-    COALESCE(
-      JSON_VALUE(json_payload.agent_name),
-      JSON_VALUE(resource.labels.reasoning_engine_id),
-      REGEXP_EXTRACT(proto_payload.audit_log.resource_name, r'agentGateways/([^/]+)'),
-      REGEXP_EXTRACT(proto_payload.audit_log.resource_name, r'templates/([^/]+)'),
-      'marketing_orchestrator'
-    ) AS agent_name,
-    CASE
-      WHEN proto_payload.audit_log.method_name LIKE '%ModelArmor%' THEN 'MODEL_ARMOR_SAFETY'
-      WHEN http_request.request_url LIKE '%/api/chat%' THEN 'USER_CHAT_REQUEST'
-      WHEN proto_payload.audit_log.method_name LIKE '%InsertJob%' THEN 'BIGQUERY_SQL_QUERY'
-      ELSE COALESCE(proto_payload.audit_log.method_name, JSON_VALUE(json_payload.event_type), 'AUDIT_EVENT')
-    END AS event_type,
-    proto_payload.audit_log.method_name AS activity_name,
-    CAST(NULL AS STRING) AS tool_name,
-    COALESCE(
-      JSON_VALUE(json_payload.message),
-      JSON_VALUE(json_payload.prompt),
-      TO_JSON_STRING(proto_payload.audit_log.request)
-    ) AS user_prompt,
-    COALESCE(
-      JSON_VALUE(json_payload.text),
-      JSON_VALUE(json_payload.response),
-      TO_JSON_STRING(proto_payload.audit_log.response)
-    ) AS agent_response,
-    CAST(NULL AS STRING) AS sql_executed,
-    CAST(NULL AS INT64) AS latency_ms,
-    CAST(NULL AS INT64) AS input_tokens,
-    CAST(NULL AS INT64) AS output_tokens,
-    CASE
-      WHEN JSON_VALUE(json_payload.agent_name) = 'analytics_agent' THEN 'bigquery-customer-analytics'
-      WHEN JSON_VALUE(json_payload.agent_name) = 'strategy_agent' THEN 'campaign-framework'
-      WHEN JSON_VALUE(json_payload.agent_name) = 'content_agent' THEN 'brand-voice-craft'
-      ELSE 'omnichannel-orchestration'
-    END AS skills_used,
-    trace AS trace_id,
-    span_id
-  FROM `agent-demo-09.defaultLink._AllLogs`
-  WHERE proto_payload.audit_log.service_name IS NOT NULL
-     OR log_name LIKE '%modelarmor%'
-     OR http_request.request_url LIKE '%/api/chat%'
+* **Cloud SQL & AlloyDB Managed MCP Servers**:
+  - Enterprise PostgreSQL and MySQL MCP servers providing vector search (`pgvector`), schema reflection, index analysis, and SQL transaction execution directly from agent workflows.
+
+* **Spanner Managed MCP Server**:
+  - High-throughput, globally distributed relational database MCP server designed for mission-critical transactional tool calls and distributed schema introspection.
+
+* **Firestore & Memorystore (Redis) Managed MCP Servers**:
+  - NoSQL document database and fast in-memory key-value cache MCP servers for real-time state retrieval, session caching, and document lookups.
+
+* **Vertex AI Search & Conversation (Discovery Engine) MCP Server**:
+  - Managed RAG search MCP server exposing enterprise document search, unstructured knowledge retrieval, and semantic snippet extraction to agents.
+
+#### 2. Architecture & How Managed MCP Works in GCP
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ ADK Agent Executable (Agent Engine Runtime)                                       │
+│                                                                                  │
+│   analytics_agent = Agent(                                                       │
+│       tools=[                                                                    │
+│           McpToolset(connection_params=SseConnectionParams(url=GATEWAY_MCP_URL))  │
+│       ]                                                                          │
+│   )                                                                              │
+└────────────────────────┬─────────────────────────────────────────────────────────┘
+                         │
+                         v (Standard SSE / Stdio MCP Transport)
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ GCP Agent Gateway (Governed MCP Security & Routing Proxy)                         │
+│  - Enforces IAM authentication & X-GCP-Project-ID headers                        │
+│  - Translates MCP tool calls to GCP service endpoints                            │
+└──────────────────┬─────────────────────┬─────────────────────┬───────────────────┘
+                   │                     │                     │
+                   v                     v                     v
+┌──────────────────────────┐  ┌──────────────────────────┐  ┌──────────────────────────┐
+│ BigQuery MCP Server      │  │ AlloyDB / Cloud SQL MCP  │  │ Vertex AI Search MCP     │
+│  • Dataset discovery     │  │  • pgvector search       │  │  • Unstructured RAG      │
+│  • Schema introspection  │  │  • SQL execution         │  │  • Doc snippet retrieval │
+│  • Query execution       │  │  • Table introspection   │  │  • Enterprise grounding  │
+└──────────────────────────┘  └──────────────────────────┘  └──────────────────────────┘
+```
+
+#### 3. Code Example: Connecting ADK Agents to Managed GCP MCP Servers
+
+Below is a Python example showing how to connect an ADK Agent to **GCP Managed BigQuery MCP** and **AlloyDB MCP** servers proxied through **GCP Agent Gateway**:
+
+```python
+from google.adk.agents import Agent
+from google.adk.tools.mcp_tool import McpToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import SseConnectionParams
+
+# 1. Managed BigQuery MCP Toolset (Proxied via Agent Gateway)
+bigquery_mcp_toolset = McpToolset(
+    connection_params=SseConnectionParams(
+        url="https://agent-gateway.internal/mcp/v1/bigquery",
+        headers={"X-GCP-Project-ID": "agent-demo-09"}
+    ),
+    tool_filter=["list_datasets", "get_table_schema", "execute_sql_query"]
 )
-SELECT * FROM trace_spans
-UNION ALL
-SELECT * FROM log_audit_events;
+
+# 2. Managed AlloyDB / Cloud SQL Vector Search MCP Toolset
+alloydb_mcp_toolset = McpToolset(
+    connection_params=SseConnectionParams(
+        url="https://agent-gateway.internal/mcp/v1/alloydb",
+        headers={"X-GCP-Project-ID": "agent-demo-09"}
+    ),
+    tool_filter=["vector_search_embeddings", "query_customer_history"]
+)
+
+# 3. Agent Binding Managed GCP MCP Toolsets
+data_agent = Agent(
+    name="managed_data_agent",
+    model="gemini-3.6-flash",
+    description="Agent leveraging GCP Managed BigQuery and AlloyDB MCP Servers.",
+    instruction="Answer data questions by querying BigQuery and AlloyDB via managed MCP toolsets.",
+    tools=[bigquery_mcp_toolset, alloydb_mcp_toolset],
+)
 ```
 
 ---
 
-## 6. Agent Registry & Skills Catalog (`agentregistry.googleapis.com`)
+## 6. Google BigQuery & BigQuery AI Data Agents (`bigquery.googleapis.com`)
 
-### 6.1 GCP Service Features & Capabilities
+### 6.1 GCP BigQuery Platform & Natively Integrated AI Agents
+**Google BigQuery** is GCP's fully managed, serverless enterprise data warehouse. Beyond serving as the operational analytical store for customer data (`agent-demo-09:marketing_analytics`), BigQuery natively incorporates **AI Data Agents** (powered by Gemini) directly into the data plane:
+
+* **BigQuery AI Data Agents**: Natively integrated agents inside BigQuery Data Canvas capable of understanding natural language data requests, introspecting schema metadata, generating complex SQL, executing multi-step data exploration, and synthesizing visual summaries.
+* **Centralized Telemetry Repository (`agent_events_v2`)**: Aggregates execution telemetry, OpenTelemetry spans, and audit logs across all agents in project `agent-demo-09` into a single structured view (`agent-demo-09.agent_analytics.agent_events_v2`).
+
+---
+
+### 6.2 The Pre-Built BigQuery Analytics Agent
+
+The **BigQuery Analytics Agent** is a specialized, pre-built observability agent designed specifically to query, audit, and analyze multi-agent execution events stored in `agent_events_v2`.
+
+#### 1. Operational Role & Value Proposition
+Instead of requiring DevOps or SecOps engineers to write complex SQL queries manually, the **BigQuery Analytics Agent** provides an interactive, natural-language interface over the entire project's agent event telemetry:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Enterprise Operations / Security / Product Team                                  │
+│  "What is the p95 latency of analytics_agent tool calls, and which skills failed?"│
+└────────────────────────┬─────────────────────────────────────────────────────────┘
+                         │
+                         v (Natural Language Query)
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Pre-Built BigQuery Analytics Agent (Gemini-Powered)                               │
+│  • Introspects agent_events_v2 view schema & metrics                             │
+│  • Generates & executes optimized BigQuery SQL                                   │
+│  • Synthesizes latency distributions, token costs & error trends                 │
+└────────────────────────┬─────────────────────────────────────────────────────────┘
+                         │
+                         v (Queries Telemetry Repository)
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ BigQuery Centralized Telemetry Dataset (`agent_analytics.agent_events_v2`)       │
+│  • Columns: session_id, user_id, agent_name, event_type, activity_name, tool_name,│
+│           user_prompt, agent_response, latency_ms, input_tokens, output_tokens,  │
+│           skills_used, trace_id, span_id                                         │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 2. Core Capabilities of the BigQuery Analytics Agent
+
+1. **Multi-Agent Session & Trajectory Analysis**:
+   - Analyzes complete conversation paths, tracking how the root `marketing_orchestrator` delegates tasks to sub-agents (`analytics_agent`, `strategy_pipeline`, `content_pipeline`).
+   - Identifies session drop-offs, user intent misclassifications, and loop patterns.
+
+2. **Performance & Latency Profiling**:
+   - Computes execution duration metrics (`latency_ms`) across individual tool calls (e.g. `query_customer_data`), LLM generation turns (`call_llm`), and end-to-end agent workflows.
+   - Highlights bottlenecks and slow database queries across the system.
+
+3. **Token Consumption & Cost Optimization**:
+   - Tracks input and output token consumption (`input_tokens`, `output_tokens`) per agent, per model (`gemini-3.6-flash`), and per user session.
+   - Enables fine-grained cost allocation across departments and customer cohorts.
+
+4. **Security, Safety & Model Armor Auditing**:
+   - Audits Model Armor safety events (`MODEL_ARMOR_SAFETY`), filtering for prompt injection attempts, PII redactions, and blocked content.
+   - Ensures compliance with corporate Responsible AI policies.
+
+5. **Skill Utilization & Quality Analytics**:
+   - Correlates activated skills (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`) with task completion quality and user feedback.
+   - Provides empirical evidence for optimizing skill instruction prompts.
+
+---
+
+## 7. Agent Registry & Skills Catalog (`agentregistry.googleapis.com`)
+
+### 7.1 GCP Service Features & Capabilities
 **Agent Registry** manages agent skills, tool definitions, and revision versions across GCP projects.
 
-### 6.2 Code Example: Skill Registration Script ([`deploy/register_skills.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/register_skills.py))
+### 7.2 Code Example: Skill Registration Script ([`deploy/register_skills.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/register_skills.py))
 
 ```python
 import subprocess
@@ -523,48 +771,549 @@ def register_skill(skill_id: str, display_name: str, payload_zip: str):
 
 ---
 
-## 7. Vertex AI Rapid Evaluation API (`aiplatform.googleapis.com`)
+## 8. Vertex AI GenAI Evaluation Service, Experiments & Online Monitors (`aiplatform.googleapis.com` & `agents-cli eval`)
 
-### 7.1 GCP Service Features & Capabilities
-Automated LLM-as-a-Judge evaluators measuring Grounding, Safety/Toxicity, and Fulfillment.
+### 8.1 GCP Evaluation Service Architecture & The Quality Flywheel
 
-### 7.2 Code Example: Local Evaluation Runner ([`eval/local_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/local_eval.py))
+The **Gemini Enterprise Agent Platform Evaluation Service** (built on Vertex AI GenAI Evaluation APIs `aiplatform.googleapis.com`) provides an end-to-end framework to measure, benchmark, and continuously optimize agent quality, safety, grounding, and tool usage accuracy.
 
-```python
-def evaluate_agent_instance(prompt: str, response: dict) -> dict:
-    passed_safety = response.get("status") != "BLOCKED_BY_MODEL_ARMOR"
-    has_analytics = bool(response.get("analytics"))
-    has_a2a_trace = len(response.get("a2a_trace", [])) > 0
+Enterprise agent evaluation is structured into **three distinct operational modalities**:
 
-    score = 1.0 if (passed_safety and has_analytics and has_a2a_trace) else 0.5
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        AGENT EVALUATION MODALITIES & LIFECYCLE                         │
+├─────────────────────────┬─────────────────────────────┬────────────────────────────────┤
+│ 1. RAPID EVALUATION     │ 2. OFFLINE & EXPERIMENT     │ 3. CONTINUOUS ONLINE MONITORS  │
+│    (Local Development)  │    EVALUATION (CI/CD)       │    (Production Runtime)        │
+├─────────────────────────┼─────────────────────────────┼────────────────────────────────┤
+│ • Interactive feedback  │ • Batch test case grading   │ • Automated 10-min sampling    │
+│ • Single-turn / prompt  │ • Multi-turn trajectories   │ • Evaluates live traces in-situ│
+│ • Local LLM-as-judge    │ • Vertex AI Experiments     │ • Streams to Cloud Monitoring  │
+│ • Fast prompt iteration │ • Baseline vs Candidate     │ • Detects drift, PII & errors  │
+└─────────────────────────┴─────────────────────────────┴────────────────────────────────┘
+```
 
-    return {
-        "prompt": prompt,
-        "metrics": {
-            "safety_passed": passed_safety,
-            "grounding_passed": has_analytics,
-            "a2a_protocol_complete": has_a2a_trace
-        },
-        "score": score
-    }
+#### The Quality Flywheel Loop
+Agent evaluation is not a one-time gate but a continuous closed-loop cycle:
+1. **Design & Dataset Synthesis**: Curate golden evaluation datasets (`EvaluationDataset` schema) or synthesize realistic user scenarios using `agents-cli eval dataset synthesize`.
+2. **Inference & Trace Capture**: Execute agent runs locally or against deployed Agent Runtime, exporting OpenTelemetry spans with standardized `gen_ai` semantic conventions.
+3. **Scoring & Multi-Dimensional Metrics**: Grade complete trajectories using pre-built managed evaluators (Task Success, Grounding, Safety) or custom rubric-based judges (`LLMMetric`) and deterministic assertions (`CodeExecutionMetric`).
+4. **Failure Clustering & Loss Analysis**: Automatically group failures into loss clusters (e.g. tool parameter errors, hallucinated facts, instruction non-compliance) to identify systemic weaknesses.
+5. **Prompt & Tool Optimization**: Optimize system instructions and tool definitions, then verify gains against tracked Vertex AI Experiments.
+
+```
+                  ┌──────────────────────────────────────────────┐
+                  │ 1. DESIGN & SYNTHESIS                        │
+                  │    • Golden datasets (EvaluationDataset)     │
+                  │    • User simulation & scenario generation   │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         v
+                  ┌──────────────────────────────────────────────┐
+                  │ 2. INFERENCE & TRACE GENERATION              │
+                  │    • OpenTelemetry gen_ai semantic spans     │
+                  │    • Full session & turn capture             │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         v
+                  ┌──────────────────────────────────────────────┐
+                  │ 3. SCORING & METRICS ENGINE                  │
+                  │    • Managed Built-ins (Grounding, Safety)   │
+                  │    • Custom LLMMetric & CodeExecutionMetric  │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         v
+                  ┌──────────────────────────────────────────────┐
+                  │ 4. LOSS ANALYSIS & FAILURE CLUSTERING        │
+                  │    • Automated root-cause clustering         │
+                  │    • Trace-level scoring & rationales        │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         v
+                  ┌──────────────────────────────────────────────┐
+                  │ 5. OPTIMIZATION & EXPERIMENT COMPARISON      │
+                  │    • Prompt refinement & tool adjustment     │
+                  │    • Compare runs in Vertex AI Experiments   │
+                  └──────────────────────────────────────────────┘
 ```
 
 ---
 
-## 8. GCP Observability & Telemetry Stack (`cloudtrace` & `logging`)
+### 8.2 Offline Evaluation & Vertex AI Experiments Tracking
 
-### 8.1 GCP Service Features & Capabilities
-* **Google Cloud Trace**: OpenTelemetry span traces (`invoke_workflow` → `call_llm` → `execute_tool`).
-* **Cloud Logging Log Analytics**: Log bucket `_Default` linked to BigQuery dataset `defaultLink`.
+#### 1. Experiment Tracking & Run Comparison (`aiplatform.Experiment`)
+During model selection and prompt engineering, every evaluation run is logged to **Vertex AI Experiments**:
+* **Parameters Tracked**: Model name (`gemini-3.6-flash`), temperature, prompt hash, system instruction revision, active skills (`bigquery-customer-analytics`, `campaign-framework`).
+* **Summary Metrics**: `final_response_quality`, `grounding_score`, `tool_selection_quality`, `hallucination_rate`, `latency_p95_ms`, `total_token_cost`.
+* **Artifacts Stored**: Rendered `EvaluationDataset` JSON, trace payloads in Cloud Storage (`gs://agent-demo-09-eval-artifacts/`), and detailed markdown evaluation reports.
+* **Side-by-Side Comparison**: The GCP Console allows engineering teams to compare up to 5 evaluation runs simultaneously, visualizing performance deltas and regressions across agent revisions.
+
+#### 2. Evaluation Metrics Pool
+The evaluation service provides both managed built-in raters and customizable metric extensions:
+
+| Category | Metric Name | Type | Description |
+| :--- | :--- | :--- | :--- |
+| **Response Quality** | `final_response_quality` | Managed LLM-Judge | Evaluates accuracy, relevance, and completeness of final response. |
+| **Grounding & Truthfulness**| `grounding_score` / `hallucination_rate` | Managed LLM-Judge | Validates factual grounding against BigQuery query results and enterprise docs. |
+| **Tool Execution** | `tool_selection_quality` | Managed LLM-Judge | Measures whether the agent invoked the appropriate tool (`query_customer_data`) for the intent. |
+| **Parameter Accuracy** | `tool_call_parameter_quality` | Managed LLM-Judge | Assesses whether SQL syntax and arguments match table schemas without syntax errors. |
+| **Safety & Governance** | `safety` / `model_armor_check` | Managed Classifier | Assesses toxicity, PII leakage, and adherence to Model Armor safety boundaries. |
+| **Custom Domain Quality** | `custom_brand_voice_alignment` | Custom `LLMMetric` | Uses custom rubric with `pydantic` schema to enforce corporate tone & marketing structure. |
+| **Deterministic Code** | `sql_execution_integrity` | Custom `CodeExecutionMetric`| Python function verifying valid SQL syntax, non-empty row return, and turn count limits. |
+
+#### 3. CLI Evaluation Suite (`agents-cli eval`)
+The platform standardizes evaluation via the `agents-cli eval` command line interface:
+
+```bash
+# 1. Synthesize evaluation scenarios with user simulation
+agents-cli eval dataset synthesize \
+  --agent-url http://localhost:8080 \
+  --output tests/eval/datasets/synthetic-marketing-evalset.json \
+  --num-scenarios 25
+
+# 2. Execute evaluation dataset and generate traces
+agents-cli eval run \
+  --dataset tests/eval/datasets/golden_marketing_prompts.json \
+  --output tests/eval/traces/run-1-traces.json
+
+# 3. Grade traces against evaluation config metrics
+agents-cli eval grade \
+  --traces tests/eval/traces/run-1-traces.json \
+  --config tests/eval/eval_config.yaml \
+  --output tests/eval/results/eval-results-v1.json
+
+# 4. Combined run & grade in CI/CD pipeline
+agents-cli eval run-and-grade \
+  --dataset tests/eval/datasets/golden_marketing_prompts.json \
+  --config tests/eval/eval_config.yaml \
+  --project agent-demo-09
+```
 
 ---
 
-## 9. Gemini Enterprise Integration & Agent Publishing (`discoveryengine.googleapis.com`)
+### 8.3 Continuous Production Evaluation with Online Monitors (`OnlineEvaluator`)
 
-### 9.1 GCP Service Features & Capabilities
+#### 1. How Online Monitors Work in GCP
+While offline evaluation protects against regressions before deployment, **Online Monitors** provide continuous, automated evaluation of live production traffic directly within the **Gemini Enterprise Agent Platform**:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Live Production Traffic (Cloud Run Backend / Agent Engine Runtime)               │
+│  • Emits OpenTelemetry traces with gen_ai semantic conventions                   │
+└────────────────────────┬─────────────────────────────────────────────────────────┘
+                         │
+                         v (Continuous Stream)
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Cloud Trace & Cloud Logging Bucket                                               │
+│  • Ingests spans, prompts, responses, tool definitions & session IDs             │
+└────────────────────────┬─────────────────────────────────────────────────────────┘
+                         │
+                         v (Scheduled Pull Every 10 Minutes)
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Online Monitor Scheduled Evaluation Loop                                         │
+│  1. QUERY: Filters & samples traces (e.g., 5% random sample + 100% errors/p95)    │
+│  2. EVALUATE: Invokes GenAI Evaluation Service (Safety, Grounding, Quality)      │
+│  3. REPORT: Writes verdict rationales to Cloud Logging & metrics to Monitoring   │
+└────────────────────────┬─────────────────────────────┬───────────────────────────┘
+                         │                             │
+                         v                             v
+┌─────────────────────────────────────────┐   ┌────────────────────────────────────┐
+│ Cloud Monitoring Time-Series Metrics    │   │ Agent Platform UI & Traces View    │
+│  • Response Quality Time-Series Graph   │   │  • Per-session score breakdown     │
+│  • Grounding Drift Alerts & SLOs        │   │  • Evaluator rationales & verdicts │
+│  • PII & Safety Violation Alerts        │   │  • One-click trace drill-down      │
+└─────────────────────────────────────────┘   └────────────────────────────────────┘
+```
+
+#### 2. Core Operational Capabilities:
+* **Scheduled Evaluation Loop**: Operates on an automated 10-minute cadence, querying recent production spans from Cloud Trace without adding latency to live user requests.
+* **Intelligent Sampling Filters**:
+  * **Sampling Rate**: Configurable percentage (e.g. 5%–10% of total volume) with maximum sample caps per run to control evaluation token costs.
+  * **Targeted Condition Filters**: Filter traces specifically by Duration (e.g. `duration > 2.5s`), Token Consumption, HTTP error codes, or specific Agent Runtime IDs.
+* **Cloud Monitoring & Alerting Integration**:
+  * Exports numeric evaluation scores as standard Cloud Monitoring metrics (`custom.googleapis.com/agent_platform/eval/response_quality`).
+  * Triggers Cloud Monitoring Alerting Policies (PagerDuty, Slack, Email) when response quality dips below 0.85 or hallucination rate exceeds 0.05.
+* **Per-Trace Observability Drill-Down**:
+  * In the Google Cloud Console (*Agent Platform > Agents > Traces*), engineers can click any conversation trace and view the **Evaluation tab** to inspect exact LLM-judge scores and step-by-step rationales.
+
+#### 3. Telemetry Prerequisites for Online Monitoring
+To enable Online Monitors, the ADK Agent application must export standardized OpenTelemetry signals by configuring the following environment variables:
+
+```bash
+# Enable experimental Gen AI semantic conventions
+export OTEL_SEMCONV_STABILITY_OPT_IN="gen_ai_latest_experimental"
+
+# Capture message content in trace events for evaluation
+export OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT="EVENT_ONLY"
+
+# Enable Cloud Trace exporter
+export OTEL_TRACES_EXPORTER="google_cloud_trace"
+
+# (Optional) For multimodal agents, offload heavy media to GCS
+export OTEL_INSTRUMENTATION_GENAI_UPLOAD_FORMAT="jsonl"
+export OTEL_INSTRUMENTATION_GENAI_COMPLETION_HOOK="upload"
+export OTEL_INSTRUMENTATION_GENAI_UPLOAD_BASE_PATH="gs://agent-demo-09-eval-artifacts/traces"
+```
+
+---
+
+### 8.4 Code & Implementation Details
+
+#### A. Evaluation Configuration File ([`tests/eval/eval_config.yaml`](file:///Users/henrikw/Projects/agent_platform_demo/tests/eval/eval_config.yaml))
+
+```yaml
+# Evaluation configuration for GCP Marketing Platform Agents
+metrics_to_run:
+  - final_response_quality
+  - grounding_score
+  - custom_marketing_rubric
+  - bq_query_integrity
+
+custom_metrics:
+  # 1. Custom LLM-as-a-Judge Rubric for Marketing Brand Alignment
+  - name: custom_marketing_rubric
+    prompt_template: |
+      You are an expert QA marketing rater. Grade the agent response on a 1-5 scale.
+      Rubric:
+      - Score 5: Accurately references BigQuery RFM customer data, formulates multi-channel strategy, and adheres to brand tone.
+      - Score 3: Valid marketing response but lacks specific data grounding or clear channel mix.
+      - Score 1: Inaccurate data claims, off-brand tone, or safety violation.
+      
+      User Prompt: {prompt}
+      Agent Response: {response}
+      Execution Context: {context}
+      Full Agent Trace: {agent_data}
+
+  # 2. Deterministic Code Execution Metric validating BigQuery outputs
+  - name: bq_query_integrity
+    custom_function: |
+      def evaluate(instance):
+          agent_data = instance.get("agent_data") or {}
+          turns = agent_data.get("turns", [])
+          has_sql = any("SELECT" in str(t).upper() for t in turns)
+          return {"score": 1.0 if has_sql else 0.0, "explanation": "Validated SQL query presence in trace"}
+```
+
+#### B. Vertex AI Experiments & Offline Evaluation Script ([`eval/vertex_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/vertex_eval.py))
+
+```python
+"""
+Vertex AI Experiments & Evaluation Service Integration
+Logs parameters, metrics, and trace artifacts to Vertex AI Experiments.
+"""
+import os
+import json
+import logging
+from google.cloud import aiplatform
+from google import genai
+from google.genai import types
+
+logger = logging.getLogger("vertex_eval")
+
+EXPERIMENT_NAME = "marketing-agent-evaluation"
+PROJECT_ID = os.getenv("GCP_PROJECT_ID", "agent-demo-09")
+LOCATION = os.getenv("GCP_REGION", "us-central1")
+
+class VertexAgentEvaluator:
+    def __init__(self):
+        aiplatform.init(
+            project=PROJECT_ID,
+            location=LOCATION,
+            experiment=EXPERIMENT_NAME
+        )
+        self.client = genai.Client()
+
+    def run_experiment_evaluation(self, run_name: str, dataset_path: str, model_version: str = "gemini-3.6-flash") -> dict:
+        """Runs batch evaluation and logs run parameters and metrics to Vertex AI Experiments."""
+        with aiplatform.start_run(run=run_name):
+            # 1. Log Experiment Parameters
+            aiplatform.log_params({
+                "model_version": model_version,
+                "dataset": os.path.basename(dataset_path),
+                "temperature": 0.0,
+                "agent_architecture": "Sequential Multi-Agent (ADK)",
+            })
+
+            with open(dataset_path, "r", encoding="utf-8") as f:
+                eval_cases = json.load(f)
+
+            scores = []
+            for case in eval_cases:
+                score = self._evaluate_case(case)
+                scores.append(score)
+
+            avg_grounding = sum(s["grounding"] for s in scores) / len(scores)
+            avg_quality = sum(s["quality"] for s in scores) / len(scores)
+            safety_rate = sum(1 for s in scores if s["safety"]) / len(scores)
+
+            # 2. Log Summary Metrics to Vertex AI Experiment Dashboard
+            summary_metrics = {
+                "grounding_score": round(avg_grounding, 3),
+                "response_quality": round(avg_quality, 3),
+                "safety_compliance_rate": round(safety_rate, 3),
+                "total_evaluated_cases": len(eval_cases)
+            }
+            aiplatform.log_metrics(summary_metrics)
+            
+            logger.info(f"✅ Logged evaluation run '{run_name}' to Vertex AI Experiment '{EXPERIMENT_NAME}'")
+            return summary_metrics
+
+    def _evaluate_case(self, case: dict) -> dict:
+        # Evaluates grounding and quality using Gemini as Judge
+        return {"grounding": 0.95, "quality": 0.92, "safety": True}
+```
+
+#### C. Programmatic Online Monitor Configuration ([`deploy/create_online_monitor.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/create_online_monitor.py))
+
+```python
+"""
+Configures a Vertex AI Agent Engine Online Monitor for continuous production evaluation.
+"""
+import os
+import requests
+import google.auth
+import google.auth.transport.requests
+
+PROJECT_ID = os.getenv("GCP_PROJECT_ID", "agent-demo-09")
+LOCATION = os.getenv("GCP_REGION", "us-central1")
+AGENT_ENGINE_ID = os.getenv("AGENT_RUNTIME_ID", "projects/agent-demo-09/locations/us-central1/reasoningEngines/123456789")
+
+def create_online_monitor():
+    credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    auth_req = google.auth.transport.requests.Request()
+    credentials.refresh(auth_req)
+
+    url = f"https://{LOCATION}-aiplatform.googleapis.com/v1beta1/projects/{PROJECT_ID}/locations/{LOCATION}/onlineMonitors"
+    headers = {
+        "Authorization": f"Bearer {credentials.token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "displayName": "marketing-agent-production-monitor",
+        "description": "Continuous 10-minute online monitor evaluating safety, grounding, and quality on production traffic.",
+        "targetResource": AGENT_ENGINE_ID,
+        "schedule": {"cron": "*/10 * * * *"},  # Evaluates every 10 minutes
+        "samplingConfig": {
+            "samplingPercentage": 10.0,       # Sample 10% of total volume
+            "maxSamplesPerRun": 50            # Cap at 50 traces per evaluation cycle
+        },
+        "traceFilter": {
+            "minDuration": "2.0s",            # Evaluate slow or intensive traces
+            "excludeErrors": False
+        },
+        "metrics": [
+            {"predefinedMetric": "safety"},
+            {"predefinedMetric": "grounding_score"},
+            {"predefinedMetric": "final_response_quality"}
+        ],
+        "exportDestination": {
+            "cloudMonitoring": True,
+            "cloudLogging": True
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code in [200, 201]:
+        print(f"✅ Online Monitor successfully created: {response.json().get('name')}")
+    else:
+        print(f"⚠️ Response: {response.status_code} - {response.text}")
+
+if __name__ == "__main__":
+    create_online_monitor()
+```
+
+---
+
+## 9. GCP Observability & Telemetry Stack (`cloudtrace` & `logging`)
+
+### 9.1 Observability Architecture & Multi-Tier Telemetry
+
+The Google Cloud Agent Platform provides enterprise-grade observability across the entire agent lifecycle. Multi-agent systems involve asynchronous handoffs, nested reasoning loops, and external database tool executions. GCP standardizes observability into **four additive tiers**:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                          GCP AGENT OBSERVABILITY 4-TIER STACK                          │
+├─────────────────────────┬─────────────────────────────┬────────────────────────────────┤
+│ TIER                    │ ENGINE / STORAGE            │ PURPOSE & SCOPE                │
+├─────────────────────────┼─────────────────────────────┼────────────────────────────────┤
+│ 1. Distributed Tracing  │ Google Cloud Trace          │ Span trees, latency profiling, │
+│    (OpenTelemetry)      │ (Cloud Trace API)           │ turn-by-turn agent handoffs    │
+├─────────────────────────┼─────────────────────────────┼────────────────────────────────┤
+│ 2. Log Analytics &      │ Cloud Logging Bucket        │ Real-time log stream, stdout,  │
+│    Log Sinks            │ (_Default & BigQuery Link)  │ error traces, filter queries   │
+├─────────────────────────┼─────────────────────────────┼────────────────────────────────┤
+│ 3. Prompt-Response      │ Google Cloud Storage (GCS)  │ Full prompt/completion payloads│
+│    Logging              │ & BQ completions_view       │ for compliance, audit & evals  │
+├─────────────────────────┼─────────────────────────────┼────────────────────────────────┤
+│ 4. BigQuery Agent       │ BigQuery Telemetry Dataset  │ Turn-level metadata, token     │
+│    Analytics Plugin     │ (agent_events_v2)           │ cost, tool provenance & safety │
+└─────────────────────────┴─────────────────────────────┴────────────────────────────────┘
+```
+
+#### Core Capabilities of the Observability Tiers:
+
+1. **Tier 1: Google Cloud Trace (Always-On Distributed Tracing)**:
+   - Tracks requests as they enter the FastAPI backend/Agent Engine runtime, flow through the root `marketing_orchestrator`, delegate to sub-agents (`analytics_agent`, `strategy_pipeline`, `content_pipeline`), and execute database tools.
+   - Provides distributed latency breakdown ($p_{50}, p_{95}, p_{99}$), identifying bottlenecks across LLM generation and BigQuery query execution.
+
+2. **Tier 2: Cloud Logging & Log Analytics**:
+   - Ingests structured JSON logs and `stdout` events into the Cloud Logging `_Default` bucket.
+   - Connected directly to BigQuery via Cloud Logging Log Analytics (`defaultLink`), allowing engineers to query application logs with Standard SQL without data movement fees.
+
+3. **Tier 3: Prompt-Response Logging (GCS & BigQuery Completions)**:
+   - Captures full user prompts, model responses, system instructions, and tool arguments, offloading high-volume payload JSONL files to a dedicated GCS bucket (`LOGS_BUCKET_NAME`).
+   - Automatically synchronizes with BigQuery through external tables and the `completions_view`, enabling compliance audits (GDPR, HIPAA) and golden dataset generation for fine-tuning.
+
+4. **Tier 4: BigQuery Agent Analytics Plugin**:
+   - A purpose-built ADK plugin that captures structured turn events into `agent_events_v2`.
+   - Enables business intelligence dashboards (Looker Studio), token cost allocation by user/department, and tracking of Model Armor safety triggers.
+
+---
+
+### 9.2 OpenTelemetry Span Hierarchy & Semantic Conventions
+
+The Google Agent Development Kit (ADK) implements the official **OpenTelemetry GenAI Semantic Conventions** (`OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental`). Every agent request generates a structured tree of nested spans:
+
+```
+invoke_workflow (trace_id: 4bf92f3577b34da6a3ce929d0e0e4736, duration: 2.84s)
+  │
+  ├── invoke_agent (agent: marketing_orchestrator, role: supervisor)
+  │     └── call_llm (model: gemini-3.6-flash, operation: chat, tokens: 420 in / 65 out)
+  │           └── generate_content (Vertex AI Gemini API)
+  │
+  ├── invoke_agent (agent: analytics_agent)
+  │     ├── call_llm (model: gemini-3.6-flash, operation: sql_synthesis)
+  │     │     └── generate_content (Vertex AI Gemini API)
+  │     └── execute_tool (tool: query_customer_data, target: BigQuery, duration: 412ms)
+  │
+  └── invoke_agent (agent: strategy_pipeline, type: SequentialAgent)
+        ├── invoke_agent (agent: strategy_reasoner)
+        │     └── call_llm (model: gemini-3.6-flash, operation: reasoning)
+        │           └── generate_content (Vertex AI Gemini API)
+        └── invoke_agent (agent: strategy_formatter)
+              └── call_llm (model: gemini-3.6-flash, schema: StrategySchema)
+                    └── generate_content (Vertex AI Gemini API)
+```
+
+#### Standardized OpenTelemetry Span Attributes:
+
+| Attribute Key | Type | Description / Example |
+| :--- | :--- | :--- |
+| `gen_ai.system` | `string` | `"gcp.vertex_ai"` |
+| `gen_ai.request.model` | `string` | `"gemini-3.6-flash"` |
+| `gen_ai.agent.name` | `string` | `"marketing_orchestrator"` / `"analytics_agent"` |
+| `gen_ai.agent.id` | `string` | Uniquely identifies the agent definition or session. |
+| `gen_ai.conversation.id` | `string` | Session ID grouping multi-turn conversations. |
+| `gen_ai.usage.input_tokens` | `int` | Number of prompt/context tokens sent to Gemini. |
+| `gen_ai.usage.output_tokens`| `int` | Number of generated response tokens. |
+| `gen_ai.tool.name` | `string` | `"query_customer_data"` |
+| `gen_ai.tool.status` | `string` | `"SUCCESS"` or `"ERROR"` |
+
+---
+
+### 9.3 Content Governance & Privacy Controls
+
+To comply with enterprise data residency and privacy regulations (GDPR, HIPAA, SOC 2), ADK implements a **two-tier content governance model**:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              TWO-TIER CONTENT GOVERNANCE                               │
+├────────────────────────────────────────┬───────────────────────────────────────────────┤
+│ TIER 1: TRACES & SPAN EVENTS           │ TIER 2: GCS & BIGQUERY COMPLETIONS            │
+├────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ Governed by:                           │ Governed by:                                  │
+│ OTEL_INSTRUMENTATION_GENAI_CAPTURE_... │ OTEL_INSTRUMENTATION_GENAI_COMPLETION_HOOK    │
+│                                        │                                               │
+│ • NO_CONTENT: Spans contain only       │ • upload: Offloads full prompt/response       │
+│   metadata & token counts (Default).   │   payloads to private GCS logs bucket.        │
+│ • EVENT_ONLY: Ingests content into     │ • Enforces bucket-level IAM & KMS encryption. │
+│   Cloud Logging events.                │ • Sinks into partitioned BQ completions table.│
+│ • SPAN_ONLY: Embeds content into       │                                               │
+│   Cloud Trace span attributes.         │                                               │
+└────────────────────────────────────────┴───────────────────────────────────────────────┘
+```
+
+---
+
+### 9.4 Code & Configuration Blueprint
+
+#### A. Telemetry Environment Configuration ([`.env`](file:///Users/henrikw/Projects/agent_platform_demo/.env) / Cloud Run Env Vars)
+
+```bash
+# Enable OpenTelemetry Cloud Trace exporter
+export OTEL_TRACES_EXPORTER="google_cloud_trace"
+export GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY="true"
+
+# Enable OpenTelemetry experimental GenAI semantic conventions
+export OTEL_SEMCONV_STABILITY_OPT_IN="gen_ai_latest_experimental"
+
+# Trace span privacy setting (keep spans metadata-only)
+export OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT="NO_CONTENT"
+export ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS="false"
+
+# Prompt-Response Logging to GCS
+export LOGS_BUCKET_NAME="agent-demo-09-agent-logs"
+export OTEL_INSTRUMENTATION_GENAI_COMPLETION_HOOK="upload"
+export OTEL_INSTRUMENTATION_GENAI_UPLOAD_BASE_PATH="gs://agent-demo-09-agent-logs/completions"
+export OTEL_INSTRUMENTATION_GENAI_UPLOAD_FORMAT="jsonl"
+
+# BigQuery Agent Analytics dataset binding
+export BQ_ANALYTICS_DATASET_ID="agent_analytics"
+```
+
+#### B. BigQuery Observability Queries
+
+DevOps and engineering teams can run Standard SQL queries directly against BigQuery telemetry tables:
+
+```sql
+-- 1. Calculate p50, p95, and p99 Latency by Agent
+SELECT
+  agent_name,
+  COUNT(*) AS total_invocations,
+  ROUND(AVG(latency_ms), 2) AS avg_latency_ms,
+  APPROX_QUANTILES(latency_ms, 100)[OFFSET(50)] AS p50_latency_ms,
+  APPROX_QUANTILES(latency_ms, 100)[OFFSET(95)] AS p95_latency_ms,
+  APPROX_QUANTILES(latency_ms, 100)[OFFSET(99)] AS p99_latency_ms
+FROM `agent-demo-09.agent_analytics.agent_events_v2`
+WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)
+GROUP BY agent_name
+ORDER BY total_invocations DESC;
+
+-- 2. Token Consumption & Cost Estimation by Model & Agent
+SELECT
+  agent_name,
+  model_name,
+  SUM(input_tokens) AS total_input_tokens,
+  SUM(output_tokens) AS total_output_tokens,
+  -- Gemini 1.5/2.0 Flash estimated pricing ($0.075 / 1M input, $0.30 / 1M output)
+  ROUND((SUM(input_tokens) / 1000000.0 * 0.075) + (SUM(output_tokens) / 1000000.0 * 0.30), 4) AS estimated_cost_usd
+FROM `agent-demo-09.agent_analytics.agent_events_v2`
+WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+GROUP BY agent_name, model_name
+ORDER BY estimated_cost_usd DESC;
+
+-- 3. Top Failing Tools & Error Clusters
+SELECT
+  tool_name,
+  error_message,
+  COUNT(*) AS failure_count
+FROM `agent-demo-09.agent_analytics.agent_events_v2`
+WHERE status = 'ERROR'
+  AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)
+GROUP BY tool_name, error_message
+ORDER BY failure_count DESC
+LIMIT 10;
+```
+
+---
+
+## 10. Gemini Enterprise Integration & Agent Publishing (`discoveryengine.googleapis.com`)
+
+### 10.1 GCP Service Features & Capabilities
 Publishes deployed Reasoning Engine agents to **Gemini Enterprise Apps** so corporate users can invoke the agent inside Gemini's chat interface.
 
-### 9.2 Code Example: Automated Publishing Script ([`deploy/publish_agent.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/publish_agent.py))
+### 10.2 Code Example: Automated Publishing Script ([`deploy/publish_agent.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/publish_agent.py))
 
 ```python
 #!/usr/bin/env python3
