@@ -1017,12 +1017,73 @@ Google BigQuery natively incorporates **AI Data Agents** (powered by Gemini in B
 
 ---
 
-## 7. Agent Registry & Skills Catalog (`agentregistry.googleapis.com`)
+## 7. Agent Skills Standard & Google Cloud Agent Registry (`agentregistry.googleapis.com`)
 
-### 7.1 GCP Service Features & Capabilities
-**Agent Registry** manages agent skills, tool definitions, and revision versions across GCP projects.
+### 7.1 Overview of Agent Skills & The 3-Level SKILL.md Standard
 
-### 7.2 Code Example: Skill Registration Script ([`deploy/register_skills.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/register_skills.py))
+![Agent Skills Standard & Google Cloud Agent Registry](architecture/02_agent_skills_and_agent_registry.jpg)
+
+In the Google Cloud ecosystem, an **Agent Skill** is a standalone, executable, modular package of instructions, code, schemas, and assets that extends an agent's reasoning and action capabilities. Skills are managed as first-class resources within the **Google Cloud Agent Registry**, enabling centralized governance, semantic discovery, access control, and sharing across an enterprise fleet.
+
+#### The 3-Level `SKILL.md` File & Directory Architecture
+
+Every skill is packaged as a structured directory adhering to a strict three-level contract:
+
+```
+skills/marketing_analytics/
+├── SKILL.md                 <-- Core skill definition (L1 Frontmatter + L2 Instructions)
+├── references/              <-- L3: Extended markdown guidance and domain documentation
+│   └── rfm_methodology.md
+├── assets/                  <-- L3: Schemas, templates, and static data contracts
+│   └── bq_schema.json
+└── scripts/                 <-- L3: Executable Python & Bash utilities run in sandbox
+    └── seed_data.py
+```
+
+* **L1 (Metadata Frontmatter)**: YAML header defining identification and discovery attributes (`name`, `description`, `version`, `tags`, and discovery URN).
+* **L2 (Instructions Body)**: The primary Markdown instructions loaded dynamically when the skill is triggered. Defines step-by-step reasoning logic and parameter boundaries.
+* **L3 (Resources & Scripts)**: Sub-directories providing extended guidance (`references/`), schemas and prompt templates (`assets/`), and executable code (`scripts/`) run in secure sandbox environments.
+
+---
+
+### 7.2 Dynamic Skill Binding & On-Demand Lifecycle
+
+Instead of statically stuffing every possible tool and instruction into the root agent's prompt (which wastes LLM context window tokens and degrades reasoning fidelity), Google ADK agents leverage **Dynamic Skill Binding**:
+
+```
+                               ┌─────────────────────────────────────────┐
+                               │       User Request / Intent Flow        │
+                               └────────────────────┬────────────────────┘
+                                                    │
+                                                    v
+                               ┌─────────────────────────────────────────┐
+                               │           Autonomous Reasoner           │
+                               │      (Root Agent with SkillToolset)     │
+                               └────────────────────┬────────────────────┘
+                                                    │
+                                                    v (On-Demand Retrieval)
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ADK DYNAMIC SKILL LIFECYCLE (Managed via Google Cloud Agent Registry)                            │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 🔍 1. list_skills        ──> Discovers matching skill URNs in Agent Registry                   │
+│ 📥 2. load_skill         ──> Dynamically binds L2 instructions & tools into current context     │
+│ 📄 3. load_skill_resource──> Fetches L3 schemas, prompt templates, and references on demand     │
+│ ⚡ 4. run_skill_script   ──> Executes L3 helper scripts inside isolated runtime sandbox         │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Core Skill Management Tool APIs:
+* `list_skills`: Lists all available private and organization-wide skills.
+* `load_skill`: Dynamically imports a specific skill's instructions and tool bindings into the active conversation session.
+* `load_skill_resource`: Loads supporting assets or schema files from `references/` or `assets/`.
+* `run_skill_script`: Invokes executable Python utilities from `scripts/` in an isolated sandbox.
+
+#### Semantic Governance & Natural Language Constraints (NLC):
+* SecOps and Compliance teams can define **Natural Language Constraints (NLC)** in the Agent Registry to govern skill loading policies (e.g. *"Never load high-risk financial transaction skills unless user has MFA authenticated and location is within authorized corporate VPN"*).
+
+---
+
+### 7.3 Skill Registration Script ([`deploy/register_skills.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/register_skills.py))
 
 ```python
 import subprocess
@@ -1030,24 +1091,78 @@ import subprocess
 def register_skill(skill_id: str, display_name: str, payload_zip: str):
     prefixed_id = f"private-{skill_id}"
     
+    # 1. Create skill resource in Agent Registry
     subprocess.run([
         "gcloud", "alpha", "agent-registry", "skills", "create", skill_id,
         "--location", "global", "--display-name", display_name,
         "--target-state", "draft", "--project", "agent-demo-09"
     ])
     
+    # 2. Upload immutable revision payload
     subprocess.run([
         "gcloud", "alpha", "agent-registry", "skills", "revisions", "create", "rev-1",
         "--skill", prefixed_id, "--location", "global",
         "--payload", payload_zip, "--project", "agent-demo-09"
     ])
     
+    # 3. Activate skill for fleet consumption
     subprocess.run([
         "gcloud", "alpha", "agent-registry", "skills", "update", prefixed_id,
         "--location", "global", "--target-state", "active", "--project", "agent-demo-09"
     ])
-    print(f"✅ Skill {skill_id} registered and activated!")
+    print(f"✅ Skill {skill_id} registered and activated in Agent Registry!")
 ```
+
+---
+
+## 7.4 Enterprise RAG Services: Vertex AI RAG Engine, Agent Search & Grounding
+
+![Enterprise RAG Services: RAG Engine, Agent Search & Grounding](architecture/07_enterprise_rag_engine_and_agent_search.jpg)
+
+### 1. The Enterprise RAG Architecture
+To provide factual grounding without expensive model fine-tuning, Google Cloud delivers a fully managed **Retrieval-Augmented Generation (RAG)** stack combining unstructured document intelligence, high-scale vector retrieval, and automated anti-hallucination verification:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 1. INGESTION & DOCUMENT PROCESSING PLANE                                                         │
+│    • Ingestion Connectors: Unstructured PDFs, Docs, Intranets, BigQuery & Cloud Storage          │
+│    • Document AI Layout Parser: Context-aware chunking preserving tables, headers, and structure │
+│    • Text & Multimodal Embeddings API: Generates high-density semantic vector embeddings         │
+│    • RagCorpora & RagFiles: Managed knowledge representations in Vertex AI                       │
+└──────────────────────────────────────────────┬───────────────────────────────────────────────────┘
+                                               │
+                                               v
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 2. RAG ENGINE & AGENT SEARCH RUNTIME                                                             │
+│    • Agent Search Data Store: Google Search-quality semantic & keyword search engine             │
+│    • Vector Search & Spanner/AlloyDB pgvector: Billion-scale low-latency vector similarity       │
+│    • retrieveContexts API: Dynamic top_k, vector_similarity & distance threshold tuning          │
+│    • Semantic Ranking API: Cross-encoder re-ranking for maximum contextual relevance             │
+└──────────────────────────────────────────────┬───────────────────────────────────────────────────┘
+                                               │
+                                               v (Retrieved Context Facts)
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 3. GROUNDING, VERIFICATION & MODEL GENERATION PLANE                                              │
+│    • Gemini Foundation Models (Gemini 2.5 / 3.0 Pro & Flash)                                     │
+│    • Dual Grounding Modes: Grounding with Google Search (Live Web) + Enterprise Search (Private) │
+│    • Check Grounding API: Deterministic fact cross-checking & citation verification              │
+│    • Output: Verified Grounded Response with Source Citations (Hallucination-free)               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Vertex AI RAG Engine (`aiplatform.googleapis.com`)
+* **RagCorpora & RagFiles**: Logical collections of enterprise documents parsed and embedded for semantic retrieval.
+* **`retrieveContexts` API**: Highly configurable retrieval method supporting:
+  - `top_k`: Number of top relevant document chunks to return.
+  - `vector_distance_threshold`: Strict distance cutoff for vector similarity.
+  - `vector_similarity_threshold`: Normalized similarity filtering.
+* **Managed Vector DB Backends**: Integrates natively with managed Cloud Spanner vector instances and AlloyDB PostgreSQL `pgvector`.
+
+### 3. Agent Search & Data Stores (`discoveryengine.googleapis.com`)
+* Out-of-the-box enterprise search engine incorporating Google Search ranking algorithms, semantic understanding, and keyword retrieval across corporate intranets, Cloud Storage buckets, and BigQuery datasets.
+
+### 4. Check Grounding API: Automated Hallucination Elimination
+* The **Check Grounding API** evaluates model completions against the retrieved citation facts. It mathematically verifies whether every claim in the response is directly supported by the retrieved text, eliminating hallucinations before responses reach end users.
 
 ---
 
