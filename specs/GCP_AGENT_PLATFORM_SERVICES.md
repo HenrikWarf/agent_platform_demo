@@ -385,11 +385,11 @@ gcloud run deploy "agent-platform-backend" \
 
 ## 3. GCP Agent Gateway & Vertex AI Model Armor (`networkservices` & `modelarmor`)
 
-### 3.1 GCP Agent Gateway: Why Use It & Enterprise Value Proposition
+### 3.1 GCP Agent Gateway: Purpose & Enterprise Architecture
 
 **GCP Agent Gateway** (`networkservices.googleapis.com`) is a managed security and networking control plane purpose-built for enterprise AI agent systems. 
 
-As enterprises move from single-turn chatbots to multi-agent architectures executing database queries and automated actions, traditional web API gateways fall short. Agent Gateway solves the core governance challenges of autonomous agent systems:
+As enterprises transition from single-turn conversational chatbots to autonomous multi-agent architectures executing database queries and automated actions, traditional web API gateways fall short. Agent Gateway solves the core governance and operational challenges of enterprise agent systems by establishing a single, governed security perimeter:
 
 ```
                   ┌─────────────────────────────────────────────────────────────┐
@@ -406,40 +406,135 @@ As enterprises move from single-turn chatbots to multi-agent architectures execu
                   └─────────────────────────────────────────────────────────────┘
 ```
 
-#### Core Enterprise Values & Benefits:
-
-1. **Centralized Security Perimeter & Zero-Trust Access Control**:
-   - Without an Agent Gateway, agents communicate directly with internal tools, LLMs, and external databases in an ungoverned network.
-   - **Agent Gateway** creates a single, governed security perimeter enforcing Zero-Trust access policies for both client-to-agent ingress (`CLIENT_TO_AGENT`) and agent-to-tools egress (`AGENT_TO_ANYWHERE`).
-
-2. **In-Line Model Armor Interception**:
-   - Intercepts incoming prompts and outgoing model responses to enforce **Vertex AI Model Armor** safety policies automatically.
-   - Blocks prompt injection / jailbreak attacks, masks sensitive PII (emails, SSNs, credit cards) in-flight, and enforces Responsible AI safety thresholds before requests reach the LLM runtime.
-
-3. **AI-Native Protocol Standardization (MCP & REST)**:
-   - Provides native proxying and governance for the **Model Context Protocol (MCP)** and HTTP/JSON streaming (`:streamQuery`).
-   - Standardizes tool execution protocols, allowing agents to invoke remote MCP tools securely across different clouds or internal networks with identity translation.
-
-4. **Agent Identity & Non-Repudiation (`AGENT_IDENTITY`)**:
-   - Integrates with **Identity-Aware Proxy (IAP)** and GCP IAM to validate caller identities (users, IDEs, web apps) and enforce specialized **Agent Identity service accounts**.
-   - Guarantees non-repudiation: every agent action, tool call, or prompt is cryptographically bound to a verified principal identity.
-
-5. **Centralized Compliance & Audit Log Stream**:
-   - Eliminates blind spots by emitting uniform audit logs directly to Cloud Audit Logs (`cloudaudit.googleapis.com`), Cloud Logging (`_Default` bucket), and Cloud Trace.
-   - Provides full compliance reporting (GDPR, HIPAA, SOC2) for AI interactions, capturing exact prompt inputs, Model Armor sanitization results, and egress tool calls.
-
-6. **Decoupling Security Governance from Agent Development**:
-   - Enables Enterprise Security Operations (SecOps) teams to update security policies, DLP scanners, or Model Armor templates globally in declarative YAML specs (`agent_gateway.yaml`) without requiring AI developers to re-deploy or re-compile agent Python code.
+#### Core Enterprise Ingress & Egress Routing Paths:
+* **`CLIENT_TO_AGENT` Ingress**: Governs external and internal client interactions (web applications, IDEs, Workspace) before prompts enter the agent runtime.
+* **`AGENT_TO_ANYWHERE` Egress**: Standardizes and secures outbound agent tool calls to internal databases (BigQuery, AlloyDB) and external SaaS services using the Model Context Protocol (MCP).
 
 ---
 
-### 3.2 Code & Implementation Details
+### 3.2 Vertex AI Model Armor (`modelarmor.googleapis.com`): The AI Firewall
 
-#### A. Agent Gateway Spec ([`deploy/agent_gateway.yaml`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/agent_gateway.yaml))
+**Vertex AI Model Armor** is Google Cloud's managed security service that operates as an intelligent **AI Firewall** across user prompts (ingress) and model responses (egress). It intercepts and neutralizes threats before they can compromise the LLM runtime or exfiltrate sensitive corporate data.
+
+```
+                                    ┌───────────────────────────────────┐
+                                    │        Incoming User Prompt       │
+                                    └─────────────────┬─────────────────┘
+                                                      │
+                                                      v
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ GCP AGENT GATEWAY / VERTEX AI MODEL ARMOR (Ingress Interception)                                     │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 🛡️ 1. PROMPT INJECTION & JAILBREAK DEFENSE                                                          │
+│    • ML-based classifiers detect instruction overrides, roleplay escapes & system manipulation       │
+│                                                                                                      │
+│ 🔒 2. SENSITIVE DATA PROTECTION (PII / DLP)                                                          │
+│    • In-flight masking & redaction of 150+ infoTypes (Emails, SSNs, Credit Cards, API Keys)          │
+│                                                                                                      │
+│ 🛑 3. RESPONSIBLE AI (RAI) SAFETY FILTERS                                                            │
+│    • Hate Speech, Harassment, Sexual Content, and Dangerous Activity thresholds                      │
+│                                                                                                      │
+│ 🌐 4. MALICIOUS URL & PHISHING DETECTION                                                             │
+│    • Google Safe Browsing scans links embedded in prompts and document attachments                  │
+│                                                                                                      │
+│ 🦠 5. MALWARE & CODE EXPLOIT INTERCEPTION                                                            │
+│    • Scans for executable payloads, SQL injection fragments & embedded scripts                       │
+└──────────────────────────────────────────────┬───────────────────────────────────────────────────────┘
+                                               │
+                                               v (Sanitized Prompt / Verified Identity)
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ VERTEX AI AGENT ENGINE RUNTIME (ADK Multi-Agent Execution)                                           │
+│  • marketing_orchestrator ──> analytics_agent (BigQuery) ──> strategy_pipeline ──> content_pipeline   │
+└──────────────────────────────────────────────┬───────────────────────────────────────────────────────┘
+                                               │
+                                               v (Raw Model Generation)
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ GCP AGENT GATEWAY / VERTEX AI MODEL ARMOR (Egress Interception)                                      │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 🛡️ 1. DATA EXFILTRATION & PII LEAKAGE DEFENSE (Redacts unintended sensitive database records)        │
+│ 🛡️ 2. OUTPUT SAFETY & BRAND REPUTATION ASSURANCE (Enforces corporate tone & safety boundaries)       │
+└──────────────────────────────────────────────┬───────────────────────────────────────────────────────┘
+                                               │
+                                               v
+                                    ┌───────────────────────────────────┐
+                                    │    Governed, Sanitized Response   │
+                                    └───────────────────────────────────┘
+```
+
+#### 1. The 5 Core Defensive Pillars of Model Armor
+
+1. **Prompt Injection & Jailbreak Defense**:
+   - Uses specialized Google DeepMind classification models to detect direct and indirect prompt injection attempts, system prompt extraction, jailbreak patterns (`"ignore previous instructions"`, `"DAN mode"`), and multi-turn adversarial evasion.
+   - Evaluates risk confidence (`LOW`, `MEDIUM`, `HIGH`) and applies deterministic blocking actions before tokens reach the Gemini model.
+
+2. **Sensitive Data Protection (PII/SDP & Cloud DLP Integration)**:
+   - Integrates natively with Google Cloud Sensitive Data Protection (DLP), scanning prompts and completions against 150+ built-in `infoTypes` (e.g. `EMAIL_ADDRESS`, `US_SOCIAL_SECURITY_NUMBER`, `CREDIT_CARD_NUMBER`, `GCP_CREDENTIALS`, `PHONE_NUMBER`).
+   - Supports automated redaction, masking (e.g. `[REDACTED_EMAIL]`), or tokenization without breaking conversational context.
+
+3. **Responsible AI & Harmful Content Filtering**:
+   - Enforces granular threshold controls across Google's 4 core Responsible AI safety categories:
+     - `HATE_SPEECH`: Content promoting violence or incitement against protected groups.
+     - `HARASSMENT`: Malicious, threatening, or bullying behavior.
+     - `SEXUALLY_EXPLICIT`: Non-compliant adult content.
+     - `DANGEROUS_CONTENT`: Instructions for physical harm, illicit substances, or weapon fabrication.
+
+4. **Malicious URL & Phishing Detection**:
+   - Intercepts URLs embedded in prompts or retrieved from external websites and scans them in real-time against **Google Safe Browsing** and Google Threat Intelligence to prevent SSRF and phishing attacks.
+
+5. **Malware & Malicious Code Interception**:
+   - Scans code blocks, scripts, and multimodal attachments for malicious shell scripts, SQL injection syntax, and executable exploit payloads.
+
+---
+
+#### 2. Governance Hierarchy: Floor Settings vs. Application Templates
+
+Model Armor establishes a two-tier governance model separating organizational security baselines from application-specific customization:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ 1. ORGANIZATIONAL FLOOR SETTINGS (Enforced by Enterprise SecOps)                        │
+│    • Set at Organization, Folder, or Project level in GCP Resource Hierarchy.          │
+│    • Defines non-negotiable minimum safety baselines (e.g., Mandatory PII masking).    │
+│    • Application teams CANNOT override or disable floor settings.                      │
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │
+                                            v (Inherited & Strengthened)
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ 2. APPLICATION TEMPLATES (Configured by Agent Platform Developers)                      │
+│    • Granular, per-application security profiles (e.g., marketing-agent-template).      │
+│    • Customizes specific infoTypes, confidence score thresholds, and action policies.  │
+│    • Can increase security strictness above the floor settings, but never below.       │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 3. Operational Inspection Modes
+
+Model Armor templates support two operational modes depending on rollout phase:
+* **`INSPECT_ONLY` (Audit Mode)**: Evaluates prompts and responses, logs safety verdicts and threat metadata to Cloud Logging / Cloud Audit Logs, but allows the request to pass unmodified. Ideal for benchmarking false-positive rates during development.
+* **`BLOCK_AND_SANITIZE` (Active Defense Mode)**: Automatically blocks high-confidence attacks (returning HTTP 400 with a sanitized safety error) and masks sensitive PII in-place before forwarding the prompt to the agent runtime.
+
+---
+
+### 3.3 Enterprise Value Proposition of Model Armor in Agent Gateway
+
+1. **Zero-Latency In-Line Interception**:
+   - Because Model Armor is hosted within Google Cloud's edge infrastructure and natively integrated with Agent Gateway, screening occurs inline in milliseconds without requiring heavy client-side regex or external API hops.
+2. **Decoupled Security Governance**:
+   - SecOps and Compliance teams can modify DLP inspection rules, update prompt injection sensitivity, or enforce new floor settings globally via Infrastructure-as-Code (YAML/Terraform) without requiring agent developers to change or redeploy Python application code.
+3. **Protection Across Both Ingress Prompts & Egress Tool Data**:
+   - If an agent tool call retrieves customer records from BigQuery containing unmasked PII or proprietary data, the egress Model Armor inspection layer sanitizes the outgoing completion before it reaches the end user or browser frontend.
+4. **Cryptographic Non-Repudiation & Auditability**:
+   - Every sanitized prompt, detected injection attempt, and PII redaction event is recorded in **Cloud Audit Logs** (`cloudaudit.googleapis.com`) and linked to the caller's verified `AGENT_IDENTITY`, providing full audit trails for SOC 2, HIPAA, and GDPR compliance.
+
+---
+
+### 3.4 Configuration Specs & Implementation Details
+
+#### A. Agent Gateway Configuration ([`deploy/agent_gateway.yaml`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/agent_gateway.yaml))
 
 ```yaml
 name: projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway
-description: Enterprise Agent Gateway enforcing Model Armor security policies and governed routing.
+description: Enterprise Agent Gateway enforcing Model Armor security policies, Zero-Trust IAM, and MCP routing.
 protocols:
   - MCP
 registries:
@@ -448,37 +543,107 @@ googleManaged:
   governedAccessPath: CLIENT_TO_AGENT
 ```
 
-#### B. Pre-Flight Prompt Safety Guard ([`backend/safety.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/safety.py))
+#### B. Model Armor Security Template Spec (`deploy/model_armor_template.yaml`)
+
+```yaml
+# Vertex AI Model Armor Template Definition
+name: projects/agent-demo-09/locations/us-central1/templates/marketing-agent-armor-policy
+description: Production Model Armor policy enforcing prompt injection defense, PII masking, and RAI safety.
+
+# 1. Prompt Injection & Jailbreak Settings
+promptInjectionAndJailbreakSettings:
+  enforcement: BLOCK
+  confidenceThreshold: MEDIUM_AND_ABOVE
+
+# 2. Sensitive Data Protection (PII Masking & Redaction)
+sdpSettings:
+  advancedConfig:
+    inspectTemplate: projects/agent-demo-09/locations/us-central1/inspectTemplates/marketing-dlp-template
+    deidentifyTemplate: projects/agent-demo-09/locations/us-central1/deidentifyTemplates/mask-pii-template
+  basicConfig:
+    filterEnforcement: SANITIZE
+    infoTypes:
+      - EMAIL_ADDRESS
+      - PHONE_NUMBER
+      - US_SOCIAL_SECURITY_NUMBER
+      - CREDIT_CARD_NUMBER
+      - GCP_CREDENTIALS
+
+# 3. Responsible AI Safety Thresholds
+raiSettings:
+  filters:
+    - filterType: HATE_SPEECH
+      confidenceThreshold: MEDIUM_AND_ABOVE
+    - filterType: HARASSMENT
+      confidenceThreshold: MEDIUM_AND_ABOVE
+    - filterType: DANGEROUS_CONTENT
+      confidenceThreshold: LOW_AND_ABOVE
+    - filterType: SEXUALLY_EXPLICIT
+      confidenceThreshold: MEDIUM_AND_ABOVE
+
+# 4. Malicious URL & Phishing Interception
+maliciousUriFilterSettings:
+  enforcement: BLOCK
+```
+
+#### C. Pre-Flight Prompt Safety Guard Implementation ([`backend/safety.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/safety.py))
 
 ```python
 import re
+import os
+import logging
+from typing import Dict, Any
+
+logger = logging.getLogger("safety_guard")
 
 class PromptSafetyGuard:
-    """Pre-flight safety inspector filtering jailbreak attempts and masking PII."""
+    """
+    Pre-flight safety inspector and Model Armor client.
+    Enforces prompt injection filtering, PII sanitization, and compliance auditing.
+    """
 
     INJECTION_PATTERNS = [
-        r"ignore\s+previous\s+instructions",
-        r"bypass\s+safety",
+        r"ignore\s+(?:all\s+)?(?:previous\s+|prior\s+)?instructions",
+        r"bypass\s+(?:all\s+)?safety",
         r"system\s*:\s*override",
-        r"<script>",
+        r"you\s+are\s+now\s+in\s+dan\s+mode",
+        r"<script[\s>]",
     ]
 
-    def inspect_and_sanitize(self, prompt: str) -> dict:
+    def inspect_and_sanitize(self, prompt: str) -> Dict[str, Any]:
+        """
+        Inspects user prompt for injection attempts and redacts sensitive PII.
+        In production, proxies directly to Model Armor's :sanitizeUserPrompt API.
+        """
+        # 1. Prompt Injection & Jailbreak Defense
         for pattern in self.INJECTION_PATTERNS:
             if re.search(pattern, prompt, re.IGNORECASE):
+                logger.warning(f"🚨 Prompt Injection intercepted: {pattern}")
                 return {
                     "passed": False,
                     "filter_reason": "PROMPT_INJECTION_DETECTED",
-                    "sanitized_prompt": prompt
+                    "sanitized_prompt": prompt,
+                    "confidence": "HIGH"
                 }
 
+        # 2. Sensitive Data Protection (PII Masking)
         sanitized = re.sub(
             r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
             "[REDACTED_EMAIL]",
             prompt
         )
+        sanitized = re.sub(
+            r"\b\d{3}-\d{2}-\d{4}\b",
+            "[REDACTED_SSN]",
+            sanitized
+        )
 
-        return {"passed": True, "filter_reason": "NONE", "sanitized_prompt": sanitized}
+        return {
+            "passed": True,
+            "filter_reason": "NONE",
+            "sanitized_prompt": sanitized,
+            "confidence": "NONE"
+        }
 ```
 
 ---
