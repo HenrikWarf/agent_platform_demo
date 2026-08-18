@@ -22,7 +22,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** A production-grade multi-agent platform on Google Cloud combines agent development frameworks (ADK), edge security (Model Armor), serverless runtime (Agent Engine), enterprise data (BigQuery), continuous evaluation, and workplace distribution (Gemini Enterprise).
 
-![GCP Multi-Agent Platform Architecture Overview](architecture/gcp_agent_platform_architecture_simplified.jpg)
+![GCP Multi-Agent Platform Architecture Overview](architecture/00_overview_gcp_agent_platform_architecture.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **The 10 Integrated Layers**: Unifies developer experience, runtime hosting, ingress security, tool protocols, data warehousing, observability, evaluation, and end-user distribution.
@@ -35,7 +35,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** Google ADK (`google-adk`) and the open Agent-to-Agent (A2A) protocol provide standard primitives for hierarchical routing, deterministic reasoning pipelines, and cross-boundary agent federation.
 
-![Google ADK & A2A Multi-Agent Architecture](architecture/adk_multi_agent_orchestration.jpg)
+![Google ADK & A2A Multi-Agent Architecture](architecture/01_adk_multi_agent_orchestration.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **Orchestration Primitives**:
@@ -51,7 +51,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** GCP Agent Gateway and Vertex AI Model Armor deliver a multi-layered AI Firewall inspecting ingress prompts, egress completions, and tool transactions without latency bottlenecks.
 
-![GCP Agent Gateway & Model Armor Security Feature Map](architecture/gcp_agent_gateway_feature_map_stylish.jpg)
+![GCP Agent Gateway & Model Armor Security Feature Map](architecture/03_agent_gateway_model_armor_security.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **5 Defensive Security Pillars**:
@@ -68,7 +68,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** Vertex AI Agent Engine (`reasoningEngines`) provides a fully managed, autoscaling container runtime equipped with turnkey session persistence, semantic memory, and artifact storage.
 
-![Vertex AI Agent Engine & Managed Platform Services](architecture/agent_engine_runtime_services.jpg)
+![Vertex AI Agent Engine & Managed Platform Services](architecture/04_agent_engine_runtime_services.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **Serverless Agent Containers**: Automatically builds, packages, and scales ADK agent code with zero server management.
@@ -82,7 +82,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** BigQuery acts as both the high-performance customer data warehouse and the cognitive data plane with Gemini in BigQuery Data Canvas for natural language data discovery.
 
-![Google BigQuery Data Warehouse & AI Data Agents](architecture/bigquery_ai_data_agents.jpg)
+![Google BigQuery Data Warehouse & AI Data Agents](architecture/06_bigquery_ai_data_agents.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **Operational Customer Warehouse (`marketing_analytics`)**:
@@ -99,7 +99,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** Standardized Agent-to-Tool interoperability via the Model Context Protocol (MCP) seamlessly integrates first-party Google-managed data stores and custom self-hosted enterprise microservices under unified Agent Gateway security.
 
-![Enterprise Model Context Protocol (MCP): Google Managed & Custom Services](architecture/mcp_enterprise_ecosystem.jpg)
+![Enterprise Model Context Protocol (MCP): Google Managed & Custom Services](architecture/05_mcp_enterprise_ecosystem.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **Unified ADK Agent Layer**:
@@ -124,7 +124,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** Vertex AI Evaluation Service closes the quality gap through a continuous 5-step Quality Flywheel spanning local rapid grading, CI/CD batch evals, and 10-minute production online monitors.
 
-![Vertex AI Quality Flywheel](architecture/evaluation_flywheel.jpg)
+![Vertex AI Quality Flywheel](architecture/08_evaluation_flywheel.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **The 5-Step Continuous Quality Flywheel**:
@@ -141,7 +141,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** End-to-end distributed observability unites OpenTelemetry span tracing with a pre-built BigQuery Analytics Agent for natural-language telemetry inspection.
 
-![GCP Agent Observability & Telemetry Stack](architecture/agent_observability_stack.jpg)
+![GCP Agent Observability & Telemetry Stack](architecture/09_agent_observability_stack.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **4-Tier Observability Model**:
@@ -157,7 +157,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 > **Key Takeaway:** Deployed agents are governed in the Agent Registry catalog and published directly into Gemini Enterprise Apps for friction-free corporate workplace adoption.
 
-![Agent Registry & Gemini Enterprise Integration](architecture/gemini_enterprise_publishing.jpg)
+![Agent Registry & Gemini Enterprise Integration](architecture/10_gemini_enterprise_publishing.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
 * **Agent Registry & Skills Catalog (`agentregistry.googleapis.com`)**:

@@ -8,6 +8,8 @@ It details the core **GCP Services** and **Agent Platform Infrastructure Compone
 
 ## 🏛️ GCP & Agent Platform Service Stack Overview
 
+![GCP Multi-Agent Platform Architecture Overview](architecture/00_overview_gcp_agent_platform_architecture.jpg)
+
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ 1. AGENT DEVELOPMENT & ORCHESTRATION LAYER                                             │
@@ -74,7 +76,7 @@ ADK provides enterprise-grade abstractions that eliminate boilerplate and enforc
 
 ### 1.2 Multi-Agent Orchestration Architecture & Primitives
 
-![Google ADK & A2A Multi-Agent Architecture](architecture/adk_multi_agent_orchestration.jpg)
+![Google ADK & A2A Multi-Agent Architecture](architecture/01_adk_multi_agent_orchestration.jpg)
 
 ```
                              ┌──────────────────────────────────┐
@@ -488,6 +490,8 @@ gcloud run deploy "agent-platform-backend" \
 
 ### 3.1 GCP Agent Gateway: Purpose & Enterprise Architecture
 
+![GCP Agent Gateway & Model Armor Security Feature Map](architecture/03_agent_gateway_model_armor_security.jpg)
+
 **GCP Agent Gateway** (`networkservices.googleapis.com`) is a managed security and networking control plane purpose-built for enterprise AI agent systems. 
 
 As enterprises transition from single-turn conversational chatbots to autonomous multi-agent architectures executing database queries and automated actions, traditional web API gateways fall short. Agent Gateway solves the core governance and operational challenges of enterprise agent systems by establishing a single, governed security perimeter:
@@ -753,7 +757,7 @@ class PromptSafetyGuard:
 
 ### 4.1 GCP Service Features & Capabilities
 
-![Vertex AI Agent Engine & Managed Platform Services](architecture/agent_engine_runtime_services.jpg)
+![Vertex AI Agent Engine & Managed Platform Services](architecture/04_agent_engine_runtime_services.jpg)
 
 **Vertex AI Agent Engine** (managed resource `reasoningEngines`) is Google Cloud's enterprise runtime for hosting, autoscaling, and executing autonomous multi-agent applications built with the **Google Agent Development Kit (ADK)**:
 1. **Agent Runtime Container**: Managed serverless container environment with container concurrency (8) and `AGENT_IDENTITY` validation.
@@ -854,7 +858,7 @@ def query_customer_data(sql_query: str, tool_context: ToolContext) -> dict:
 
 ### 5.3 Enterprise Model Context Protocol (MCP) Ecosystem: Google Managed & Custom Services
 
-![Enterprise Model Context Protocol (MCP): Google Managed & Custom Services](architecture/mcp_enterprise_ecosystem.jpg)
+![Enterprise Model Context Protocol (MCP): Google Managed & Custom Services](architecture/05_mcp_enterprise_ecosystem.jpg)
 
 The **Model Context Protocol (MCP)** is an open industry standard that unifies how AI agents discover and execute tools across disparate data sources and internal microservices. In enterprise deployments, ADK agents seamlessly interact with **both Google-managed first-party MCP services and custom self-hosted enterprise MCP servers** through the governed security perimeter of **GCP Agent Gateway**.
 
@@ -993,7 +997,7 @@ enterprise_omnichannel_agent = Agent(
 
 ### 6.1 GCP BigQuery Analytical Architecture & Customer Data Warehouse
 
-![Google BigQuery Data Warehouse & AI Data Agents](architecture/bigquery_ai_data_agents.jpg)
+![Google BigQuery Data Warehouse & AI Data Agents](architecture/06_bigquery_ai_data_agents.jpg)
 
 **Google BigQuery** is GCP's fully managed, serverless enterprise data warehouse. In this application, BigQuery serves as the operational analytical store and single source of truth for all marketing analytics and customer data in project `agent-demo-09`:
 
@@ -1079,7 +1083,7 @@ Agent evaluation is not a one-time gate but a continuous closed-loop cycle:
 4. **Failure Clustering & Loss Analysis**: Automatically group failures into loss clusters (e.g. tool parameter errors, hallucinated facts, instruction non-compliance) to identify systemic weaknesses.
 5. **Prompt & Tool Optimization**: Optimize system instructions and tool definitions, then verify gains against tracked Vertex AI Experiments.
 
-![Vertex AI Agent Evaluation Quality Flywheel](architecture/evaluation_flywheel.jpg)
+![Vertex AI Agent Evaluation Quality Flywheel](architecture/08_evaluation_flywheel.jpg)
 
 ```
                   ┌──────────────────────────────────────────────┐
@@ -1409,7 +1413,7 @@ if __name__ == "__main__":
 
 ### 9.1 Observability Architecture & Multi-Tier Telemetry
 
-![GCP Agent Observability & Telemetry Stack](architecture/agent_observability_stack.jpg)
+![GCP Agent Observability & Telemetry Stack](architecture/09_agent_observability_stack.jpg)
 
 The Google Cloud Agent Platform provides enterprise-grade observability across the entire agent lifecycle. Multi-agent systems involve asynchronous handoffs, nested reasoning loops, and external database tool executions. GCP standardizes observability into **four additive tiers**:
 
@@ -1648,7 +1652,7 @@ LIMIT 10;
 
 ### 10.1 GCP Service Features & Capabilities
 
-![Agent Registry & Gemini Enterprise Integration](architecture/gemini_enterprise_publishing.jpg)
+![Agent Registry & Gemini Enterprise Integration](architecture/10_gemini_enterprise_publishing.jpg)
 
 Publishes deployed Reasoning Engine agents to **Gemini Enterprise Apps** so corporate users can invoke the agent inside Gemini's chat interface.
 
