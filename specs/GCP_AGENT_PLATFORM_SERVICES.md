@@ -12,6 +12,7 @@ It details the core **GCP Services** and **Agent Platform Infrastructure Compone
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ 1. AGENT DEVELOPMENT & ORCHESTRATION LAYER                                             │
 │    • Google ADK (google.adk) ──> Hierarchical Multi-Agent Executable (App)             │
+│    • Agent-to-Agent Protocol (A2A) ──> Cross-Agent Discovery & Distributed Delegation   │
 │    • Skills Standard (SKILL.md) & MCP Toolsets ──> Modular Agent Capabilities          │
 └───────────────────────────────────────────┬────────────────────────────────────────────┘
                                             │
@@ -284,7 +285,105 @@ app = App(
 
 ---
 
-### 1.4 The `agents-cli` Lifecycle Toolchain (`google-agents-cli`)
+### 1.4 The Agent-to-Agent (A2A) Protocol & Inter-Agent Federation
+
+#### 1. What is the A2A Protocol & Why is it Critical?
+While ADK orchestration primitives (`SequentialAgent`, `ParallelAgent`, supervisor hierarchies) coordinate agents within the same process or memory space, enterprise multi-agent architectures often require autonomous agents to collaborate across multiple microservices, different Google Cloud projects, or external partner networks.
+
+The **Agent-to-Agent (A2A) Protocol** is an open, standardized communication and discovery specification (built on JSON-RPC, REST, and Server-Sent Events) designed to enable autonomous agents to discover each other, negotiate capabilities, exchange structured context, and delegate tasks across network boundaries.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               MCP VS. A2A PROTOCOL SCOPE                               │
+├────────────────────────────────────────┬───────────────────────────────────────────────┤
+│ MODEL CONTEXT PROTOCOL (MCP)           │ AGENT-TO-AGENT PROTOCOL (A2A)                 │
+├────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ • Agent-to-Tool / Agent-to-Data        │ • Agent-to-Agent / Peer-to-Peer Federation    │
+│ • Database queries, file systems, APIs │ • Autonomous goal delegation & collaboration  │
+│ • Stateless tool invocations           │ • Multi-turn conversation & state negotiation │
+│ • Primitives: tools, resources, prompts│ • Primitives: Agent Cards, Tasks, DataParts   │
+└────────────────────────────────────────┴───────────────────────────────────────────────┘
+```
+
+#### 2. Core Primitives of the A2A Protocol
+
+1. **The Standardized Agent Card (`.well-known/agent-card.json`)**:
+   - Every A2A-compliant agent publishes a machine-readable JSON manifest at `/a2a/{app_name}/.well-known/agent-card.json`.
+   - Declares agent identity, descriptions, capabilities, supported input/output schemas (Pydantic/JSON Schema), and authentication methods.
+   - Example Agent Card JSON:
+     ```json
+     {
+       "name": "marketing_orchestrator",
+       "description": "Enterprise campaign supervisor delegating analytics, omnichannel strategy, and content generation.",
+       "version": "1.0.0",
+       "protocolVersion": "0.3.0",
+       "capabilities": ["analytics", "strategy", "copywriting"],
+       "endpoints": {
+         "rpc": "/a2a/app/rpc",
+         "events": "/a2a/app/events"
+       },
+       "skills": ["bigquery-customer-analytics", "campaign-framework", "brand-voice-craft"]
+     }
+     ```
+
+2. **Exposing an ADK Agent as an A2A Service (`to_a2a` & `attach_a2a_routes`)**:
+   - Any ADK `Agent` or `App` natively serves A2A routes out-of-the-box when scaffolded.
+   - You can also expose any agent programmatically as an A2A service:
+     ```python
+     from google.adk.a2a.utils.agent_to_a2a import to_a2a
+     from app.agent import root_agent
+
+     # Expose root supervisor agent as an A2A microservice on port 8001
+     to_a2a(root_agent, port=8001)
+     ```
+
+3. **Consuming Remote Agents as First-Class Sub-Agents (`RemoteA2aAgent`)**:
+   - An orchestrator can bind a remote A2A service across the network, treating it identically to a local Python sub-agent:
+     ```python
+     from google.adk.agents.remote_a2a_agent import RemoteA2aAgent
+     from google.adk.agents import Agent
+
+     # 1. Bind remote Pricing & Inventory Agent hosted on Cloud Run in another GCP project
+     pricing_agent = RemoteA2aAgent(
+         name="remote_pricing_specialist",
+         description="Calculates real-time product discounts and checks regional inventory.",
+         agent_card_url="https://pricing-service-q5c3bhebga-uc.a.run.app/a2a/pricing/.well-known/agent-card.json"
+     )
+
+     # 2. Supervisor delegates to both local sub-agents and remote A2A microservices
+     enterprise_orchestrator = Agent(
+         name="enterprise_campaign_director",
+         model="gemini-3.6-flash",
+         instruction="Coordinate marketing campaigns using analytics, strategy, content, and remote pricing agents.",
+         sub_agents=[analytics_agent, strategy_pipeline, content_pipeline, pricing_agent]
+     )
+     ```
+
+4. **Rich Multimodal Payloads & Declarative UI (`A2UI`)**:
+   - A2A agents can exchange structured `DataPart` payloads and declarative UI components via the **A2UI** standard (`application/a2ui+json`), allowing downstream web frontends or Gemini Enterprise to render interactive forms, graphs, and approval cards client-side.
+
+#### 3. Multi-Agent Federation Architecture
+
+```
+                                    ┌──────────────────────────────────┐
+                                    │    Root Marketing Supervisor     │
+                                    │      (Agent Engine Runtime)      │
+                                    └─────────────────┬────────────────┘
+                                                      │ (A2A Protocol / JSON-RPC)
+                      ┌───────────────────────────────┼───────────────────────────────┐
+                      │ (Local Sub-Agent)             │ (Remote A2A Microservice)     │ (Remote A2A Partner)
+                      v                               v                               v
+┌──────────────────────────────┐ ┌──────────────────────────────┐ ┌──────────────────────────────┐
+│       Analytics Agent        │ │  Remote CRM / Pricing Agent  │ │ External Ad Agency Agent     │
+│  (In-Process ADK Sub-Agent)  │ │  (Cloud Run / GKE Microsvc)  │ │ (Partner VPC / A2A Gateway)  │
+│  • Local SQL Tools & BigQuery│ │  • Agent Card Discovery      │ │  • Agent Card Discovery      │
+│  • Direct Memory Context     │ │  • Remote State Synchronization││  • Delegated Task Execution   │
+└──────────────────────────────┘ └──────────────────────────────┘ └──────────────────────────────┘
+```
+
+---
+
+### 1.5 The `agents-cli` Lifecycle Toolchain (`google-agents-cli`)
 
 **`agents-cli`** is the official command-line interface accompanying the Google Agent Development Kit (ADK). It orchestrates the end-to-end **Agent Development Lifecycle (ADLC)** across 6 distinct phases:
 
