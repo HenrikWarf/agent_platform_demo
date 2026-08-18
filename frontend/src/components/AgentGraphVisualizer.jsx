@@ -44,16 +44,18 @@ Routing:
     description: 'Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation across 200 aligned customer records.',
     capabilities: [
       'Generates BigQuery Standard SQL from natural language',
-      'Queries RFM summary, demographics 360, and transaction tables',
+      'Queries RFM summary, demographics, transactions, products, and events tables',
       'Returns structured row-level data or aggregate summaries',
       'Stores results in session state for downstream agents',
     ],
     instruction: `Answer data questions by writing BigQuery SQL and executing it with query_customer_data.
 
 BigQuery Tables (dataset: agent-demo-09.marketing_analytics):
-1. customer_rfm_summary — customer_id, rfm_segment, recency_days, frequency_orders, total_monetary
-2. customer_demographics_360 — customer_id, full_name, email, age, location, churn_risk_score, lifetime_value_tier
-3. customer_transactions — transaction_id, customer_id, amount, transaction_date
+1. customer_rfm_summary — customer_id, rfm_segment, recency_days, frequency_orders, total_monetary_eur
+2. customer_demographics_360 — customer_id, full_name, age, gender, location, loyalty_tier, crazy_club_points, churn_risk_score
+3. customer_transactions — transaction_id, customer_id, product_id, product_name, category, amount_eur, channel
+4. product_catalog — product_id, product_name, category, subcategory, price_eur, sustainability_certified
+5. customer_events — event_id, customer_id, event_type, event_date, channel, device
 
 Rules:
 • Write a single BigQuery Standard SQL query.
