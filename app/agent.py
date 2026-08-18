@@ -11,8 +11,8 @@ import google.auth
 from google.adk import App
 from google.adk.agents import Agent, SequentialAgent
 from google.adk.skills import load_skill_from_dir, SkillToolset
+from google.adk.integrations.agent_registry import AgentRegistry
 
-from app import tools
 from app.schemas import StrategySchema, ContentSchema
 from app.company_context import COMPANY_CONTEXT
 
@@ -22,6 +22,19 @@ _, project_id = google.auth.default()
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id or "agent-demo-09")
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
+
+# ─── Managed MCP BigQuery Server (Agent Registry) ─────────────────────────────
+
+MCP_SERVER_RESOURCE = os.environ.get(
+    "MCP_SERVER_RESOURCE",
+    "projects/agent-demo-09/locations/global/mcpServers/agentregistry-00000000-0000-0000-b464-716766602694",
+)
+
+registry = AgentRegistry(
+    project_id=project_id or "agent-demo-09",
+    location=os.environ.get("GOOGLE_CLOUD_LOCATION", "global"),
+)
+mcp_toolset = registry.get_mcp_toolset(MCP_SERVER_RESOURCE)
 
 # ─── Load Skills from local skill directories ─────────────────────────────────
 
@@ -35,7 +48,7 @@ analytics_skillset = SkillToolset(skills=[analytics_skill])
 strategy_skillset = SkillToolset(skills=[strategy_skill])
 content_skillset = SkillToolset(skills=[content_skill])
 
-# ─── Analytics Agent ──────────────────────────────────────────────────────────
+# ─── Analytics Agent (uses managed MCP BigQuery server) ───────────────────────
 
 analytics_agent = Agent(
     name="analytics_agent",
@@ -45,8 +58,8 @@ analytics_agent = Agent(
 
 {COMPANY_CONTEXT}
 
-Your role is to answer data questions by writing BigQuery SQL and executing it with the
-query_customer_data tool. You have the full table schema below — generate SQL yourself.
+Your role is to answer data questions by querying BigQuery using the MCP BigQuery tools
+available to you. You have the full table schema below to help you write accurate queries.
 
 ## BigQuery Tables (dataset: agent-demo-09.marketing_analytics)
 
@@ -85,16 +98,16 @@ query_customer_data tool. You have the full table schema below — generate SQL 
      'collection_preview', 'cart_abandon'
 
 ## Rules
-- Write a single BigQuery Standard SQL query to answer the user's question.
+- Use the MCP BigQuery tools to execute SQL queries against the tables above.
 - Use fully qualified table names (e.g. `agent-demo-09.marketing_analytics.customer_rfm_summary`).
 - Add LIMIT 20 for row-level listings.
-- Call query_customer_data EXACTLY ONCE with your SQL query.
-- After receiving results, summarize the findings and STOP. Do NOT call tools again.
+- After receiving results, summarize the findings and STOP. Do NOT query again.
 - Never fabricate data — only report what BigQuery returns.
 - All monetary values are in EUR (€).
 """,
-    tools=[tools.query_customer_data, analytics_skillset],
+    tools=[mcp_toolset, analytics_skillset],
 )
+
 
 # ─── Strategy Pipeline (SequentialAgent: reasoning → formatting) ──────────────
 
