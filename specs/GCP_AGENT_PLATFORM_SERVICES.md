@@ -74,6 +74,8 @@ ADK provides enterprise-grade abstractions that eliminate boilerplate and enforc
 
 ### 1.2 Multi-Agent Orchestration Architecture & Primitives
 
+![Google ADK & A2A Multi-Agent Architecture](architecture/adk_multi_agent_orchestration.jpg)
+
 ```
                              ┌──────────────────────────────────┐
                              │       Marketing Orchestrator     │
@@ -750,6 +752,9 @@ class PromptSafetyGuard:
 ## 4. Vertex AI Agent Engine & Managed Runtime Services (`aiplatform.googleapis.com/reasoningEngines`)
 
 ### 4.1 GCP Service Features & Capabilities
+
+![Vertex AI Agent Engine & Managed Platform Services](architecture/agent_engine_runtime_services.jpg)
+
 **Vertex AI Agent Engine** (managed resource `reasoningEngines`) is Google Cloud's enterprise runtime for hosting, autoscaling, and executing autonomous multi-agent applications built with the **Google Agent Development Kit (ADK)**:
 1. **Agent Runtime Container**: Managed serverless container environment with container concurrency (8) and `AGENT_IDENTITY` validation.
 2. **Vertex AI Session Service (`VertexAiSessionService`)**: Stateful session persistence (`/apps/{app}/users/{user}/sessions`).
@@ -849,6 +854,8 @@ def query_customer_data(sql_query: str, tool_context: ToolContext) -> dict:
 
 ### 5.3 GCP Managed Model Context Protocol (MCP) Services Ecosystem
 
+![Tools & Managed Model Context Protocol (MCP) Ecosystem](architecture/managed_mcp_tools_ecosystem.jpg)
+
 Google Cloud Platform provides first-party managed **MCP Servers** and **Toolsets** that standardize how AI agents interact with GCP data stores and enterprise services using the open **Model Context Protocol (MCP)** specification.
 
 #### 1. Available GCP Managed MCP Toolsets & Services
@@ -940,6 +947,9 @@ data_agent = Agent(
 ## 6. Google BigQuery & BigQuery AI Data Agents (`bigquery.googleapis.com`)
 
 ### 6.1 GCP BigQuery Analytical Architecture & Customer Data Warehouse
+
+![Google BigQuery Data Warehouse & AI Data Agents](architecture/bigquery_ai_data_agents.jpg)
+
 **Google BigQuery** is GCP's fully managed, serverless enterprise data warehouse. In this application, BigQuery serves as the operational analytical store and single source of truth for all marketing analytics and customer data in project `agent-demo-09`:
 
 * **Dataset**: `agent-demo-09:marketing_analytics`
@@ -1354,6 +1364,8 @@ if __name__ == "__main__":
 
 ### 9.1 Observability Architecture & Multi-Tier Telemetry
 
+![GCP Agent Observability & Telemetry Stack](architecture/agent_observability_stack.jpg)
+
 The Google Cloud Agent Platform provides enterprise-grade observability across the entire agent lifecycle. Multi-agent systems involve asynchronous handoffs, nested reasoning loops, and external database tool executions. GCP standardizes observability into **four additive tiers**:
 
 ```
@@ -1590,6 +1602,9 @@ LIMIT 10;
 ## 10. Gemini Enterprise Integration & Agent Publishing (`discoveryengine.googleapis.com`)
 
 ### 10.1 GCP Service Features & Capabilities
+
+![Agent Registry & Gemini Enterprise Integration](architecture/gemini_enterprise_publishing.jpg)
+
 Publishes deployed Reasoning Engine agents to **Gemini Enterprise Apps** so corporate users can invoke the agent inside Gemini's chat interface.
 
 ### 10.2 Code Example: Automated Publishing Script ([`deploy/publish_agent.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/publish_agent.py))
