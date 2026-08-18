@@ -1024,6 +1024,8 @@ Agent evaluation is not a one-time gate but a continuous closed-loop cycle:
 4. **Failure Clustering & Loss Analysis**: Automatically group failures into loss clusters (e.g. tool parameter errors, hallucinated facts, instruction non-compliance) to identify systemic weaknesses.
 5. **Prompt & Tool Optimization**: Optimize system instructions and tool definitions, then verify gains against tracked Vertex AI Experiments.
 
+![Vertex AI Agent Evaluation Quality Flywheel](architecture/evaluation_flywheel.jpg)
+
 ```
                   ┌──────────────────────────────────────────────┐
                   │ 1. DESIGN & SYNTHESIS                        │
