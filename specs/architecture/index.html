@@ -865,7 +865,7 @@
   </div>
 
   <script>
-    // ─── Complete 11-Slide Data Model (Skills & Registry positioned in Layer 5 after Enterprise RAG) ─
+    // ─── Complete 11-Slide Data Model (Agent Engine before Agent Gateway & Model Armor) ─
     const SLIDES_DATA = [
       {
         id: 1,
@@ -882,14 +882,14 @@
           },
           {
             title: "Core Engineering Pillars Covered",
-            desc: "<ul><li><strong>1. Agent Development:</strong> Google ADK, Sequential reasoning pipelines, and A2A Protocol.</li><li><strong>2. AI Firewall:</strong> Agent Gateway & Model Armor zero-trust inspection.</li><li><strong>3. Managed Runtime:</strong> Agent Engine serverless container runtime, Session Service, and Memory Bank.</li><li><strong>4. Tool Ecosystem:</strong> Managed BigQuery/AlloyDB MCPs & custom enterprise microservices.</li><li><strong>5. Enterprise RAG:</strong> RagCorpora, Agent Search & Check Grounding API.</li><li><strong>6. Agent Skills:</strong> 3-level SKILL.md hierarchy & Agent Registry dynamic binding.</li><li><strong>7. Continuous Quality:</strong> Synthetic eval datasets, LLM-as-judge, and 10-min online monitors.</li><li><strong>8. Observability:</strong> Cloud Trace distributed span trees and BigQuery telemetry agent.</li><li><strong>9. Fleet Distribution:</strong> Agent Registry and Gemini Enterprise workplace publishing.</li></ul>"
+            desc: "<ul><li><strong>1. Agent Development:</strong> Google ADK, Sequential reasoning pipelines, and A2A Protocol.</li><li><strong>2. Managed Runtime:</strong> Agent Engine serverless container runtime, Session Service, and Memory Bank.</li><li><strong>3. AI Firewall:</strong> Agent Gateway & Model Armor zero-trust inspection.</li><li><strong>4. Tool Ecosystem:</strong> Managed BigQuery/AlloyDB MCPs & custom enterprise microservices.</li><li><strong>5. Enterprise RAG:</strong> RagCorpora, Agent Search & Check Grounding API.</li><li><strong>6. Agent Skills:</strong> 3-level SKILL.md hierarchy & Agent Registry dynamic binding.</li><li><strong>7. Continuous Quality:</strong> Synthetic eval datasets, LLM-as-judge, and 10-min online monitors.</li><li><strong>8. Observability:</strong> Cloud Trace distributed span trees and BigQuery telemetry agent.</li><li><strong>9. Fleet Distribution:</strong> Agent Registry and Gemini Enterprise workplace publishing.</li></ul>"
           },
           {
             title: "Production Demonstration Application",
             desc: "Backed by an operational marketing multi-agent platform automating customer RFM analytics, omnichannel strategy formulation, and creative copywriting on live BigQuery customer datasets."
           }
         ],
-        services: ["google-adk", "A2A Protocol", "Agent Gateway", "Model Armor", "Agent Engine", "Model Context Protocol", "RAG Engine", "Agent Registry", "Cloud Trace", "Gemini Enterprise"]
+        services: ["google-adk", "A2A Protocol", "Agent Engine", "Agent Gateway", "Model Armor", "Model Context Protocol", "RAG Engine", "Agent Registry", "Cloud Trace", "Gemini Enterprise"]
       },
       {
         id: 2,
@@ -917,7 +917,7 @@
             desc: "Built on managed Google Cloud infrastructure with IAM Service Account authentication, Cloud KMS encryption, private VPC interconnects, and OpenTelemetry Cloud Trace."
           }
         ],
-        services: ["google-adk", "Cloud Run", "Agent Gateway", "Model Armor", "Agent Engine", "BigQuery", "Agent Registry", "Gemini Enterprise"]
+        services: ["google-adk", "Cloud Run", "Agent Engine", "Agent Gateway", "Model Armor", "BigQuery", "Agent Registry", "Gemini Enterprise"]
       },
       {
         id: 3,
@@ -945,26 +945,6 @@
       },
       {
         id: 4,
-        sectionNum: "Section 03",
-        sectionBadge: "Layer 3: Security & Governance",
-        title: "Zero-Trust Security Perimeter — Agent Gateway & Model Armor",
-        subtitle: "Managed AI Firewall Intercepting Prompts, Model Completions & Tool Calls",
-        image: "03_agent_gateway_model_armor_security.jpg",
-        takeaway: "GCP Agent Gateway and Model Armor deliver a high-throughput, AI-native firewall intercepting prompt injection, PII exfiltration, harmful content, and malware at the network boundary.",
-        points: [
-          {
-            title: "5 Defensive AI Firewall Pillars",
-            desc: "<ul><li><strong>Prompt Injection & Jailbreak Defense:</strong> ML classifiers detect instruction hijacking and system overrides.</li><li><strong>Sensitive Data Protection (SDP/DLP):</strong> Real-time in-flight masking across 150+ PII infoTypes (Credit Cards, SSNs, Passwords, API Keys).</li><li><strong>Responsible AI Safety Filters:</strong> Configurable thresholds for hate speech, harassment, and dangerous content.</li><li><strong>Malicious URI & Phishing Detection:</strong> Google Safe Browsing scans links in prompts and tool args.</li><li><strong>Malware Interception:</strong> Blocks executable payloads, SQL injection fragments, and code exploits.</li></ul>"
-          },
-          {
-            title: "Floor Settings vs. Application Templates",
-            desc: "Enforces immutable enterprise-wide baseline security policies (Floor Settings) set by SecOps while allowing application teams to customize domain-specific sensitivity templates."
-          }
-        ],
-        services: ["networkservices (Agent Gateway)", "modelarmor (Model Armor)", "Cloud DLP / SDP", "Google Safe Browsing", "IAM Policies"]
-      },
-      {
-        id: 5,
         sectionNum: "Section 04",
         sectionBadge: "Layer 4: Managed Runtime",
         title: "Agent Engine & Managed Platform Runtime Services",
@@ -990,6 +970,26 @@
           }
         ],
         services: ["aiplatform/reasoningEngines", "Session Service", "MemoryBankConfig", "Cloud Storage (GCS)", "agents-cli deploy"]
+      },
+      {
+        id: 5,
+        sectionNum: "Section 03",
+        sectionBadge: "Layer 3: Security & Governance",
+        title: "Zero-Trust Security Perimeter — Agent Gateway & Model Armor",
+        subtitle: "Managed AI Firewall Intercepting Prompts, Model Completions & Tool Calls",
+        image: "03_agent_gateway_model_armor_security.jpg",
+        takeaway: "GCP Agent Gateway and Model Armor deliver a high-throughput, AI-native firewall intercepting prompt injection, PII exfiltration, harmful content, and malware at the network boundary.",
+        points: [
+          {
+            title: "5 Defensive AI Firewall Pillars",
+            desc: "<ul><li><strong>Prompt Injection & Jailbreak Defense:</strong> ML classifiers detect instruction hijacking and system overrides.</li><li><strong>Sensitive Data Protection (SDP/DLP):</strong> Real-time in-flight masking across 150+ PII infoTypes (Credit Cards, SSNs, Passwords, API Keys).</li><li><strong>Responsible AI Safety Filters:</strong> Configurable thresholds for hate speech, harassment, and dangerous content.</li><li><strong>Malicious URI & Phishing Detection:</strong> Google Safe Browsing scans links in prompts and tool args.</li><li><strong>Malware Interception:</strong> Blocks executable payloads, SQL injection fragments, and code exploits.</li></ul>"
+          },
+          {
+            title: "Floor Settings vs. Application Templates",
+            desc: "Enforces immutable enterprise-wide baseline security policies (Floor Settings) set by SecOps while allowing application teams to customize domain-specific sensitivity templates."
+          }
+        ],
+        services: ["networkservices (Agent Gateway)", "modelarmor (Model Armor)", "Cloud DLP / SDP", "Google Safe Browsing", "IAM Policies"]
       },
       {
         id: 6,

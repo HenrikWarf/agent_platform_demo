@@ -9,8 +9,8 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 1. [Slide 1: Gemini Enterprise Agent Platform (Title Cover)](#slide-1-gemini-enterprise-agent-platform-title-cover)
 2. [Slide 2: End-to-End Enterprise Architecture Overview](#slide-2-end-to-end-enterprise-architecture-overview)
 3. [Slide 3: Multi-Agent Orchestration with Google ADK & A2A Protocol](#slide-3-multi-agent-orchestration-with-google-adk--a2a-protocol)
-4. [Slide 4: Zero-Trust Security Perimeter — Agent Gateway & Model Armor](#slide-4-zero-trust-security-perimeter--agent-gateway--model-armor)
-5. [Slide 5: Agent Engine & Managed Runtime Services](#slide-5-agent-engine--managed-runtime-services)
+4. [Slide 4: Agent Engine & Managed Runtime Services](#slide-4-agent-engine--managed-runtime-services)
+5. [Slide 5: Zero-Trust Security Perimeter — Agent Gateway & Model Armor](#slide-5-zero-trust-security-perimeter--agent-gateway--model-armor)
 6. [Slide 6: Model Context Protocol (MCP) — Managed & Custom Enterprise Services](#slide-6-model-context-protocol-mcp--managed--custom-enterprise-services)
 7. [Slide 7: Enterprise RAG Services — RAG Engine, Agent Search & Grounding](#slide-7-enterprise-rag-services--rag-engine-agent-search--grounding)
 8. [Slide 8: Agent Skills Standard & Google Cloud Agent Registry](#slide-8-agent-skills-standard--google-cloud-agent-registry)
@@ -30,8 +30,8 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 * **Enterprise Architecture Deep-Dive**: Navigates the paradigm shift from single-turn chatbots to production-grade autonomous multi-agent systems.
 * **The Core Engineering Pillars**:
   1. **Agent Development**: Google ADK (`google-adk`), Sequential pipelines, and A2A Protocol federation.
-  2. **AI Firewall**: Agent Gateway and Model Armor zero-trust inspection across prompts, completions, and tools.
-  3. **Managed Runtime**: Agent Engine serverless container runtime, Session Service, and Memory Bank.
+  2. **Managed Runtime**: Agent Engine serverless container runtime, Session Service, and Memory Bank.
+  3. **AI Firewall**: Agent Gateway and Model Armor zero-trust inspection across prompts, completions, and tools.
   4. **Unified Tool Ecosystem**: Google Managed MCPs (BigQuery, AlloyDB) & Custom enterprise microservices.
   5. **Enterprise RAG**: RagCorpora, Google-quality Agent Search & Check Grounding verification.
   6. **Agent Skills & Registry**: Modular 3-level `SKILL.md` packages and dynamic on-demand runtime binding.
@@ -70,7 +70,21 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 
 ---
 
-## Slide 4: Zero-Trust Security Perimeter — Agent Gateway & Model Armor
+## Slide 4: Agent Engine & Managed Runtime Services
+
+> **Key Takeaway:** Agent Engine (`reasoningEngines`) provides a fully managed, autoscaling container runtime equipped with turnkey session persistence, semantic memory, and artifact storage.
+
+![Agent Engine & Managed Platform Services](architecture/04_agent_engine_runtime_services.jpg)
+
+### 🎙️ Speaker Notes & Key Points:
+* **Serverless Agent Containers**: Automatically builds, packages, and scales ADK agent code with zero server management.
+* **Session Service**: Manages multi-turn conversation history and state propagation under `/apps/.../sessions`.
+* **Memory Bank (`MemoryBankConfig`)**: Provides semantic long-term customer memory and vector search retrieval across sessions.
+* **GCS Artifact Service**: Securely stores generated campaign creatives, PDF reports, and export files with KMS encryption.
+
+---
+
+## Slide 5: Zero-Trust Security Perimeter — Agent Gateway & Model Armor
 
 > **Key Takeaway:** GCP Agent Gateway and Model Armor deliver a multi-layered AI Firewall inspecting ingress prompts, egress completions, and tool transactions without latency bottlenecks.
 
@@ -84,20 +98,6 @@ This presentation flow translates the end-to-end multi-agent architecture into a
   4. **Malicious URI & Phishing Detection**: Real-time URL threat intelligence checks.
   5. **Malware & Executable Interception**: Blocks malicious payload delivery in tool args.
 * **Floor Settings vs. Application Templates**: Enforces immutable enterprise-wide baseline policies while allowing application-level customization.
-
----
-
-## Slide 5: Agent Engine & Managed Runtime Services
-
-> **Key Takeaway:** Agent Engine (`reasoningEngines`) provides a fully managed, autoscaling container runtime equipped with turnkey session persistence, semantic memory, and artifact storage.
-
-![Agent Engine & Managed Platform Services](architecture/04_agent_engine_runtime_services.jpg)
-
-### 🎙️ Speaker Notes & Key Points:
-* **Serverless Agent Containers**: Automatically builds, packages, and scales ADK agent code with zero server management.
-* **Session Service**: Manages multi-turn conversation history and state propagation under `/apps/.../sessions`.
-* **Memory Bank (`MemoryBankConfig`)**: Provides semantic long-term customer memory and vector search retrieval across sessions.
-* **GCS Artifact Service**: Securely stores generated campaign creatives, PDF reports, and export files with KMS encryption.
 
 ---
 
