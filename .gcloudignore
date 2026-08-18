@@ -22,6 +22,7 @@ terraform/
 
 # Documentation
 docs/
+specs/
 *.md
 !README.md
 !skills/**/SKILL.md
