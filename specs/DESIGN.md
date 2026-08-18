@@ -10,7 +10,7 @@ The application follows a microservice multi-agent topology powered by the **Goo
 ```
 +-------------------------------------------------------------------------+
 |                              REACT FRONTEND                             |
-|    Light/Dark Mode Theme | Chat & A2A Visualizer | BigQuery Inspector    |
+|    Light/Dark Mode | Chat | A2A Explorer | Simulator & OTel | BigQuery  |
 +------------------------------------+------------------------------------+
                                      | (REST HTTP JSON)
                                      v
@@ -31,11 +31,11 @@ The application follows a microservice multi-agent topology powered by the **Goo
 |                                    |
 +-----+------------------------------+------------------------------+-----+
       |                              |                              |
-      | (A2A Protocol)               | (A2A Protocol)               | (A2A)
+      | (LLM delegation)             | (LLM delegation)             | (LLM)
       v                              v                              v
 +------------------+         +------------------+         +------------------+
-| Analytics Agent  |         |  Strategy Agent  |         |  Content Agent   |
-|  (NL2SQL Engine) |         | (omnichannel_str)|         |  (brand_voice)   |
+| Analytics Agent  |         | Strategy Pipeline|         | Content Pipeline |
+| (BigQuery SQL)   |         | (SequentialAgent)|         | (SequentialAgent)|
 +--------+---------+         +------------------+         +------------------+
          |
          v
@@ -148,7 +148,7 @@ gcloud projects add-iam-policy-binding agent-demo-09 \
 ## 4. Multi-Agent Design & A2A Protocol
 
 ### 4.1 Orchestrator & Intent Classifier
-The **Orchestrator Agent** (`agents/orchestrator_agent.py`) classifies user intent:
+The **Root Orchestrator** (`app/agent.py: marketing_orchestrator`) classifies user intent via LLM delegation:
 
 | Intent | Execution Flow | Output |
 |--------|---------------|--------|
@@ -157,9 +157,9 @@ The **Orchestrator Agent** (`agents/orchestrator_agent.py`) classifies user inte
 | `FULL_CAMPAIGN` | Orchestrator → AnalyticsAgent → StrategyAgent → ContentAgent | + Creative copy |
 
 ### 4.2 Subagent Architecture
-- **Analytics Agent** (`app/agent.py: analytics_agent`): Single-tool agent with `query_customer_data`. The agent generates BigQuery SQL directly from its instructions (which contain the full table schema) and executes it in one tool call. No nested LLM calls.
-- **Strategy Agent** (`app/agent.py: strategy_agent`): `generate_strategy` tool. Campaign frameworks, channel mix, ROI projections.
-- **Content Agent** (`app/agent.py: content_agent`): `generate_content_pieces` tool. Subject lines, email templates, ad copy.
+- **Analytics Agent** (`app/agent.py: analytics_agent`): Single-tool agent with `query_customer_data`. Generates BigQuery SQL from instructions (full table schema) and executes in one tool call. Skill: `bigquery-customer-analytics`.
+- **Strategy Pipeline** (`app/agent.py: strategy_pipeline`): SequentialAgent — `strategy_reasoning_agent` → `strategy_json_agent` (Pydantic structured output). Skill: `campaign-framework`.
+- **Content Pipeline** (`app/agent.py: content_pipeline`): SequentialAgent — `content_reasoning_agent` → `content_json_agent` (Pydantic structured output). Skill: `brand-voice-craft`.
 
 ### 4.3 ADK Root Agent (`app/agent.py`)
 The `app/agent.py` defines the `root_agent` using `google.adk.agents.Agent`. This is the ADK entry point that Agent Runtime discovers and serves. It delegates to the orchestrator agent's tools.
@@ -202,9 +202,10 @@ CSS custom properties for instant light/dark theme switching:
 | Component | Responsibility |
 |-----------|---------------|
 | `ChatInterface.jsx` | Main chat with markdown rendering, SQL accordion |
-| `AgentGraphVisualizer.jsx` | A2A protocol routing visualization |
+| `A2AExplorer.jsx` | A2A protocol explorer with full-screen agent card modal |
+| `AgentGraphVisualizer.jsx` | Agent interaction flow graph |
+| `SimulatorControls.jsx` | Real traffic simulator with per-agent KPI breakdown |
 | `BigQueryDataViewer.jsx` | Live BigQuery table sampling & inspection |
-| `SimulatorControls.jsx` | Traffic load simulator for telemetry |
 | `SkillsInspector.jsx` | Skill registry browser (filters CLI dev skills) |
 
 ---
@@ -213,8 +214,9 @@ CSS custom properties for instant light/dark theme switching:
 
 ### 6.1 Scaffolded Telemetry (`app/app_utils/telemetry.py`)
 - Cloud Trace span export (gated on `GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY`)
-- Prompt-response logging to GCS (`NO_CONTENT` metadata-only mode)
+- Prompt-response logging to GCS (`SPAN_AND_EVENT` full content capture mode)
 - GenAI instrumentation with `OTEL_INSTRUMENTATION_GENAI_COMPLETION_HOOK=upload`
+- GCS completions bucket: `gs://agent-demo-09-agent-platform-logs/completions`
 
 ### 6.2 Cloud Logging & Log Analytics
 - Log Analytics enabled on global `_Default` bucket (`analyticsEnabled: true`)

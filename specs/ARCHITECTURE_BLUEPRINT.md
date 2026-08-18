@@ -23,9 +23,8 @@ This document outlines the end-to-end system architecture and GCP deployment top
 * **Synthetic Traffic Simulator**: Automated traffic generator simulating continuous marketing prompt load for telemetry analysis.
 
 ### 2. Backend & API Gateway Layer
-* **FastAPI Backend Server** ([`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py)): Exposes REST API endpoints (`/api/chat`, `/api/health`, `/api/skills`, `/api/bigquery/sample`).
-* **Prompt Safety Guard** ([`backend/safety.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/safety.py)): Application-level pre-flight safety check for PII masking and prompt injection filtering.
-* **Agent Runtime Client** ([`backend/agent_runtime_client.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/agent_runtime_client.py)): Proxies user prompts to deployed Reasoning Engine instances via `:streamQuery` governed endpoints.
+* **FastAPI Backend Server** ([`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py)): Exposes REST API endpoints (`/api/chat`, `/health`, `/api/version`, `/api/simulator/*`, `/api/a2a/*`).
+* **Agent Runtime Client** ([`backend/agent_runtime_client.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/agent_runtime_client.py)): Proxies user prompts to deployed Reasoning Engine instances via `:streamQuery` governed endpoints. Also provides the synthetic traffic simulator and A2A proxy.
 
 ### 3. Security & Governance Layer (GCP Infrastructure)
 * **GCP Agent Gateway** (`networkservices.googleapis.com`): Governed ingress routing enforcing client-to-agent access policies.
@@ -33,16 +32,16 @@ This document outlines the end-to-end system architecture and GCP deployment top
 
 ### 4. Agent Orchestration Engine (Agent Engine)
 Built with **Google Agent Development Kit (ADK)** and powered by **Gemini 3.6 Flash**:
-* **Root Orchestrator Agent (`marketing_orchestrator`)**: Intent classifier delegating via Agent-to-Agent (A2A) protocol.
+* **Root Orchestrator Agent (`marketing_orchestrator`)**: LLM-driven delegation to specialized sub-agents.
 * **Customer Insights & Analytics Agent (`analytics_agent`)**: Direct BigQuery Standard SQL generator and query executor.
 * **Omnichannel Strategy Agent (`strategy_agent`)**: Marketing strategy, channel mix allocation, and ROI projection generator.
 * **Brand Voice Content Agent (`content_agent`)**: Email templates, social media posts, and SMS copy generator.
 
 ### 5. Agent Registry & Skills Store
 * **Agent Registry** (`agentregistry.googleapis.com`): Centralized store for dynamically bound marketing skills:
-  * `marketing_analytics`: BigQuery customer data analytics & SQL templates.
-  * `omnichannel_strategy`: Campaign frameworks & channel mix allocations.
-  * `brand_voice`: Brand tone & creative copywriting rules.
+  * `bigquery-customer-analytics`: BigQuery customer data analytics & SQL templates.
+  * `campaign-framework`: Campaign frameworks & channel mix allocations.
+  * `brand-voice-craft`: Brand tone & creative copywriting rules.
 
 ### 6. Tools & Data Layer (Google BigQuery)
 * **Google BigQuery** (`agent-demo-09:marketing_analytics`):
@@ -52,5 +51,8 @@ Built with **Google Agent Development Kit (ADK)** and powered by **Gemini 3.6 Fl
 
 ### 7. Observability & Evaluation Layer
 * **OpenTelemetry Cloud Trace**: Distributed tracing capturing span hierarchies (`invoke_workflow` → `call_llm` → `execute_tool`).
+* **Prompt-Response Logging**: Full content capture to GCS (`gs://agent-demo-09-agent-platform-logs`), Cloud Trace spans (`SPAN_AND_EVENT`), and Cloud Logging events.
 * **Cloud Logging & Log Analytics**: Centralized log bucket (`_Default`) and linked BigQuery dataset (`defaultLink`).
-* **Evaluation Engine**: Local evaluation suite ([`eval/local_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/local_eval.py)) and Agent Platform Rapid Evaluation API integration ([`eval/vertex_eval.py`](file:///Users/henrikw/Projects/agent_platform_demo/eval/vertex_eval.py)).
+* **Evaluation Engine**: ADK eval framework (`agents-cli eval`) and per-trace manual evaluation in Cloud Console.
+
+> **Known Limitation**: Online evaluation monitors do not work with multi-agent systems due to non-uniform `gen_ai.system_instructions` across sub-agent traces.
