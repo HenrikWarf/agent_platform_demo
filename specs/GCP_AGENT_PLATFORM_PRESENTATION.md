@@ -9,11 +9,11 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 1. [Slide 1: Gemini Enterprise Agent Platform (Title Cover)](#slide-1-gemini-enterprise-agent-platform-title-cover)
 2. [Slide 2: End-to-End Enterprise Architecture Overview](#slide-2-end-to-end-enterprise-architecture-overview)
 3. [Slide 3: Multi-Agent Orchestration with Google ADK & A2A Protocol](#slide-3-multi-agent-orchestration-with-google-adk--a2a-protocol)
-4. [Slide 4: Agent Skills Standard & Google Cloud Agent Registry](#slide-4-agent-skills-standard--google-cloud-agent-registry)
-5. [Slide 5: Zero-Trust Security Perimeter — Agent Gateway & Model Armor](#slide-5-zero-trust-security-perimeter--agent-gateway--model-armor)
-6. [Slide 6: Agent Engine & Managed Runtime Services](#slide-6-agent-engine--managed-runtime-services)
-7. [Slide 7: Model Context Protocol (MCP) — Managed & Custom Enterprise Services](#slide-7-model-context-protocol-mcp--managed--custom-enterprise-services)
-8. [Slide 8: Enterprise RAG Services — RAG Engine, Agent Search & Grounding](#slide-8-enterprise-rag-services--rag-engine-agent-search--grounding)
+4. [Slide 4: Zero-Trust Security Perimeter — Agent Gateway & Model Armor](#slide-4-zero-trust-security-perimeter--agent-gateway--model-armor)
+5. [Slide 5: Agent Engine & Managed Runtime Services](#slide-5-agent-engine--managed-runtime-services)
+6. [Slide 6: Model Context Protocol (MCP) — Managed & Custom Enterprise Services](#slide-6-model-context-protocol-mcp--managed--custom-enterprise-services)
+7. [Slide 7: Enterprise RAG Services — RAG Engine, Agent Search & Grounding](#slide-7-enterprise-rag-services--rag-engine-agent-search--grounding)
+8. [Slide 8: Agent Skills Standard & Google Cloud Agent Registry](#slide-8-agent-skills-standard--google-cloud-agent-registry)
 9. [Slide 9: Continuous Quality Flywheel, Agent Evaluation & Online Monitors](#slide-9-continuous-quality-flywheel-agent-evaluation--online-monitors)
 10. [Slide 10: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent](#slide-10-4-tier-observability-cloud-trace--bigquery-analytics-agent)
 11. [Slide 11: Agent Registry & Gemini Enterprise Workplace Publishing](#slide-11-agent-registry--gemini-enterprise-workplace-publishing)
@@ -30,11 +30,11 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 * **Enterprise Architecture Deep-Dive**: Navigates the paradigm shift from single-turn chatbots to production-grade autonomous multi-agent systems.
 * **The Core Engineering Pillars**:
   1. **Agent Development**: Google ADK (`google-adk`), Sequential pipelines, and A2A Protocol federation.
-  2. **Agent Skills & Registry**: Modular 3-level `SKILL.md` packages and dynamic on-demand runtime binding.
-  3. **AI Firewall**: Agent Gateway and Model Armor zero-trust inspection across prompts, completions, and tools.
-  4. **Managed Runtime**: Agent Engine serverless container runtime, Session Service, and Memory Bank.
-  5. **Unified Tool Ecosystem**: Google Managed MCPs (BigQuery, AlloyDB) & Custom enterprise microservices.
-  6. **Enterprise RAG**: RagCorpora, Google-quality Agent Search & Check Grounding verification.
+  2. **AI Firewall**: Agent Gateway and Model Armor zero-trust inspection across prompts, completions, and tools.
+  3. **Managed Runtime**: Agent Engine serverless container runtime, Session Service, and Memory Bank.
+  4. **Unified Tool Ecosystem**: Google Managed MCPs (BigQuery, AlloyDB) & Custom enterprise microservices.
+  5. **Enterprise RAG**: RagCorpora, Google-quality Agent Search & Check Grounding verification.
+  6. **Agent Skills & Registry**: Modular 3-level `SKILL.md` packages and dynamic on-demand runtime binding.
   7. **Continuous Quality**: Synthetic golden eval datasets, LLM-as-judge scoring, and 10-min production online monitors.
   8. **Observability**: Cloud Trace distributed span trees and conversational BigQuery Analytics Agent.
   9. **Fleet Distribution**: Centralized Agent Registry and 1-click publishing to corporate Gemini Enterprise chat.
@@ -70,26 +70,7 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 
 ---
 
-## Slide 4: Agent Skills Standard & Google Cloud Agent Registry
-
-> **Key Takeaway:** Agent Skills package domain expertise into modular 3-level bundles (`SKILL.md`) managed in the Google Cloud Agent Registry and dynamically bound on-demand to optimize context windows.
-
-![Agent Skills Standard & Google Cloud Agent Registry](architecture/02_agent_skills_and_agent_registry.jpg)
-
-### 🎙️ Speaker Notes & Key Points:
-* **The 3-Level `SKILL.md` Architecture**:
-  * **L1 (Metadata Frontmatter)**: YAML frontmatter with `name`, `description`, discovery tags, and `URN`.
-  * **L2 (Body Instructions)**: In-depth domain reasoning guidelines and execution rules.
-  * **L3 (Resource Bundles)**: `references/` (documentation), `assets/` (database schemas & API templates), and `scripts/` (executable Python/Bash helpers).
-* **Google Cloud Agent Registry (`agentregistry.googleapis.com`)**:
-  * Centralized enterprise catalog governing skill packages via URNs (`urn:skill:projects-...:locations:...`), versioning, and Role-Based Access Control (RBAC).
-* **Dynamic Skill Binding & On-Demand Retrieval**:
-  * ADK agents discover and bind skills at runtime using `list_skills`, `load_skill`, `load_skill_resource`, and `run_skill_script` inside isolated sandboxes.
-* **Semantic Governance**: Applies Natural Language Constraints (NLC) to intercept skill loading and enforce strict enterprise compliance policies.
-
----
-
-## Slide 5: Zero-Trust Security Perimeter — Agent Gateway & Model Armor
+## Slide 4: Zero-Trust Security Perimeter — Agent Gateway & Model Armor
 
 > **Key Takeaway:** GCP Agent Gateway and Model Armor deliver a multi-layered AI Firewall inspecting ingress prompts, egress completions, and tool transactions without latency bottlenecks.
 
@@ -106,7 +87,7 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 
 ---
 
-## Slide 6: Agent Engine & Managed Runtime Services
+## Slide 5: Agent Engine & Managed Runtime Services
 
 > **Key Takeaway:** Agent Engine (`reasoningEngines`) provides a fully managed, autoscaling container runtime equipped with turnkey session persistence, semantic memory, and artifact storage.
 
@@ -120,7 +101,7 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 
 ---
 
-## Slide 7: Model Context Protocol (MCP) — Managed & Custom Enterprise Services
+## Slide 6: Model Context Protocol (MCP) — Managed & Custom Enterprise Services
 
 > **Key Takeaway:** Standardized Agent-to-Tool interoperability via the Model Context Protocol (MCP) seamlessly integrates first-party Google-managed data stores and custom self-hosted enterprise microservices under unified Agent Gateway security.
 
@@ -145,7 +126,7 @@ This presentation flow translates the end-to-end multi-agent architecture into a
 
 ---
 
-## Slide 8: Enterprise RAG Services — RAG Engine, Agent Search & Grounding
+## Slide 7: Enterprise RAG Services — RAG Engine, Agent Search & Grounding
 
 > **Key Takeaway:** Vertex AI RAG Engine and Agent Search provide managed enterprise RAG orchestration, document ingestion, vector retrieval, and automated Check Grounding API citation verification.
 
@@ -163,6 +144,25 @@ This presentation flow translates the end-to-end multi-agent architecture into a
   * Parses complex PDFs into structured, context-aware chunks preserving tables and headings before generating high-dimensional dense embeddings.
 * **Check Grounding API & Anti-Hallucination**:
   * Deterministically cross-references model responses against retrieved fact citations to verify factual accuracy and eliminate hallucinations before returning answers to users.
+
+---
+
+## Slide 8: Agent Skills Standard & Google Cloud Agent Registry
+
+> **Key Takeaway:** Agent Skills package domain expertise into modular 3-level bundles (`SKILL.md`) managed in the Google Cloud Agent Registry and dynamically bound on-demand to optimize context windows.
+
+![Agent Skills Standard & Google Cloud Agent Registry](architecture/02_agent_skills_and_agent_registry.jpg)
+
+### 🎙️ Speaker Notes & Key Points:
+* **The 3-Level `SKILL.md` Architecture**:
+  * **L1 (Metadata Frontmatter)**: YAML frontmatter with `name`, `description`, discovery tags, and `URN`.
+  * **L2 (Body Instructions)**: In-depth domain reasoning guidelines and execution rules.
+  * **L3 (Resource Bundles)**: `references/` (documentation), `assets/` (database schemas & API templates), and `scripts/` (executable Python/Bash helpers).
+* **Google Cloud Agent Registry (`agentregistry.googleapis.com`)**:
+  * Centralized enterprise catalog governing skill packages via URNs (`urn:skill:projects-...:locations:...`), versioning, and Role-Based Access Control (RBAC).
+* **Dynamic Skill Binding & On-Demand Retrieval**:
+  * ADK agents discover and bind skills at runtime using `list_skills`, `load_skill`, `load_skill_resource`, and `run_skill_script` inside isolated sandboxes.
+* **Semantic Governance**: Applies Natural Language Constraints (NLC) to intercept skill loading and enforce strict enterprise compliance policies.
 
 ---
 

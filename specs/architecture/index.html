@@ -865,7 +865,7 @@
   </div>
 
   <script>
-    // ─── Complete 11-Slide Data Model (Strictly Synchronized with GCP_AGENT_PLATFORM_SERVICES.md) ─
+    // ─── Complete 11-Slide Data Model (Skills & Registry positioned in Layer 5 after Enterprise RAG) ─
     const SLIDES_DATA = [
       {
         id: 1,
@@ -882,14 +882,14 @@
           },
           {
             title: "Core Engineering Pillars Covered",
-            desc: "<ul><li><strong>1. Agent Development:</strong> Google ADK, Sequential reasoning pipelines, and A2A Protocol.</li><li><strong>2. Agent Skills:</strong> 3-level SKILL.md hierarchy & Agent Registry dynamic binding.</li><li><strong>3. AI Firewall:</strong> Agent Gateway & Model Armor zero-trust inspection.</li><li><strong>4. Managed Runtime:</strong> Agent Engine serverless container runtime, Session Service, and Memory Bank.</li><li><strong>5. Tool Ecosystem:</strong> Managed BigQuery/AlloyDB MCPs & custom enterprise microservices.</li><li><strong>6. Enterprise RAG:</strong> RagCorpora, Agent Search & Check Grounding API.</li><li><strong>7. Continuous Quality:</strong> Synthetic eval datasets, LLM-as-judge, and 10-min online monitors.</li><li><strong>8. Observability:</strong> Cloud Trace distributed span trees and BigQuery telemetry agent.</li><li><strong>9. Fleet Distribution:</strong> Agent Registry and Gemini Enterprise workplace publishing.</li></ul>"
+            desc: "<ul><li><strong>1. Agent Development:</strong> Google ADK, Sequential reasoning pipelines, and A2A Protocol.</li><li><strong>2. AI Firewall:</strong> Agent Gateway & Model Armor zero-trust inspection.</li><li><strong>3. Managed Runtime:</strong> Agent Engine serverless container runtime, Session Service, and Memory Bank.</li><li><strong>4. Tool Ecosystem:</strong> Managed BigQuery/AlloyDB MCPs & custom enterprise microservices.</li><li><strong>5. Enterprise RAG:</strong> RagCorpora, Agent Search & Check Grounding API.</li><li><strong>6. Agent Skills:</strong> 3-level SKILL.md hierarchy & Agent Registry dynamic binding.</li><li><strong>7. Continuous Quality:</strong> Synthetic eval datasets, LLM-as-judge, and 10-min online monitors.</li><li><strong>8. Observability:</strong> Cloud Trace distributed span trees and BigQuery telemetry agent.</li><li><strong>9. Fleet Distribution:</strong> Agent Registry and Gemini Enterprise workplace publishing.</li></ul>"
           },
           {
             title: "Production Demonstration Application",
             desc: "Backed by an operational marketing multi-agent platform automating customer RFM analytics, omnichannel strategy formulation, and creative copywriting on live BigQuery customer datasets."
           }
         ],
-        services: ["google-adk", "A2A Protocol", "Agent Registry", "Agent Gateway", "Model Armor", "Agent Engine", "RAG Engine", "Model Context Protocol", "Cloud Trace", "Gemini Enterprise"]
+        services: ["google-adk", "A2A Protocol", "Agent Gateway", "Model Armor", "Agent Engine", "Model Context Protocol", "RAG Engine", "Agent Registry", "Cloud Trace", "Gemini Enterprise"]
       },
       {
         id: 2,
@@ -945,34 +945,6 @@
       },
       {
         id: 4,
-        sectionNum: "Section 02",
-        sectionBadge: "Layer 1.3: Skills & Registry",
-        title: "Agent Skills Standard & Google Cloud Agent Registry",
-        subtitle: "Modular SKILL.md Packages, Centralized Fleet Catalog & Dynamic Skill Binding",
-        image: "02_agent_skills_and_agent_registry.jpg",
-        takeaway: "Agent Skills package domain expertise into modular 3-level bundles (SKILL.md) managed in the Google Cloud Agent Registry and dynamically bound on-demand to optimize context windows.",
-        points: [
-          {
-            title: "The 3-Level SKILL.md Architecture",
-            desc: "<ul><li><strong>L1 (Metadata Frontmatter):</strong> YAML schema with name, description, discovery tags, and URN.</li><li><strong>L2 (Body Instructions):</strong> In-depth domain reasoning rules and execution guidelines.</li><li><strong>L3 (Resource Bundles):</strong> <code>references/</code> (extended docs), <code>assets/</code> (schemas & templates), and <code>scripts/</code> (executable tools).</li></ul>"
-          },
-          {
-            title: "Google Cloud Agent Registry (agentregistry.googleapis.com)",
-            desc: "Centralized enterprise catalog governing skill packages via URNs (<code>urn:skill:projects-...:locations:...</code>), versioning, and Role-Based Access Control (RBAC)."
-          },
-          {
-            title: "Dynamic Skill Binding & On-Demand Retrieval",
-            desc: "Instead of bloating the system prompt, ADK agents discover and bind skills dynamically at runtime via <code>list_skills</code>, <code>load_skill</code>, <code>load_skill_resource</code>, and <code>run_skill_script</code> inside isolated sandboxes."
-          },
-          {
-            title: "Semantic Governance & Natural Language Constraints",
-            desc: "Applies Natural Language Constraints (NLC) to intercept skill loading and enforce strict enterprise compliance policies."
-          }
-        ],
-        services: ["agentregistry.googleapis.com", "SkillToolset", "SKILL.md Standard", "Dynamic Binding APIs", "Sandbox Runtime"]
-      },
-      {
-        id: 5,
         sectionNum: "Section 03",
         sectionBadge: "Layer 3: Security & Governance",
         title: "Zero-Trust Security Perimeter — Agent Gateway & Model Armor",
@@ -992,7 +964,7 @@
         services: ["networkservices (Agent Gateway)", "modelarmor (Model Armor)", "Cloud DLP / SDP", "Google Safe Browsing", "IAM Policies"]
       },
       {
-        id: 6,
+        id: 5,
         sectionNum: "Section 04",
         sectionBadge: "Layer 4: Managed Runtime",
         title: "Agent Engine & Managed Platform Runtime Services",
@@ -1020,9 +992,9 @@
         services: ["aiplatform/reasoningEngines", "Session Service", "MemoryBankConfig", "Cloud Storage (GCS)", "agents-cli deploy"]
       },
       {
-        id: 7,
+        id: 6,
         sectionNum: "Section 05",
-        sectionBadge: "Layer 5: Tools & Interoperability",
+        sectionBadge: "Layer 5.1: Tools & Protocols",
         title: "Enterprise Model Context Protocol (MCP) Ecosystem",
         subtitle: "Unified Ingress for Google Managed Services & Custom Enterprise Microservices",
         image: "05_mcp_enterprise_ecosystem.jpg",
@@ -1044,9 +1016,9 @@
         services: ["Model Context Protocol (MCP)", "McpToolset", "BigQuery MCP", "AlloyDB pgvector MCP", "Enterprise Search MCP", "Agent Gateway Proxy"]
       },
       {
-        id: 8,
+        id: 7,
         sectionNum: "Section 06",
-        sectionBadge: "Layer 5.2: Enterprise RAG",
+        sectionBadge: "Layer 5.2: Enterprise Knowledge & RAG",
         title: "Enterprise RAG Services — RAG Engine, Agent Search & Grounding",
         subtitle: "Context Augmentation with RagCorpora, Google-Quality Search & Check Grounding Verification",
         image: "07_enterprise_rag_engine_and_agent_search.jpg",
@@ -1070,6 +1042,34 @@
           }
         ],
         services: ["Vertex AI RAG Engine", "Agent Search", "Check Grounding API", "Document AI Layout Parser", "Vector Search", "Embeddings API"]
+      },
+      {
+        id: 8,
+        sectionNum: "Section 07",
+        sectionBadge: "Layer 5.3: Skills & Registry",
+        title: "Agent Skills Standard & Google Cloud Agent Registry",
+        subtitle: "Modular SKILL.md Packages, Centralized Fleet Catalog & Dynamic Skill Binding",
+        image: "02_agent_skills_and_agent_registry.jpg",
+        takeaway: "Agent Skills package domain expertise into modular 3-level bundles (SKILL.md) managed in the Google Cloud Agent Registry and dynamically bound on-demand to optimize context windows.",
+        points: [
+          {
+            title: "The 3-Level SKILL.md Architecture",
+            desc: "<ul><li><strong>L1 (Metadata Frontmatter):</strong> YAML schema with name, description, discovery tags, and URN.</li><li><strong>L2 (Body Instructions):</strong> In-depth domain reasoning rules and execution guidelines.</li><li><strong>L3 (Resource Bundles):</strong> <code>references/</code> (extended docs), <code>assets/</code> (schemas & templates), and <code>scripts/</code> (executable tools).</li></ul>"
+          },
+          {
+            title: "Google Cloud Agent Registry (agentregistry.googleapis.com)",
+            desc: "Centralized enterprise catalog governing skill packages via URNs (<code>urn:skill:projects-...:locations:...</code>), versioning, and Role-Based Access Control (RBAC)."
+          },
+          {
+            title: "Dynamic Skill Binding & On-Demand Retrieval",
+            desc: "Instead of bloating the system prompt, ADK agents discover and bind skills dynamically at runtime via <code>list_skills</code>, <code>load_skill</code>, <code>load_skill_resource</code>, and <code>run_skill_script</code> inside isolated sandboxes."
+          },
+          {
+            title: "Semantic Governance & Natural Language Constraints",
+            desc: "Applies Natural Language Constraints (NLC) to intercept skill loading and enforce strict enterprise compliance policies."
+          }
+        ],
+        services: ["agentregistry.googleapis.com", "SkillToolset", "SKILL.md Standard", "Dynamic Binding APIs", "Sandbox Runtime"]
       },
       {
         id: 9,
@@ -1390,7 +1390,8 @@
           openLightbox();
           break;
         case "1": case "2": case "3": case "4":
-        case "5": case "6": case "7": case "8": case "9":
+        case "5": case "6": case "7": case "8":
+        case "9":
           const slideNum = parseInt(e.key, 10) - 1;
           if (slideNum >= 0 && slideNum < totalSlides) {
             goToSlide(slideNum);
