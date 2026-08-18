@@ -10,8 +10,8 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 2. [Slide 2: Multi-Agent Orchestration with Google ADK & A2A Protocol](#slide-2-multi-agent-orchestration-with-google-adk--a2a-protocol)
 3. [Slide 3: Zero-Trust Security Perimeter — Agent Gateway & Model Armor](#slide-3-zero-trust-security-perimeter--agent-gateway--model-armor)
 4. [Slide 4: Vertex AI Agent Engine & Managed Runtime Services](#slide-4-vertex-ai-agent-engine--managed-runtime-services)
-5. [Slide 5: Enterprise Tools & GCP Managed Model Context Protocol (MCP)](#slide-5-enterprise-tools--gcp-managed-model-context-protocol-mcp)
-6. [Slide 6: Google BigQuery Data Warehouse & AI Data Agents](#slide-6-google-bigquery-data-warehouse--ai-data-agents)
+5. [Slide 5: Google BigQuery Data Warehouse & AI Data Agents](#slide-5-google-bigquery-data-warehouse--ai-data-agents)
+6. [Slide 6: Model Context Protocol (MCP) — Google Managed & Custom Enterprise Services](#slide-6-model-context-protocol-mcp--google-managed--custom-enterprise-services)
 7. [Slide 7: Continuous Quality Flywheel, Evaluation & Online Monitors](#slide-7-continuous-quality-flywheel-evaluation--online-monitors)
 8. [Slide 8: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent](#slide-8-4-tier-observability-cloud-trace--bigquery-analytics-agent)
 9. [Slide 9: Agent Registry & Gemini Enterprise Workplace Publishing](#slide-9-agent-registry--gemini-enterprise-workplace-publishing)
@@ -78,24 +78,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 5: Enterprise Tools & GCP Managed Model Context Protocol (MCP)
-
-> **Key Takeaway:** Standardized Agent-to-Tool interoperability via the Model Context Protocol (MCP) connects agents to managed enterprise data sources with identity translation and rate limiting.
-
-![Tools & Managed Model Context Protocol (MCP) Ecosystem](architecture/managed_mcp_tools_ecosystem.jpg)
-
-### 🎙️ Speaker Notes & Key Points:
-* **GCP Managed MCP Ecosystem**:
-  * **BigQuery MCP**: Schema introspection, dataset discovery, and SQL query execution.
-  * **AlloyDB & Cloud SQL MCP**: `pgvector` semantic vector search and transactional queries.
-  * **Spanner Managed MCP**: Globally distributed transactional operations.
-  * **Firestore & Memorystore MCP**: High-speed real-time caching and session state.
-  * **Vertex AI Search MCP**: Unstructured enterprise document grounding and RAG.
-* **Agent Gateway MCP Proxy**: Enforces IAM credentials, project headers, and rate limits on all tool interactions.
-
----
-
-## Slide 6: Google BigQuery Data Warehouse & AI Data Agents
+## Slide 5: Google BigQuery Data Warehouse & AI Data Agents
 
 > **Key Takeaway:** BigQuery acts as both the high-performance customer data warehouse and the cognitive data plane with Gemini in BigQuery Data Canvas for natural language data discovery.
 
@@ -109,6 +92,31 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 * **BigQuery AI Data Agents**:
   * Natural language to optimized BigQuery SQL translation.
   * Interactive data canvas for multi-table cohort visualization and trend analysis.
+
+---
+
+## Slide 6: Model Context Protocol (MCP) — Google Managed & Custom Enterprise Services
+
+> **Key Takeaway:** Standardized Agent-to-Tool interoperability via the Model Context Protocol (MCP) seamlessly integrates first-party Google-managed data stores and custom self-hosted enterprise microservices under unified Agent Gateway security.
+
+![Enterprise Model Context Protocol (MCP): Google Managed & Custom Services](architecture/mcp_enterprise_ecosystem.jpg)
+
+### 🎙️ Speaker Notes & Key Points:
+* **Unified ADK Agent Layer**:
+  * `McpToolset` & `ToolContext`: Binds multiple MCP servers as native agent tools with full state access.
+  * Declarative tool abstraction insulating agents from backend communication protocols.
+* **GCP Agent Gateway MCP Ingress & Proxy**:
+  * Enforces IAM token translation, project headers, mTLS encryption, rate limiting, and audit logging across all tool calls.
+* **Google Managed MCP Services**:
+  * **BigQuery MCP Server**: Dataset schema introspection and BigQuery SQL execution.
+  * **AlloyDB & Cloud SQL MCP**: `pgvector` semantic similarity search and transactional SQL.
+  * **Vertex AI Search MCP**: Unstructured document RAG and enterprise grounding.
+  * **Spanner & Firestore MCP**: Global ACID transactions and real-time state caching.
+* **Custom Enterprise MCP Services**:
+  * **ERP / CRM / SAP Microservices**: Bridges core corporate data (SAP, Salesforce) into agent workflows.
+  * **Proprietary Marketing & Ad Platform MCP**: Custom ad-tech bidding, audience syndication, and channel execution.
+  * **Internal Rules & Pricing Engine MCP**: Proprietary discount calculations and margin validation.
+  * **Legacy Database MCP Connectors**: On-premise mainframe and database integration.
 
 ---
 

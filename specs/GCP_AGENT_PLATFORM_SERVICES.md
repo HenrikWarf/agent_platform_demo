@@ -852,70 +852,91 @@ def query_customer_data(sql_query: str, tool_context: ToolContext) -> dict:
 
 ---
 
-### 5.3 GCP Managed Model Context Protocol (MCP) Services Ecosystem
+### 5.3 Enterprise Model Context Protocol (MCP) Ecosystem: Google Managed & Custom Services
 
-![Tools & Managed Model Context Protocol (MCP) Ecosystem](architecture/managed_mcp_tools_ecosystem.jpg)
+![Enterprise Model Context Protocol (MCP): Google Managed & Custom Services](architecture/mcp_enterprise_ecosystem.jpg)
 
-Google Cloud Platform provides first-party managed **MCP Servers** and **Toolsets** that standardize how AI agents interact with GCP data stores and enterprise services using the open **Model Context Protocol (MCP)** specification.
+The **Model Context Protocol (MCP)** is an open industry standard that unifies how AI agents discover and execute tools across disparate data sources and internal microservices. In enterprise deployments, ADK agents seamlessly interact with **both Google-managed first-party MCP services and custom self-hosted enterprise MCP servers** through the governed security perimeter of **GCP Agent Gateway**.
 
-#### 1. Available GCP Managed MCP Toolsets & Services
+---
+
+#### 1. Google Managed MCP Services (First-Party GCP Integrations)
+
+Google Cloud Platform provides turnkey, serverless **MCP Servers** that expose GCP data infrastructure natively to agents without custom glue code:
 
 * **BigQuery Managed MCP Server (`mcp-server-bigquery`)**:
-  - Allows agents to discover BigQuery datasets, inspect table schemas (`INFORMATION_SCHEMA`), generate SQL queries, run queries via BigQuery Jobs API, and sample data using standardized MCP primitives.
-  - Supports fine-grained IAM controls and dataset-level boundaries.
+  - Exposes dataset discovery, schema introspection (`INFORMATION_SCHEMA`), query validation, and SQL execution via the BigQuery Jobs API.
+  - Enforces dataset IAM boundaries, data masking rules, and row-level security.
 
-* **Cloud SQL & AlloyDB Managed MCP Servers**:
-  - Enterprise PostgreSQL and MySQL MCP servers providing vector search (`pgvector`), schema reflection, index analysis, and SQL transaction execution directly from agent workflows.
+* **AlloyDB & Cloud SQL Managed MCP Servers**:
+  - High-performance PostgreSQL/MySQL MCP servers providing vector search (`pgvector`), index analysis, schema reflection, and transactional SQL operations.
 
-* **Spanner Managed MCP Server**:
-  - High-throughput, globally distributed relational database MCP server designed for mission-critical transactional tool calls and distributed schema introspection.
+* **Vertex AI Search & Conversation MCP Server**:
+  - Managed enterprise RAG MCP server enabling semantic search over internal documentation, unstructured PDFs, and grounded enterprise corpora.
 
-* **Firestore & Memorystore (Redis) Managed MCP Servers**:
-  - NoSQL document database and fast in-memory key-value cache MCP servers for real-time state retrieval, session caching, and document lookups.
+* **Spanner & Firestore / Memorystore MCP Servers**:
+  - Globally distributed ACID transactions (Spanner) and ultra-low-latency real-time key-value caching (Firestore/Redis) for fast agent state access.
 
-* **Vertex AI Search & Conversation (Discovery Engine) MCP Server**:
-  - Managed RAG search MCP server exposing enterprise document search, unstructured knowledge retrieval, and semantic snippet extraction to agents.
+---
 
-#### 2. Architecture & How Managed MCP Works in GCP
+#### 2. Custom Enterprise MCP Services (Self-Hosted Microservices)
+
+Enterprises build and host bespoke MCP services in Python, TypeScript, or Go to expose internal business systems to AI agents:
+
+* **Custom ERP / SAP / CRM MCP Microservices**:
+  - Exposes customer account balances, contract terms, billing history, and Salesforce/SAP CRM objects through structured MCP tool definitions.
+* **Proprietary Marketing & Ad Platform MCP**:
+  - Bridges agents to proprietary ad-bidding networks, email delivery engines, and audience syndication pipelines.
+* **Internal Rules & Pricing Engine MCP**:
+  - Validates discount authorizations, calculates real-time margin requirements, and enforces business logic compliance.
+* **On-Premise Legacy Database MCP Connectors**:
+  - Securely proxies legacy mainframe, Oracle, or IBM DB2 databases over Cloud Interconnect / VPN to agent runtimes.
+
+---
+
+#### 3. Architecture: Unified Agent Gateway MCP Ingress
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │ ADK Agent Executable (Agent Engine Runtime)                                       │
-│                                                                                  │
-│   analytics_agent = Agent(                                                       │
-│       tools=[                                                                    │
-│           McpToolset(connection_params=SseConnectionParams(url=GATEWAY_MCP_URL))  │
-│       ]                                                                          │
-│   )                                                                              │
+│  analytics_agent = Agent(                                                        │
+│      tools=[                                                                     │
+│          managed_bq_mcp_toolset,                                                 │
+│          custom_crm_mcp_toolset,                                                 │
+│          custom_pricing_mcp_toolset,                                             │
+│      ]                                                                           │
+│  )                                                                               │
 └────────────────────────┬─────────────────────────────────────────────────────────┘
                          │
-                         v (Standard SSE / Stdio MCP Transport)
+                         v (SSE / Stdio MCP Transport)
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│ GCP Agent Gateway (Governed MCP Security & Routing Proxy)                         │
-│  - Enforces IAM authentication & X-GCP-Project-ID headers                        │
-│  - Translates MCP tool calls to GCP service endpoints                            │
-└──────────────────┬─────────────────────┬─────────────────────┬───────────────────┘
-                   │                     │                     │
-                   v                     v                     v
-┌──────────────────────────┐  ┌──────────────────────────┐  ┌──────────────────────────┐
-│ BigQuery MCP Server      │  │ AlloyDB / Cloud SQL MCP  │  │ Vertex AI Search MCP     │
-│  • Dataset discovery     │  │  • pgvector search       │  │  • Unstructured RAG      │
-│  • Schema introspection  │  │  • SQL execution         │  │  • Doc snippet retrieval │
-│  • Query execution       │  │  • Table introspection   │  │  • Enterprise grounding  │
-└──────────────────────────┘  └──────────────────────────┘  └──────────────────────────┘
+│ GCP Agent Gateway (Unified MCP Security, IAM Ingress & Routing Proxy)             │
+│  • Enforces IAM Service Account Authentication & X-GCP-Project-ID headers        │
+│  • Performs mTLS transport encryption & per-tool rate limiting                   │
+│  • Emits structured OpenTelemetry audit telemetry to Cloud Logging & BigQuery    │
+└──────────────────┬───────────────────────────────────────┬───────────────────────┘
+                   │                                       │
+                   v (First-Party APIs)                    v (Private VPC / Cloud Run)
+┌──────────────────────────────────────┐ ┌─────────────────────────────────────────┐
+│ Google Managed MCP Services          │ │ Custom Enterprise MCP Microservices     │
+│  • BigQuery MCP (SQL & Schemas)      │ │  • Custom SAP / Salesforce CRM MCP      │
+│  • AlloyDB MCP (pgvector search)     │ │  • Proprietary Marketing Campaign MCP   │
+│  • Vertex AI Search MCP (Doc RAG)    │ │  • Internal Rules & Pricing Engine MCP  │
+│  • Spanner & Firestore MCP           │ │  • Legacy Database Bridge MCP           │
+└──────────────────────────────────────┘ └─────────────────────────────────────────┘
 ```
 
-#### 3. Code Example: Connecting ADK Agents to Managed GCP MCP Servers
+---
 
-Below is a Python example showing how to connect an ADK Agent to **GCP Managed BigQuery MCP** and **AlloyDB MCP** servers proxied through **GCP Agent Gateway**:
+#### 4. Code Example: Connecting ADK Agents to Managed & Custom MCP Servers
 
 ```python
 from google.adk.agents import Agent
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import SseConnectionParams
 
-# 1. Managed BigQuery MCP Toolset (Proxied via Agent Gateway)
-bigquery_mcp_toolset = McpToolset(
+# ─── 1. Google Managed BigQuery MCP Toolset ──────────────────────────────────
+managed_bq_mcp = McpToolset(
     connection_params=SseConnectionParams(
         url="https://agent-gateway.internal/mcp/v1/bigquery",
         headers={"X-GCP-Project-ID": "agent-demo-09"}
@@ -923,22 +944,46 @@ bigquery_mcp_toolset = McpToolset(
     tool_filter=["list_datasets", "get_table_schema", "execute_sql_query"]
 )
 
-# 2. Managed AlloyDB / Cloud SQL Vector Search MCP Toolset
-alloydb_mcp_toolset = McpToolset(
+# ─── 2. Google Managed Vertex AI Search MCP Toolset (Document RAG) ────────────
+managed_rag_mcp = McpToolset(
     connection_params=SseConnectionParams(
-        url="https://agent-gateway.internal/mcp/v1/alloydb",
+        url="https://agent-gateway.internal/mcp/v1/vertex-search",
         headers={"X-GCP-Project-ID": "agent-demo-09"}
     ),
-    tool_filter=["vector_search_embeddings", "query_customer_history"]
+    tool_filter=["search_documents", "get_document_chunks"]
 )
 
-# 3. Agent Binding Managed GCP MCP Toolsets
-data_agent = Agent(
-    name="managed_data_agent",
+# ─── 3. Custom Enterprise CRM & SAP MCP Server (Internal Microservice) ────────
+custom_crm_mcp = McpToolset(
+    connection_params=SseConnectionParams(
+        url="https://crm-mcp-service-q5c3bhebga-uc.a.run.app/sse",
+        headers={"Authorization": "Bearer internal-jwt-token"}
+    ),
+    tool_filter=["get_customer_crm_profile", "check_credit_limit", "get_account_tier"]
+)
+
+# ─── 4. Custom Enterprise Pricing & Rules Engine MCP ──────────────────────────
+custom_pricing_mcp = McpToolset(
+    connection_params=SseConnectionParams(
+        url="https://pricing-mcp-service-q5c3bhebga-uc.a.run.app/sse",
+        headers={"Authorization": "Bearer internal-jwt-token"}
+    ),
+    tool_filter=["calculate_dynamic_discount", "validate_margin_threshold"]
+)
+
+# ─── 5. Unified ADK Agent Binding Both Managed & Custom MCP Toolsets ──────────
+enterprise_omnichannel_agent = Agent(
+    name="enterprise_omnichannel_specialist",
     model="gemini-3.6-flash",
-    description="Agent leveraging GCP Managed BigQuery and AlloyDB MCP Servers.",
-    instruction="Answer data questions by querying BigQuery and AlloyDB via managed MCP toolsets.",
-    tools=[bigquery_mcp_toolset, alloydb_mcp_toolset],
+    description="Agent combining BigQuery analytics, enterprise doc RAG, internal CRM data, and custom pricing rules.",
+    instruction="""
+    Execute comprehensive campaign decisions by:
+    1. Querying BigQuery customer transactions via managed_bq_mcp.
+    2. Grounding brand policies using managed_rag_mcp.
+    3. Checking live account status using custom_crm_mcp.
+    4. Calculating dynamic personalized discounts using custom_pricing_mcp.
+    """,
+    tools=[managed_bq_mcp, managed_rag_mcp, custom_crm_mcp, custom_pricing_mcp],
 )
 ```
 
