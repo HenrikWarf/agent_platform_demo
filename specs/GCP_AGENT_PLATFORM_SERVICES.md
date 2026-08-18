@@ -840,65 +840,24 @@ data_agent = Agent(
 
 ## 6. Google BigQuery & BigQuery AI Data Agents (`bigquery.googleapis.com`)
 
-### 6.1 GCP BigQuery Platform & Natively Integrated AI Agents
-**Google BigQuery** is GCP's fully managed, serverless enterprise data warehouse. Beyond serving as the operational analytical store for customer data (`agent-demo-09:marketing_analytics`), BigQuery natively incorporates **AI Data Agents** (powered by Gemini) directly into the data plane:
+### 6.1 GCP BigQuery Analytical Architecture & Customer Data Warehouse
+**Google BigQuery** is GCP's fully managed, serverless enterprise data warehouse. In this application, BigQuery serves as the operational analytical store and single source of truth for all marketing analytics and customer data in project `agent-demo-09`:
 
-* **BigQuery AI Data Agents**: Natively integrated agents inside BigQuery Data Canvas capable of understanding natural language data requests, introspecting schema metadata, generating complex SQL, executing multi-step data exploration, and synthesizing visual summaries.
-* **Centralized Telemetry Repository (`agent_events_v2`)**: Aggregates execution telemetry, OpenTelemetry spans, and audit logs across all agents in project `agent-demo-09` into a single structured view (`agent-demo-09.agent_analytics.agent_events_v2`).
+* **Dataset**: `agent-demo-09:marketing_analytics`
+* **Core Analytics Tables**:
+  - `customer_rfm_summary`: Pre-aggregated RFM segmentation (`customer_id`, `rfm_segment`, `recency_days`, `frequency`, `monetary_value`).
+  - `customer_demographics_360`: Enriched demographic attributes (`customer_id`, `age`, `income`, `location`, `industry`).
+  - `customer_transactions`: Granular transactional history for deep cohort exploration.
+* **High-Throughput Batch Ingestion**: Automated data seeders and ingestion pipelines load aligned records using the BigQuery Jobs API (`load_table_from_json` with `WRITE_TRUNCATE`).
 
 ---
 
-### 6.2 The Pre-Built BigQuery Analytics Agent
+### 6.2 BigQuery AI Data Agents & Data Canvas
 
-The **BigQuery Analytics Agent** is a specialized, pre-built observability agent designed specifically to query, audit, and analyze multi-agent execution events stored in `agent_events_v2`.
+Google BigQuery natively incorporates **AI Data Agents** (powered by Gemini in BigQuery) directly into the data plane:
 
-#### 1. Operational Role & Value Proposition
-Instead of requiring DevOps or SecOps engineers to write complex SQL queries manually, the **BigQuery Analytics Agent** provides an interactive, natural-language interface over the entire project's agent event telemetry:
-
-```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ Enterprise Operations / Security / Product Team                                  │
-│  "What is the p95 latency of analytics_agent tool calls, and which skills failed?"│
-└────────────────────────┬─────────────────────────────────────────────────────────┘
-                         │
-                         v (Natural Language Query)
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ Pre-Built BigQuery Analytics Agent (Gemini-Powered)                               │
-│  • Introspects agent_events_v2 view schema & metrics                             │
-│  • Generates & executes optimized BigQuery SQL                                   │
-│  • Synthesizes latency distributions, token costs & error trends                 │
-└────────────────────────┬─────────────────────────────────────────────────────────┘
-                         │
-                         v (Queries Telemetry Repository)
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ BigQuery Centralized Telemetry Dataset (`agent_analytics.agent_events_v2`)       │
-│  • Columns: session_id, user_id, agent_name, event_type, activity_name, tool_name,│
-│           user_prompt, agent_response, latency_ms, input_tokens, output_tokens,  │
-│           skills_used, trace_id, span_id                                         │
-└──────────────────────────────────────────────────────────────────────────────────┘
-```
-
-#### 2. Core Capabilities of the BigQuery Analytics Agent
-
-1. **Multi-Agent Session & Trajectory Analysis**:
-   - Analyzes complete conversation paths, tracking how the root `marketing_orchestrator` delegates tasks to sub-agents (`analytics_agent`, `strategy_pipeline`, `content_pipeline`).
-   - Identifies session drop-offs, user intent misclassifications, and loop patterns.
-
-2. **Performance & Latency Profiling**:
-   - Computes execution duration metrics (`latency_ms`) across individual tool calls (e.g. `query_customer_data`), LLM generation turns (`call_llm`), and end-to-end agent workflows.
-   - Highlights bottlenecks and slow database queries across the system.
-
-3. **Token Consumption & Cost Optimization**:
-   - Tracks input and output token consumption (`input_tokens`, `output_tokens`) per agent, per model (`gemini-3.6-flash`), and per user session.
-   - Enables fine-grained cost allocation across departments and customer cohorts.
-
-4. **Security, Safety & Model Armor Auditing**:
-   - Audits Model Armor safety events (`MODEL_ARMOR_SAFETY`), filtering for prompt injection attempts, PII redactions, and blocked content.
-   - Ensures compliance with corporate Responsible AI policies.
-
-5. **Skill Utilization & Quality Analytics**:
-   - Correlates activated skills (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`) with task completion quality and user feedback.
-   - Provides empirical evidence for optimizing skill instruction prompts.
+* **Natural Language Exploration (BigQuery Data Canvas)**: Business stakeholders and analysts can explore customer cohorts using natural language prompts. The BigQuery AI agent automatically inspects table schemas (`INFORMATION_SCHEMA`), drafts optimized BigQuery SQL, executes queries, and synthesizes interactive visualizations.
+* **Agent-Driven Data Democratization**: Enables non-technical marketing teams to query customer data safely while adhering to fine-grained dataset IAM controls and row-level security boundaries.
 
 ---
 
@@ -1336,7 +1295,61 @@ The Google Cloud Agent Platform provides enterprise-grade observability across t
 
 ---
 
-### 9.2 OpenTelemetry Span Hierarchy & Semantic Conventions
+### 9.2 The Pre-Built BigQuery Analytics Agent (Gemini-Powered Telemetry Reasoner)
+
+The **BigQuery Analytics Agent** is a specialized, pre-built observability agent designed specifically to query, audit, and analyze multi-agent execution events stored in `agent_events_v2`.
+
+#### 1. Operational Role & Value Proposition
+Instead of requiring DevOps or SecOps engineers to write complex SQL queries manually, the **BigQuery Analytics Agent** provides an interactive, natural-language interface over the entire project's agent event telemetry:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Enterprise Operations / Security / Product Team                                  │
+│  "What is the p95 latency of analytics_agent tool calls, and which skills failed?"│
+└────────────────────────┬─────────────────────────────────────────────────────────┘
+                         │
+                         v (Natural Language Query)
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Pre-Built BigQuery Analytics Agent (Gemini-Powered)                               │
+│  • Introspects agent_events_v2 view schema & metrics                             │
+│  • Generates & executes optimized BigQuery SQL                                   │
+│  • Synthesizes latency distributions, token costs & error trends                 │
+└────────────────────────┬─────────────────────────────────────────────────────────┘
+                         │
+                         v (Queries Telemetry Repository)
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ BigQuery Centralized Telemetry Dataset (`agent_analytics.agent_events_v2`)       │
+│  • Columns: session_id, user_id, agent_name, event_type, activity_name, tool_name,│
+│           user_prompt, agent_response, latency_ms, input_tokens, output_tokens,  │
+│           skills_used, trace_id, span_id                                         │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 2. Core Capabilities of the BigQuery Analytics Agent
+
+1. **Multi-Agent Session & Trajectory Analysis**:
+   - Analyzes complete conversation paths, tracking how the root `marketing_orchestrator` delegates tasks to sub-agents (`analytics_agent`, `strategy_pipeline`, `content_pipeline`).
+   - Identifies session drop-offs, user intent misclassifications, and loop patterns.
+
+2. **Performance & Latency Profiling**:
+   - Computes execution duration metrics (`latency_ms`) across individual tool calls (e.g. `query_customer_data`), LLM generation turns (`call_llm`), and end-to-end agent workflows.
+   - Highlights bottlenecks and slow database queries across the system.
+
+3. **Token Consumption & Cost Optimization**:
+   - Tracks input and output token consumption (`input_tokens`, `output_tokens`) per agent, per model (`gemini-3.6-flash`), and per user session.
+   - Enables fine-grained cost allocation across departments and customer cohorts.
+
+4. **Security, Safety & Model Armor Auditing**:
+   - Audits Model Armor safety events (`MODEL_ARMOR_SAFETY`), filtering for prompt injection attempts, PII redactions, and blocked content.
+   - Ensures compliance with corporate Responsible AI policies.
+
+5. **Skill Utilization & Quality Analytics**:
+   - Correlates activated skills (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`) with task completion quality and user feedback.
+   - Provides empirical evidence for optimizing skill instruction prompts.
+
+---
+
+### 9.3 OpenTelemetry Span Hierarchy & Semantic Conventions
 
 The Google Agent Development Kit (ADK) implements the official **OpenTelemetry GenAI Semantic Conventions** (`OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental`). Every agent request generates a structured tree of nested spans:
 
@@ -1377,7 +1390,7 @@ invoke_workflow (trace_id: 4bf92f3577b34da6a3ce929d0e0e4736, duration: 2.84s)
 
 ---
 
-### 9.3 Content Governance & Privacy Controls
+### 9.4 Content Governance & Privacy Controls
 
 To comply with enterprise data residency and privacy regulations (GDPR, HIPAA, SOC 2), ADK implements a **two-tier content governance model**:
 
@@ -1401,7 +1414,7 @@ To comply with enterprise data residency and privacy regulations (GDPR, HIPAA, S
 
 ---
 
-### 9.4 Code & Configuration Blueprint
+### 9.5 Code & Configuration Blueprint
 
 #### A. Telemetry Environment Configuration ([`.env`](file:///Users/henrikw/Projects/agent_platform_demo/.env) / Cloud Run Env Vars)
 
