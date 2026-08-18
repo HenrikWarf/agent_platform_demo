@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Gemini Enterprise Agent Platform — Architecture Slide Deck</title>
+  <title>Gemini Enterprise Agent Platform — Architecture Presentation Deck</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
       --font-display: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -88,8 +88,8 @@
     header {
       background-color: var(--bg-surface);
       border-bottom: 1px solid var(--border-subtle);
-      height: 60px;
-      min-height: 60px;
+      height: 58px;
+      min-height: 58px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -107,7 +107,7 @@
     .brand-logo {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       font-family: var(--font-display);
       font-weight: 700;
       font-size: 1.15rem;
@@ -120,12 +120,12 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335);
       border-radius: 8px;
       color: white;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 700;
       box-shadow: 0 2px 6px rgba(66, 133, 244, 0.4);
     }
@@ -144,7 +144,7 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .slide-jump-select {
@@ -159,6 +159,7 @@
       cursor: pointer;
       outline: none;
       transition: border-color 0.2s ease;
+      max-width: 320px;
     }
 
     .slide-jump-select:focus {
@@ -169,7 +170,7 @@
       font-family: var(--font-mono);
       font-size: 0.85rem;
       font-weight: 600;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 20px;
       background-color: var(--bg-surface-subtle);
       color: var(--text-secondary);
@@ -196,6 +197,12 @@
       border-color: var(--border-strong);
     }
 
+    .icon-btn.active {
+      background-color: var(--badge-bg);
+      color: var(--badge-text);
+      border-color: var(--gcp-blue);
+    }
+
     /* ─── Top Progress Bar ──────────────────────────────────────── */
     .progress-bar-container {
       height: 3px;
@@ -212,7 +219,7 @@
       transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ─── Main Stage Layout (Split View) ───────────────────────── */
+    /* ─── Main Stage Layout (Split View: Image Presenter Left, Text Right) ─ */
     main {
       flex: 1;
       display: flex;
@@ -221,196 +228,42 @@
       position: relative;
     }
 
-    /* Left Side: Content Panel */
-    .content-panel {
-      flex: 0 0 44%;
-      max-width: 44%;
-      height: 100%;
-      overflow-y: auto;
-      padding: 36px 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      background-color: var(--bg-surface);
-      border-right: 1px solid var(--border-subtle);
-      scroll-behavior: smooth;
+    /* Swapped Layout Mode */
+    main.layout-swapped {
+      flex-direction: row-reverse;
     }
 
-    .content-panel::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .content-panel::-webkit-scrollbar-thumb {
-      background-color: var(--border-strong);
-      border-radius: 3px;
-    }
-
-    .slide-badge-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .section-pill {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      padding: 4px 10px;
-      border-radius: 12px;
-      background: var(--badge-bg);
-      color: var(--badge-text);
-    }
-
-    .slide-number-badge {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-tertiary);
-    }
-
-    .slide-title {
-      font-family: var(--font-display);
-      font-size: 1.85rem;
-      font-weight: 700;
-      line-height: 1.25;
-      color: var(--text-primary);
-      letter-spacing: -0.02em;
-    }
-
-    /* Key Takeaway Card */
-    .takeaway-card {
-      background: var(--card-highlight);
-      border-left: 4px solid var(--gcp-blue);
-      border-radius: 0 12px 12px 0;
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .takeaway-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--card-highlight-text);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .takeaway-text {
-      font-size: 0.96rem;
-      line-height: 1.5;
-      color: var(--text-primary);
-      font-weight: 500;
-    }
-
-    /* Talking Points Section */
-    .talking-points-container {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .talking-points-heading {
-      font-size: 0.85rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .point-card {
-      background: var(--bg-surface-subtle);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    .point-card:hover {
-      border-color: var(--gcp-blue);
-      transform: translateY(-1px);
-    }
-
-    .point-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .point-desc {
-      font-size: 0.88rem;
-      line-height: 1.55;
-      color: var(--text-secondary);
-    }
-
-    .point-desc ul {
-      margin-left: 20px;
-      margin-top: 6px;
-    }
-
-    .point-desc li {
-      margin-bottom: 4px;
-    }
-
-    .point-desc code {
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-      background-color: var(--border-subtle);
-      padding: 2px 6px;
-      border-radius: 4px;
-      color: var(--text-primary);
-    }
-
-    /* Service Tags */
-    .services-tag-cloud {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .service-chip {
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      font-weight: 500;
-      padding: 4px 10px;
-      border-radius: 8px;
-      background: var(--chip-bg);
-      color: var(--chip-text);
-      border: 1px solid var(--border-subtle);
-    }
-
-    /* Right Side: Large Slide Image Canvas */
+    /* Left Side (Primary Focus): Large Image Presenter Canvas (64% width) */
     .image-panel {
-      flex: 0 0 56%;
-      max-width: 56%;
+      flex: 0 0 64%;
+      max-width: 64%;
       height: 100%;
       background-color: var(--bg-primary);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 32px;
+      padding: 20px 24px;
       position: relative;
       user-select: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    main.wide-mode .image-panel {
+      flex: 0 0 76%;
+      max-width: 76%;
+    }
+
+    main.wide-mode .content-panel {
+      flex: 0 0 24%;
+      max-width: 24%;
+      padding: 20px;
     }
 
     .image-container-card {
       width: 100%;
       height: 100%;
-      max-height: calc(100vh - 180px);
+      max-height: calc(100vh - 140px);
       background-color: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: 16px;
@@ -433,8 +286,8 @@
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
-      border-radius: 12px;
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      border-radius: 10px;
+      transition: opacity 0.22s ease, transform 0.22s ease;
     }
 
     .image-overlay-tools {
@@ -453,7 +306,7 @@
     }
 
     .tool-badge {
-      background: rgba(32, 33, 36, 0.75);
+      background: rgba(32, 33, 36, 0.8);
       backdrop-filter: blur(8px);
       color: white;
       font-size: 0.75rem;
@@ -470,49 +323,234 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.9);
       box-shadow: var(--shadow-md);
       border: 1px solid var(--border-subtle);
       color: var(--text-primary);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       cursor: pointer;
-      opacity: 0.7;
+      opacity: 0.75;
       transition: all 0.2s ease;
       z-index: 8;
     }
 
     [data-theme="dark"] .img-nav-arrow {
-      background: rgba(30, 31, 35, 0.85);
+      background: rgba(30, 31, 35, 0.9);
     }
 
     .img-nav-arrow:hover {
       opacity: 1;
-      transform: translateY(-50%) scale(1.08);
+      transform: translateY(-50%) scale(1.1);
       background: var(--gcp-blue);
       color: white;
       border-color: var(--gcp-blue);
     }
 
     .img-nav-prev {
-      left: 12px;
+      left: 10px;
     }
 
     .img-nav-next {
-      right: 12px;
+      right: 10px;
+    }
+
+    /* Right Side: Detailed Technical Content & Talking Points Panel (36% width) */
+    .content-panel {
+      flex: 0 0 36%;
+      max-width: 36%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background-color: var(--bg-surface);
+      border-left: 1px solid var(--border-subtle);
+      scroll-behavior: smooth;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    main.layout-swapped .content-panel {
+      border-left: none;
+      border-right: 1px solid var(--border-subtle);
+    }
+
+    .content-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .content-panel::-webkit-scrollbar-thumb {
+      background-color: var(--border-strong);
+      border-radius: 3px;
+    }
+
+    .slide-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .section-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+    }
+
+    .slide-number-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+    }
+
+    .slide-title {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 700;
+      line-height: 1.28;
+      color: var(--text-primary);
+      letter-spacing: -0.015em;
+    }
+
+    .slide-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-top: -8px;
+      line-height: 1.4;
+    }
+
+    /* Key Takeaway Card */
+    .takeaway-card {
+      background: var(--card-highlight);
+      border-left: 4px solid var(--gcp-blue);
+      border-radius: 0 12px 12px 0;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .takeaway-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--card-highlight-text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .takeaway-text {
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Talking Points Section */
+    .talking-points-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .talking-points-heading {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .point-card {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .point-card:hover {
+      border-color: var(--gcp-blue);
+      transform: translateY(-1px);
+    }
+
+    .point-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .point-desc {
+      font-size: 0.85rem;
+      line-height: 1.52;
+      color: var(--text-secondary);
+    }
+
+    .point-desc ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+
+    .point-desc li {
+      margin-bottom: 4px;
+    }
+
+    .point-desc code {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background-color: var(--border-subtle);
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: var(--text-primary);
+    }
+
+    /* Service Tags */
+    .services-tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 2px;
+    }
+
+    .service-chip {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 9px;
+      border-radius: 8px;
+      background: var(--chip-bg);
+      color: var(--chip-text);
+      border: 1px solid var(--border-subtle);
     }
 
     /* ─── Bottom Navigation & Control Bar ──────────────────────── */
     footer {
       background-color: var(--bg-surface);
       border-top: 1px solid var(--border-subtle);
-      height: 64px;
-      min-height: 64px;
+      height: 60px;
+      min-height: 60px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -528,9 +566,9 @@
 
     .btn-nav {
       font-family: var(--font-body);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
-      padding: 8px 18px;
+      padding: 7px 16px;
       border-radius: 8px;
       border: 1px solid var(--border-subtle);
       background-color: var(--bg-surface);
@@ -592,7 +630,7 @@
     }
 
     .keyboard-guide {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-tertiary);
       display: flex;
       align-items: center;
@@ -601,11 +639,11 @@
 
     .key-cap {
       font-family: var(--font-mono);
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 600;
       background: var(--bg-surface-subtle);
       border: 1px solid var(--border-subtle);
-      padding: 2px 6px;
+      padding: 2px 5px;
       border-radius: 4px;
       color: var(--text-secondary);
       box-shadow: 0 1px 1px rgba(0,0,0,0.1);
@@ -664,24 +702,25 @@
     }
 
     /* ─── Responsive Adjustments ────────────────────────────────── */
-    @media (max-width: 1024px) {
+    @media (max-width: 1100px) {
       main {
-        flex-direction: column-reverse;
+        flex-direction: column !important;
         overflow-y: auto;
       }
+      .image-panel {
+        flex: 0 0 auto !important;
+        max-width: 100% !important;
+        height: 55vh;
+        padding: 16px;
+      }
       .content-panel {
-        flex: 1 1 auto;
-        max-width: 100%;
+        flex: 1 1 auto !important;
+        max-width: 100% !important;
         height: auto;
-        border-right: none;
+        border-left: none !important;
+        border-right: none !important;
         border-top: 1px solid var(--border-subtle);
         padding: 24px;
-      }
-      .image-panel {
-        flex: 0 0 auto;
-        max-width: 100%;
-        height: 50vh;
-        padding: 16px;
       }
       body {
         overflow: auto;
@@ -699,7 +738,7 @@
         display: none;
       }
       .slide-title {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
       }
     }
   </style>
@@ -721,6 +760,8 @@
         <!-- Injected via JavaScript -->
       </select>
       <span class="slide-counter" id="slideCounterDisplay">1 / 8</span>
+      <button class="icon-btn" id="wideModeBtn" title="Toggle Wide Presenter Mode (W)">↔</button>
+      <button class="icon-btn" id="swapLayoutBtn" title="Swap Left/Right Layout (S)">⇄</button>
       <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme (T)">☀️</button>
       <button class="icon-btn" id="fullscreenToggleBtn" title="Toggle Fullscreen (F)">⛶</button>
     </div>
@@ -731,9 +772,22 @@
     <div class="progress-bar-fill" id="progressBarFill"></div>
   </div>
 
-  <!-- Main Stage Split View -->
-  <main>
-    <!-- Left Column: Rich Content & Talking Points -->
+  <!-- Main Stage Split View (Left: Primary Image Presenter, Right: Deep-Dive Technical Content) -->
+  <main id="mainStage">
+    <!-- Left Column (Primary Focus): Large High-Resolution Slide Canvas -->
+    <section class="image-panel">
+      <button class="img-nav-arrow img-nav-prev" id="imgPrevBtn" title="Previous Slide (←)">‹</button>
+      <button class="img-nav-arrow img-nav-next" id="imgNextBtn" title="Next Slide (→)">›</button>
+
+      <div class="image-container-card" id="imageContainerCard" title="Click to view full-resolution lightbox zoom">
+        <div class="image-overlay-tools">
+          <span class="tool-badge">🔍 Click to Zoom (Z)</span>
+        </div>
+        <img src="00_overview_gcp_agent_platform_architecture.jpg" alt="Architecture Diagram" class="slide-img" id="slideImage" />
+      </div>
+    </section>
+
+    <!-- Right Column: Rich Synchronized Technical Content & Talking Points -->
     <section class="content-panel" id="contentPanel">
       <div class="slide-badge-row">
         <span class="section-pill" id="sectionPill">Section 00</span>
@@ -741,46 +795,34 @@
       </div>
 
       <h1 class="slide-title" id="slideTitle">Loading Slide...</h1>
+      <p class="slide-subtitle" id="slideSubtitle">Loading subtitle...</p>
 
       <!-- Key Takeaway Banner -->
       <div class="takeaway-card">
         <div class="takeaway-label">
-          <span>💡</span> Key Takeaway
+          <span>💡</span> Executive Takeaway
         </div>
         <p class="takeaway-text" id="takeawayText">Loading executive summary...</p>
       </div>
 
-      <!-- Deep Dive Talking Points -->
+      <!-- Deep Dive Talking Points Synchronized with GCP_AGENT_PLATFORM_SERVICES.md -->
       <div class="talking-points-container">
         <div class="talking-points-heading">
-          <span>🎙️</span> Architecture Breakdown & Speaker Notes
+          <span>🎙️</span> Architecture Breakdown & Speaker Talking Points
         </div>
-        <div id="talkingPointsList" style="display: flex; flex-direction: column; gap: 12px;">
+        <div id="talkingPointsList" style="display: flex; flex-direction: column; gap: 10px;">
           <!-- Injected dynamically -->
         </div>
       </div>
 
       <!-- GCP Services & Protocols Tags -->
-      <div class="talking-points-container" style="margin-top: 6px;">
+      <div class="talking-points-container" style="margin-top: 4px;">
         <div class="talking-points-heading">
           <span>☁️</span> GCP Services & Integrated Standards
         </div>
         <div class="services-tag-cloud" id="servicesCloud">
           <!-- Injected dynamically -->
         </div>
-      </div>
-    </section>
-
-    <!-- Right Column: High-Res Diagram Canvas -->
-    <section class="image-panel">
-      <button class="img-nav-arrow img-nav-prev" id="imgPrevBtn" title="Previous Slide (←)">‹</button>
-      <button class="img-nav-arrow img-nav-next" id="imgNextBtn" title="Next Slide (→)">›</button>
-
-      <div class="image-container-card" id="imageContainerCard" title="Click to view full-resolution lightbox zoom">
-        <div class="image-overlay-tools">
-          <span class="tool-badge">🔍 Click to Zoom</span>
-        </div>
-        <img src="00_overview_gcp_agent_platform_architecture.jpg" alt="Architecture Diagram" class="slide-img" id="slideImage" />
       </div>
     </section>
   </main>
@@ -809,8 +851,10 @@
       <kbd class="key-cap">Space</kbd>
       <span>| Zoom:</span>
       <kbd class="key-cap">Z</kbd>
-      <span>| Theme:</span>
-      <kbd class="key-cap">T</kbd>
+      <span>| Wide:</span>
+      <kbd class="key-cap">W</kbd>
+      <span>| Swap:</span>
+      <kbd class="key-cap">S</kbd>
     </div>
   </footer>
 
@@ -821,27 +865,32 @@
   </div>
 
   <script>
-    // ─── Complete 8-Slide Data Model ──────────────────────────────
+    // ─── Complete 8-Slide Data Model (Strictly Synchronized with GCP_AGENT_PLATFORM_SERVICES.md) ─
     const SLIDES_DATA = [
       {
         id: 1,
         sectionNum: "Section 00",
         sectionBadge: "GCP Platform Overview",
         title: "End-to-End Enterprise Agent Architecture",
+        subtitle: "10-Layer Production Stack from Ingress Security to Autonomous Runtime Execution",
         image: "00_overview_gcp_agent_platform_architecture.jpg",
         takeaway: "A production-grade multi-agent platform on Google Cloud unifies developer frameworks (ADK), edge security (Model Armor), serverless runtime (Agent Engine), enterprise data, continuous evaluation, and workplace distribution (Gemini Enterprise).",
         points: [
           {
-            title: "10 Integrated Architecture Layers",
-            desc: "Unifies developer experience, runtime hosting, ingress security, tool protocols, data warehousing, observability, evaluation, and end-user workplace distribution into a single cohesive foundation."
+            title: "10 Unified Architectural Layers",
+            desc: "Eliminates fragmented AI glue-code by providing a standardized lifecycle across developer frameworks (<code>google-adk</code>), API hosting (<code>Cloud Run</code>), perimeter security (<code>Model Armor</code>), runtime reasoning (<code>Agent Engine</code>), and enterprise distribution (<code>Gemini Enterprise</code>)."
           },
           {
-            title: "Strict Separation of Concerns",
-            desc: "Decouples conversational UI presentation (React / Cloud Run) from cognitive reasoning containers (Agent Engine) and external data execution (BigQuery / AlloyDB)."
+            title: "Clean Separation of Concerns",
+            desc: "Decouples conversational presentation (React / FastAPI) from cognitive reasoning containers (Agent Engine) and external enterprise data stores (BigQuery / AlloyDB / Enterprise Search RAG)."
           },
           {
-            title: "Zero-Trust Perimeter & Security Guardrails",
-            desc: "AI-native security (Model Armor) sits at the network boundary, ensuring all ingress prompts and egress completions are inspected in real time before reaching LLMs or users."
+            title: "Zero-Trust Perimeter & Ingress Safety",
+            desc: "AI-native security (Model Armor) sits at the network boundary, inspecting all user prompts and model completions in real time before reaching LLMs or clients."
+          },
+          {
+            title: "Enterprise Serverless Fabric",
+            desc: "Built on managed Google Cloud infrastructure with IAM Service Account authentication, Cloud KMS encryption, private VPC interconnects, and OpenTelemetry Cloud Trace."
           }
         ],
         services: ["google-adk", "Cloud Run", "Agent Gateway", "Model Armor", "Agent Engine", "BigQuery", "Agent Registry", "Gemini Enterprise"]
@@ -851,145 +900,160 @@
         sectionNum: "Section 01",
         sectionBadge: "Layer 1: Orchestration & Framework",
         title: "Multi-Agent Orchestration with Google ADK & A2A Protocol",
+        subtitle: "Hierarchical Supervisors, Deterministic Pipelines, and Distributed Agent Federation",
         image: "01_adk_multi_agent_orchestration.jpg",
         takeaway: "Google ADK (<code>google-adk</code>) and the open Agent-to-Agent (A2A) protocol provide standard primitives for hierarchical routing, deterministic reasoning pipelines, and cross-boundary agent federation.",
         points: [
           {
-            title: "Core Orchestration Primitives",
-            desc: "<code>Agent</code> acts as the core reasoner with instructions and tools; <code>SequentialAgent</code> chains analysis into strict JSON schemas; <code>ParallelAgent</code> & <code>LoopAgent</code> handle fan-outs and iterative refinement."
+            title: "Core ADK Orchestration Primitives",
+            desc: "<code>Agent</code> acts as the core persona reasoner binding instructions, function tools, and Gemini models. <code>SequentialAgent</code> chains multi-stage workflows deterministically (e.g. LLM Reasoner → Strict JSON Schema Formatter). <code>ParallelAgent</code> & <code>LoopAgent</code> handle fan-outs and iterative refinement cycles."
           },
           {
-            title: "A2A Protocol & Agent Cards",
-            desc: "Exposes machine-readable <code>.well-known/agent-card.json</code> manifests for peer-to-peer discovery and distributed microservice delegation across GCP projects."
+            title: "Agent-to-Agent (A2A) Protocol & Agent Cards",
+            desc: "Exposes machine-readable <code>.well-known/agent-card.json</code> manifests for automated capability discovery. Enables distributed task delegation across separate Cloud Run microservices or partner GCP projects via <code>RemoteA2aAgent</code>."
           },
           {
             title: "The agents-cli Lifecycle Flywheel",
-            desc: "Drives the standardized developer loop across <strong>Scaffold → Build → Evaluate → Deploy → Publish → Observe</strong>."
+            desc: "Standardizes the 6-phase engineering lifecycle: <strong>Scaffold → Build → Evaluate → Deploy → Publish → Observe</strong> via official CLI commands (<code>agents-cli deploy</code>, <code>agents-cli publish gemini-enterprise</code>)."
           }
         ],
-        services: ["google-adk", "agents-cli", "A2A Protocol", "Gemini 2.5/3.0 Models", "Pydantic Schemas"]
+        services: ["google-adk", "agents-cli", "A2A Protocol (JSON-RPC)", "Gemini 2.5/3.0 Models", "Pydantic Schemas", "SkillToolset"]
       },
       {
         id: 3,
         sectionNum: "Section 03",
         sectionBadge: "Layer 3: Security & Governance",
         title: "Zero-Trust Security Perimeter — Agent Gateway & Model Armor",
+        subtitle: "Managed AI Firewall Intercepting Prompts, Model Completions & Tool Calls",
         image: "03_agent_gateway_model_armor_security.jpg",
-        takeaway: "GCP Agent Gateway and Model Armor deliver a multi-layered AI Firewall inspecting ingress prompts, egress completions, and tool transactions without latency bottlenecks.",
+        takeaway: "GCP Agent Gateway and Model Armor deliver a high-throughput, AI-native firewall intercepting prompt injection, PII exfiltration, harmful content, and malware at the network boundary.",
         points: [
           {
             title: "5 Defensive AI Firewall Pillars",
-            desc: "<ul><li><strong>Prompt Injection & Jailbreak Defense:</strong> Neutralizes adversarial overrides.</li><li><strong>Sensitive Data Protection (SDP/DLP):</strong> Real-time PII masking across 150+ infoTypes.</li><li><strong>Responsible AI Filters:</strong> Hate, harassment, and toxicity threshold blocks.</li><li><strong>Malicious URI & Phishing:</strong> Google Safe Browsing inspection.</li><li><strong>Malware Interception:</strong> Blocks executable payloads in tool args.</li></ul>"
+            desc: "<ul><li><strong>Prompt Injection & Jailbreak Defense:</strong> ML classifiers detect instruction hijacking and system overrides.</li><li><strong>Sensitive Data Protection (SDP/DLP):</strong> Real-time in-flight masking across 150+ PII infoTypes (Credit Cards, SSNs, Passwords, API Keys).</li><li><strong>Responsible AI Safety Filters:</strong> Configurable thresholds for hate speech, harassment, and dangerous content.</li><li><strong>Malicious URI & Phishing Detection:</strong> Google Safe Browsing scans links in prompts and tool args.</li><li><strong>Malware Interception:</strong> Blocks executable payloads, SQL injection fragments, and code exploits.</li></ul>"
           },
           {
             title: "Floor Settings vs. Application Templates",
-            desc: "Enforces immutable enterprise-wide baseline security policies while allowing application-level customization and threshold adjustments."
+            desc: "Enforces immutable enterprise-wide baseline security policies (Floor Settings) set by SecOps while allowing application teams to customize domain-specific sensitivity templates."
           }
         ],
-        services: ["networkservices (Agent Gateway)", "modelarmor (Model Armor)", "Cloud DLP / SDP", "Safe Browsing"]
+        services: ["networkservices (Agent Gateway)", "modelarmor (Model Armor)", "Cloud DLP / SDP", "Google Safe Browsing", "IAM Policies"]
       },
       {
         id: 4,
         sectionNum: "Section 04",
         sectionBadge: "Layer 4: Managed Runtime",
         title: "Agent Engine & Managed Platform Runtime Services",
+        subtitle: "Autoscaling Container Runtime, Stateful Sessions, Memory Bank & Artifact Storage",
         image: "04_agent_engine_runtime_services.jpg",
-        takeaway: "Agent Engine (<code>reasoningEngines</code>) provides a fully managed, autoscaling container runtime equipped with turnkey session persistence, semantic memory, and artifact storage.",
+        takeaway: "Agent Engine (<code>reasoningEngines</code>) is Google Cloud's fully managed, autoscaling container runtime purpose-built for ADK agents, delivering turnkey stateful sessions, semantic memory, and artifact persistence.",
         points: [
           {
-            title: "Serverless Agent Containers",
-            desc: "Automatically packages, builds, and autoscales ADK agent code with zero server management, container concurrency controls, and <code>AGENT_IDENTITY</code> verification."
+            title: "Serverless Agent Runtime Container",
+            desc: "Managed container hosting ADK multi-agent executables with instant cold-start mitigation, container concurrency controls (8 concurrent turns/container), and <code>AGENT_IDENTITY</code> verification."
           },
           {
             title: "Turnkey Session Service",
-            desc: "Manages stateful multi-turn conversation history and context propagation under <code>/apps/{app}/users/{user}/sessions</code>."
+            desc: "Manages stateful multi-turn conversation history and context propagation under <code>/apps/{app}/users/{user}/sessions</code> without manual database plumbing."
           },
           {
-            title: "Semantic Memory Bank & Artifact Storage",
-            desc: "Provides semantic long-term customer memory retrieval (<code>MemoryBankConfig</code>) and encrypted Cloud Storage (<code>GcsArtifactService</code>) for generated reports and assets."
+            title: "Semantic Memory Bank (MemoryBankConfig)",
+            desc: "Indexes customer preferences, past campaign outcomes, and brand guidelines into a long-term vector memory store queried across sessions."
+          },
+          {
+            title: "Cloud Storage Artifact Service (GcsArtifactService)",
+            desc: "Encrypted, auditable Cloud Storage persistence for generated campaign copy, PDF reports, JSON schemas, and media assets."
           }
         ],
-        services: ["aiplatform/reasoningEngines", "Session Service", "Memory Bank", "Cloud Storage (GCS)"]
+        services: ["aiplatform/reasoningEngines", "Session Service", "MemoryBankConfig", "Cloud Storage (GCS)", "agents-cli deploy"]
       },
       {
         id: 5,
         sectionNum: "Section 05",
         sectionBadge: "Layer 5: Tools & Interoperability",
-        title: "Model Context Protocol (MCP) — Managed & Custom Services",
+        title: "Enterprise Model Context Protocol (MCP) Ecosystem",
+        subtitle: "Unified Ingress for Google Managed Services & Custom Enterprise Microservices",
         image: "05_mcp_enterprise_ecosystem.jpg",
-        takeaway: "Standardized Agent-to-Tool interoperability via the Model Context Protocol (MCP) seamlessly integrates first-party Google-managed data stores and custom self-hosted enterprise microservices under unified Agent Gateway security.",
+        takeaway: "The open Model Context Protocol (MCP) standardizes agent tool execution across first-party Google-managed data stores and custom enterprise microservices under unified Agent Gateway governance.",
         points: [
           {
-            title: "Unified ADK Agent Layer (McpToolset)",
-            desc: "Binds multiple MCP servers as native agent tools with full state access via <code>ToolContext</code>, insulating agents from backend communication protocols."
+            title: "Unified Agent Tool Abstraction (McpToolset)",
+            desc: "ADK agents bind tools via <code>McpToolset</code> and <code>ToolContext</code>, giving agents access to schemas, actions, and shared session memory without custom glue code."
           },
           {
-            title: "Google Managed First-Party MCPs",
-            desc: "<strong>BigQuery MCP:</strong> Automated SQL & schema introspection; <strong>AlloyDB MCP:</strong> pgvector search; <strong>Enterprise Search MCP:</strong> Document RAG; <strong>Spanner/Firestore MCP:</strong> Global ACID transactions."
+            title: "Google Managed First-Party MCP Services",
+            desc: "<ul><li><strong>BigQuery MCP:</strong> Dataset discovery, schema reflection (<code>INFORMATION_SCHEMA</code>), and SQL execution.</li><li><strong>AlloyDB & Cloud SQL MCP:</strong> PostgreSQL <code>pgvector</code> semantic search and transactional SQL.</li><li><strong>Enterprise Search MCP:</strong> Unstructured document RAG and corporate policy grounding.</li><li><strong>Spanner & Firestore MCP:</strong> Global ACID transactions and real-time state caching.</li></ul>"
           },
           {
             title: "Custom Enterprise MCP Microservices",
-            desc: "Exposes bespoke internal systems including SAP / Salesforce CRM data, proprietary marketing ad-bidding networks, internal margin calculators, and mainframe databases."
+            desc: "Bridges bespoke internal systems including SAP / Salesforce CRM data, proprietary ad-bidding networks, dynamic margin calculators, and legacy on-premise mainframe databases."
           }
         ],
-        services: ["Model Context Protocol (MCP)", "McpToolset", "BigQuery MCP", "AlloyDB pgvector MCP", "Enterprise Search MCP"]
+        services: ["Model Context Protocol (MCP)", "McpToolset", "BigQuery MCP", "AlloyDB pgvector MCP", "Enterprise Search MCP", "Agent Gateway Proxy"]
       },
       {
         id: 6,
         sectionNum: "Section 08",
         sectionBadge: "Layer 6: Continuous Evaluation",
         title: "Continuous Quality Flywheel, Agent Evaluation & Online Monitors",
+        subtitle: "5-Step Quality Loop: Synthesis, Trace Capture, LLM Judges, Loss Analysis & Optimization",
         image: "08_evaluation_flywheel.jpg",
-        takeaway: "The Agent Platform Evaluation Service closes the quality gap through a continuous 5-step Quality Flywheel spanning local rapid grading, CI/CD batch evals, and 10-minute production online monitors.",
+        takeaway: "The Agent Platform Evaluation Service closes the quality gap through a continuous 5-step Quality Flywheel spanning local development grading, CI/CD regression gates, and 10-minute production online monitors.",
         points: [
           {
-            title: "The 5-Step Quality Flywheel Loop",
-            desc: "<strong>1. Dataset Synthesis:</strong> User simulations generating golden test cases;<br/><strong>2. Trace Capture:</strong> OpenTelemetry gen_ai semantic spans;<br/><strong>3. Multi-Metric Scoring:</strong> Managed LLM judges & custom rubrics;<br/><strong>4. Loss Analysis:</strong> Root-cause failure clustering;<br/><strong>5. Optimization:</strong> Prompt tuning benchmarked in Experiments."
+            title: "The 5-Step Continuous Quality Flywheel",
+            desc: "<strong>1. Dataset Synthesis:</strong> User simulation generating golden test cases;<br/><strong>2. Trace Capture:</strong> OpenTelemetry <code>gen_ai</code> semantic spans;<br/><strong>3. Multi-Metric Scoring:</strong> Managed LLM judges (Faithfulness, Grounding, Safety) + custom rubrics (<code>LLMMetric</code>, <code>CodeExecutionMetric</code>);<br/><strong>4. Loss Analysis:</strong> Root-cause clustering of tool parameter errors and hallucinations;<br/><strong>5. Optimization:</strong> Prompt tuning benchmarked in Experiments."
           },
           {
             title: "Production Online Monitors",
-            desc: "Automated 10-minute scheduled background jobs that continuously sample and evaluate live production traffic in-situ to detect safety regressions and quality drift."
+            desc: "Automated 10-minute scheduled background jobs that continuously sample and evaluate live production traffic in-situ, alerting engineering to quality drift or policy regressions."
           }
         ],
-        services: ["aiplatform (Evaluation API)", "Agent Platform Experiments", "agents-cli eval", "Cloud Monitoring"]
+        services: ["aiplatform (Evaluation API)", "Agent Platform Experiments", "agents-cli eval", "Cloud Monitoring", "Online Monitors"]
       },
       {
         id: 7,
         sectionNum: "Section 09",
         sectionBadge: "Layer 7: Observability & Telemetry",
         title: "4-Tier Observability Stack & BigQuery Analytics Agent",
+        subtitle: "Cloud Trace Profiling, Log Analytics, Completions Auditing & Pre-Built Telemetry Agent",
         image: "09_agent_observability_stack.jpg",
-        takeaway: "End-to-end distributed observability unites OpenTelemetry span tracing with a pre-built BigQuery Analytics Agent for natural-language telemetry inspection.",
+        takeaway: "End-to-end distributed observability unifies OpenTelemetry span tracing with a pre-built BigQuery Analytics Agent for natural-language telemetry inspection and incident triage.",
         points: [
           {
-            title: "The 4-Tier Observability Model",
-            desc: "<ul><li><strong>Tier 1 (Cloud Trace):</strong> Distributed span trees & turn-by-turn latency profiling.</li><li><strong>Tier 2 (Cloud Logging):</strong> Real-time stdout stream linked to Log Analytics.</li><li><strong>Tier 3 (Completions Logging):</strong> Encrypted GCS payload sync for audits.</li><li><strong>Tier 4 (BigQuery Analytics):</strong> Turn-level event views (<code>agent_events_v2</code>).</li></ul>"
+            title: "The 4-Tier Observability Hierarchy",
+            desc: "<ul><li><strong>Tier 1 (Cloud Trace):</strong> Distributed waterfall span trees and turn-by-turn latency profiling.</li><li><strong>Tier 2 (Cloud Logging):</strong> Real-time stdout stream queryable via SQL in BigQuery Log Analytics.</li><li><strong>Tier 3 (Prompt-Response Logging):</strong> Encrypted Cloud Storage completions payloads for enterprise audits.</li><li><strong>Tier 4 (BigQuery Analytics):</strong> Turn-level event views (<code>agent_events_v2</code>) tracking execution time, token burn, and errors.</li></ul>"
           },
           {
             title: "Pre-Built BigQuery Analytics Agent",
-            desc: "Interactive natural-language assistant answering engineering and Ops queries about p95 latencies, error clusters, token costs, and blocked prompt injections."
+            desc: "Dedicated conversational telemetry assistant empowering SecOps and engineering to query: <em>'What was our p95 tool latency today?'</em> or <em>'Show all blocked prompt injections in the last 24h'</em>."
           }
         ],
-        services: ["Cloud Trace", "Cloud Logging", "BigQuery Log Analytics", "OpenTelemetry (OTel)"]
+        services: ["Cloud Trace (cloudtrace.googleapis.com)", "Cloud Logging", "BigQuery Log Analytics", "Cloud Storage (GCS)", "OpenTelemetry (OTel)"]
       },
       {
         id: 8,
         sectionNum: "Section 10",
         sectionBadge: "Layer 8: Fleet Governance & Distribution",
         title: "Agent Registry & Gemini Enterprise Workplace Publishing",
+        subtitle: "Centralized Enterprise Skills Catalog & Frictionless Google Workspace Distribution",
         image: "10_gemini_enterprise_publishing.jpg",
-        takeaway: "Deployed agents are governed in the Agent Registry catalog and published directly into Gemini Enterprise Apps for friction-free corporate workplace adoption.",
+        takeaway: "Deployed agents are cataloged and governed in the Agent Registry and published directly into Gemini Enterprise Apps for friction-free employee adoption across Google Workspace.",
         points: [
           {
-            title: "Agent Registry & Skills Catalog",
-            desc: "Centralized catalog of enterprise agents, skills, and immutable revisions (<code>agentregistry.googleapis.com</code>) with role-based access control (RBAC)."
+            title: "Agent Registry & Enterprise Skills Catalog",
+            desc: "Centralized catalog of all deployed multi-agent applications, active skills, tools, and immutable revision tags (<code>agentregistry.googleapis.com</code>) with role-based access control (RBAC)."
           },
           {
             title: "One-Click Publishing (agents-cli publish)",
-            desc: "Instantly deploys agents to corporate Gemini Enterprise chat interfaces, empowering business users to run data-backed campaigns directly from Google Workspace."
+            desc: "Published in seconds via <code>agents-cli publish gemini-enterprise</code>. Instantly embeds autonomous marketing agents into <strong>Gemini Enterprise chat</strong> and Google Workspace applications (Docs, Sheets, Gmail)."
+          },
+          {
+            title: "Empowering Business Users",
+            desc: "Marketing and business stakeholders run complex BigQuery customer segmentation, omnichannel strategy generation, and creative copywriting using plain natural language without touching cloud infrastructure."
           }
         ],
-        services: ["agentregistry.googleapis.com", "Gemini Enterprise Apps", "Google Workspace", "agents-cli publish"]
+        services: ["agentregistry.googleapis.com", "discoveryengine.googleapis.com (Gemini Enterprise)", "Google Workspace", "agents-cli publish"]
       }
     ];
 
@@ -997,9 +1061,11 @@
     let currentSlideIndex = 0;
     const totalSlides = SLIDES_DATA.length;
 
+    const mainStage = document.getElementById("mainStage");
     const sectionPill = document.getElementById("sectionPill");
     const slideNumberBadge = document.getElementById("slideNumberBadge");
     const slideTitle = document.getElementById("slideTitle");
+    const slideSubtitle = document.getElementById("slideSubtitle");
     const takeawayText = document.getElementById("takeawayText");
     const talkingPointsList = document.getElementById("talkingPointsList");
     const servicesCloud = document.getElementById("servicesCloud");
@@ -1015,6 +1081,8 @@
     const imgNextBtn = document.getElementById("imgNextBtn");
     const themeToggleBtn = document.getElementById("themeToggleBtn");
     const fullscreenToggleBtn = document.getElementById("fullscreenToggleBtn");
+    const wideModeBtn = document.getElementById("wideModeBtn");
+    const swapLayoutBtn = document.getElementById("swapLayoutBtn");
     const lightboxModal = document.getElementById("lightboxModal");
     const lightboxImg = document.getElementById("lightboxImg");
     const lightboxCloseBtn = document.getElementById("lightboxCloseBtn");
@@ -1055,6 +1123,7 @@
       sectionPill.textContent = slide.sectionBadge || slide.sectionNum;
       slideNumberBadge.textContent = `Slide ${slide.id} of ${totalSlides}`;
       slideTitle.textContent = slide.title;
+      slideSubtitle.textContent = slide.subtitle || "";
       takeawayText.innerHTML = slide.takeaway;
 
       // Render talking points
@@ -1073,8 +1142,8 @@
       `).join("");
 
       // Update image with smooth transition
-      slideImage.style.opacity = "0.2";
-      slideImage.style.transform = "scale(0.98)";
+      slideImage.style.opacity = "0.15";
+      slideImage.style.transform = "scale(0.985)";
       setTimeout(() => {
         slideImage.src = slide.image;
         slideImage.alt = slide.title;
@@ -1097,8 +1166,8 @@
       // Update button disabled states
       prevBtn.disabled = index === 0;
       nextBtn.disabled = index === totalSlides - 1;
-      imgPrevBtn.style.opacity = index === 0 ? "0.3" : "0.7";
-      imgNextBtn.style.opacity = index === totalSlides - 1 ? "0.3" : "0.7";
+      imgPrevBtn.style.opacity = index === 0 ? "0.3" : "0.75";
+      imgNextBtn.style.opacity = index === totalSlides - 1 ? "0.3" : "0.75";
 
       // Reset scroll position on content panel
       contentPanel.scrollTop = 0;
@@ -1131,7 +1200,7 @@
       lightboxModal.classList.remove("open");
     }
 
-    // ─── Theme Toggle ────────────────────────────────────────────
+    // ─── Theme & Layout Toggles ──────────────────────────────────
     function toggleTheme() {
       const currentTheme = document.body.getAttribute("data-theme") || "light";
       const newTheme = currentTheme === "light" ? "dark" : "light";
@@ -1139,7 +1208,16 @@
       themeToggleBtn.textContent = newTheme === "dark" ? "🌙" : "☀️";
     }
 
-    // ─── Fullscreen Toggle ───────────────────────────────────────
+    function toggleWideMode() {
+      mainStage.classList.toggle("wide-mode");
+      wideModeBtn.classList.toggle("active", mainStage.classList.contains("wide-mode"));
+    }
+
+    function toggleSwapLayout() {
+      mainStage.classList.toggle("layout-swapped");
+      swapLayoutBtn.classList.toggle("active", mainStage.classList.contains("layout-swapped"));
+    }
+
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(err => {
@@ -1160,6 +1238,8 @@
     slideJumpSelect.addEventListener("change", (e) => goToSlide(parseInt(e.target.value, 10)));
     themeToggleBtn.addEventListener("click", toggleTheme);
     fullscreenToggleBtn.addEventListener("click", toggleFullscreen);
+    wideModeBtn.addEventListener("click", toggleWideMode);
+    swapLayoutBtn.addEventListener("click", toggleSwapLayout);
     imageContainerCard.addEventListener("click", openLightbox);
     lightboxCloseBtn.addEventListener("click", closeLightbox);
     lightboxModal.addEventListener("click", (e) => {
@@ -1212,6 +1292,16 @@
         case "T":
           e.preventDefault();
           toggleTheme();
+          break;
+        case "w":
+        case "W":
+          e.preventDefault();
+          toggleWideMode();
+          break;
+        case "s":
+        case "S":
+          e.preventDefault();
+          toggleSwapLayout();
           break;
         case "z":
         case "Z":
