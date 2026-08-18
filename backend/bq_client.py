@@ -34,7 +34,7 @@ class BigQueryClient:
                 logger.error(f"Failed to initialize GCP BigQuery SDK client for project '{self.project_id}': {e}")
         return self._client
 
-    def get_rfm_segments(self, segment_filter: str = "At-Risk Premium") -> Dict[str, Any]:
+    def get_rfm_segments(self, segment_filter: str = "Dormant At-Risk") -> Dict[str, Any]:
         """Queries customer dataset for RFM segmentation metrics."""
         if not self.client:
             raise RuntimeError("BigQuery client is not active.")
@@ -45,8 +45,8 @@ class BigQueryClient:
                 'All Cohorts (Full Dataset)' AS rfm_segment,
                 COUNT(customer_id) AS customer_count,
                 ROUND(AVG(recency_days), 1) AS avg_recency,
-                ROUND(AVG(total_monetary), 2) AS avg_monetary,
-                ROUND(SUM(total_monetary), 2) AS total_revenue_at_risk
+                ROUND(AVG(total_monetary_eur), 2) AS avg_monetary_eur,
+                ROUND(SUM(total_monetary_eur), 2) AS total_revenue_eur
             FROM `{self.project_id}.{self.dataset_id}.customer_rfm_summary`
             """).strip()
             job_config = None
@@ -56,8 +56,8 @@ class BigQueryClient:
                 rfm_segment,
                 COUNT(customer_id) AS customer_count,
                 ROUND(AVG(recency_days), 1) AS avg_recency,
-                ROUND(AVG(total_monetary), 2) AS avg_monetary,
-                ROUND(SUM(total_monetary), 2) AS total_revenue_at_risk
+                ROUND(AVG(total_monetary_eur), 2) AS avg_monetary_eur,
+                ROUND(SUM(total_monetary_eur), 2) AS total_revenue_eur
             FROM `{self.project_id}.{self.dataset_id}.customer_rfm_summary`
             WHERE rfm_segment = @segment
             GROUP BY rfm_segment
@@ -76,9 +76,9 @@ class BigQueryClient:
                     "target_segment": str(row.rfm_segment),
                     "count_in_segment": int(row.customer_count or 0),
                     "avg_recency_days": float(row.avg_recency or 0),
-                    "avg_monetary_val": float(row.avg_monetary or 0),
-                    "total_segment_revenue_at_risk": float(row.total_revenue_at_risk or 0),
-                    "top_purchased_categories": ["Premium Enterprise Tier", "Custom Connectors", "Dedicated Node"],
+                    "avg_monetary_val_eur": float(row.avg_monetary_eur or 0),
+                    "total_segment_revenue_eur": float(row.total_revenue_eur or 0),
+                    "top_categories": ["Womenswear", "Menswear", "Accessories"],
                     "sql_executed": query
                 }
             else:

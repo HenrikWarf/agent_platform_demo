@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Cpu, ShieldCheck, Database, FileText, Sparkles, ArrowRight, Zap, X, Wrench, BookOpen, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Cpu, ShieldCheck, Database, FileText, Sparkles, ArrowRight, Zap, X, Wrench, BookOpen, MessageSquare, Copy, Check, Terminal } from 'lucide-react';
 
 /* ── Agent Metadata ────────────────────────────────────────────────────────── */
 
@@ -128,138 +129,270 @@ Do NOT use any tools. Generate the content using your own creativity.`,
   }
 };
 
-/* ── Agent Detail Modal ────────────────────────────────────────────────────── */
+/* ── Fullscreen Agent Detail Modal (Mounted via React Portal) ──────────────── */
 
 function AgentDetailModal({ agentKey, onClose }) {
   const agent = AGENT_META[agentKey];
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [onClose]);
+
   if (!agent) return null;
   const Icon = agent.icon;
 
-  return (
+  const copyInstruction = () => {
+    window.navigator.clipboard.writeText(agent.instruction);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const modalElement = (
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '1rem', animation: 'fadeIn 0.15s ease'
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        background: 'rgba(10, 12, 16, 0.72)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem 1.5rem',
+        animation: 'fadeIn 0.2s ease',
+        boxSizing: 'border-box'
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border-color)',
-          borderRadius: '16px', width: '100%', maxWidth: '520px',
-          maxHeight: '85vh', overflowY: 'auto',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.3)',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '18px',
+          width: '100%',
+          maxWidth: '840px',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
+          overflow: 'hidden',
+          animation: 'scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        {/* Header */}
+        {/* Modal Header */}
         <div style={{
-          padding: '1.2rem 1.4rem', borderBottom: '1px solid var(--border-color)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 1,
-          borderRadius: '16px 16px 0 0'
+          padding: '1.4rem 1.8rem',
+          borderBottom: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'var(--bg-card)',
+          flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <div style={{
-              width: '36px', height: '36px', borderRadius: '10px',
-              background: `${agent.color}18`, border: `1.5px solid ${agent.color}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: `${agent.color}18`,
+              border: `1.5px solid ${agent.color}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
-              <Icon size={18} color={agent.color} />
+              <Icon size={22} color={agent.color} />
             </div>
             <div>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                {agent.name}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                  {agent.name}
+                </span>
+                <span style={{
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '12px',
+                  background: `${agent.color}15`,
+                  color: agent.color,
+                  border: `1px solid ${agent.color}40`,
+                }}>
+                  {agent.role}
+                </span>
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                {agent.role} · {agent.model}
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span>Foundation Model: <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--chip-bg)', padding: '2px 6px', borderRadius: '4px', color: 'var(--text-main)' }}>{agent.model}</code></span>
+                <span>•</span>
+                <span>Protocol: <strong>Agent-to-Agent (A2A)</strong></span>
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
+            title="Close modal (Esc)"
             style={{
-              background: 'var(--chip-bg)', border: '1px solid var(--border-color)',
-              borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--text-muted)', transition: 'all 0.15s'
+              background: 'var(--chip-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '10px',
+              width: '36px',
+              height: '36px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-muted)',
+              transition: 'all 0.15s'
             }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--border-color)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'var(--chip-bg)'}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-main)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--chip-bg)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: '1.2rem 1.4rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-          {/* Description */}
-          <p style={{ fontSize: '0.84rem', lineHeight: '1.6', color: 'var(--text-main)', margin: 0 }}>
+        {/* Scrollable Modal Body */}
+        <div style={{
+          padding: '1.6rem 1.8rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.3rem',
+          overflowY: 'auto',
+          flex: 1,
+        }}>
+          {/* Agent Overview & Description */}
+          <div style={{
+            background: 'var(--panel-bg)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '1rem 1.2rem',
+            lineHeight: 1.6,
+            fontSize: '0.88rem',
+            color: 'var(--text-main)'
+          }}>
             {agent.description}
-          </p>
+          </div>
 
-          {/* Capabilities */}
+          {/* Capabilities Grid */}
           {agent.capabilities && agent.capabilities.length > 0 && (
             <div>
               <div style={sectionHeader()}>
-                <Zap size={14} color="var(--color-primary)" />
-                Capabilities
+                <Zap size={15} color="var(--color-primary)" />
+                Core Capabilities & Responsibilities
               </div>
-              <ul style={{
-                margin: 0, paddingLeft: '1.2rem',
-                display: 'flex', flexDirection: 'column', gap: '0.3rem'
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '0.6rem'
               }}>
                 {agent.capabilities.map((cap, i) => (
-                  <li key={i} style={{
-                    fontSize: '0.78rem', lineHeight: '1.5',
-                    color: 'var(--text-main)'
+                  <div key={i} style={{
+                    background: 'var(--chip-bg)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '0.65rem 0.9rem',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-main)',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.5rem',
+                    lineHeight: 1.5
                   }}>
-                    {cap}
-                  </li>
+                    <span style={{ color: agent.color, fontWeight: 700 }}>▸</span>
+                    <span>{cap}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
-          {/* System Instruction */}
+          {/* System Instruction / Reasoning Framework */}
           <div>
-            <div style={sectionHeader()}>
-              <MessageSquare size={14} color="var(--color-primary)" />
-              System Instruction
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+              <div style={sectionHeader()}>
+                <MessageSquare size={15} color="var(--color-primary)" />
+                System Instruction & Reasoning Rules
+              </div>
+              <button
+                onClick={copyInstruction}
+                style={{
+                  background: 'var(--chip-bg)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  padding: '0.25rem 0.6rem',
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  color: copied ? 'var(--color-success)' : 'var(--text-muted)'
+                }}
+              >
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+                {copied ? 'Copied' : 'Copy Instruction'}
+              </button>
             </div>
             <div style={{
-              background: 'var(--code-bg)', border: '1px solid var(--border-color)',
-              borderRadius: '10px', padding: '0.85rem 1rem',
-              fontFamily: 'var(--font-mono)', fontSize: '0.76rem',
-              lineHeight: '1.6', color: 'var(--text-main)',
-              whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto'
+              background: 'var(--code-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '10px',
+              padding: '1rem 1.2rem',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.78rem',
+              lineHeight: 1.6,
+              color: 'var(--text-main)',
+              whiteSpace: 'pre-wrap',
+              maxHeight: '260px',
+              overflowY: 'auto'
             }}>
               {agent.instruction}
             </div>
           </div>
 
-          {/* Tools — only when agent has code-defined tools */}
+          {/* Registered Tools & External Functions */}
           {agent.tools.length > 0 && (
             <div>
               <div style={sectionHeader()}>
-                <Wrench size={14} color="var(--color-primary)" />
-                Tools ({agent.tools.length})
+                <Wrench size={15} color="var(--color-primary)" />
+                Registered Tools & External Functions ({agent.tools.length})
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {agent.tools.map((tool, i) => (
                   <div key={i} style={{
-                    background: 'var(--chip-bg)', border: '1px solid var(--border-color)',
-                    borderRadius: '8px', padding: '0.6rem 0.85rem'
+                    background: 'var(--panel-bg)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '10px',
+                    padding: '0.8rem 1rem'
                   }}>
                     <div style={{
-                      fontSize: '0.8rem', fontWeight: 700, color: agent.color,
-                      fontFamily: 'var(--font-mono)', marginBottom: '0.2rem'
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      color: agent.color,
+                      fontFamily: 'var(--font-mono)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      marginBottom: '0.3rem'
                     }}>
+                      <Terminal size={14} />
                       {tool.name}()
                     </div>
-                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
                       {tool.description}
                     </div>
                   </div>
@@ -268,32 +401,53 @@ function AgentDetailModal({ agentKey, onClose }) {
             </div>
           )}
 
-          {/* Skills — only when agent has separately defined SKILL.md skills */}
+          {/* Bound Skills & SKILL.md Architecture */}
           {agent.skills.length > 0 && (
             <div>
               <div style={sectionHeader()}>
-                <BookOpen size={14} color="var(--color-primary)" />
-                Skills ({agent.skills.length})
+                <BookOpen size={15} color="var(--color-primary)" />
+                Bound Agent Skills ({agent.skills.length})
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {agent.skills.map((skill, i) => (
                   <div key={i} style={{
-                    background: `${agent.color}08`, border: `1px solid ${agent.color}30`,
-                    borderRadius: '8px', padding: '0.6rem 0.85rem',
-                    display: 'flex', alignItems: 'center', gap: '0.5rem'
+                    background: `${agent.color}08`,
+                    border: `1px solid ${agent.color}35`,
+                    borderRadius: '10px',
+                    padding: '0.8rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.6rem'
                   }}>
-                    <Zap size={14} color={agent.color} />
-                    <div>
-                      <div style={{
-                        fontSize: '0.8rem', fontWeight: 700, color: agent.color,
-                        fontFamily: 'var(--font-mono)'
-                      }}>
-                        {skill.name}
-                      </div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                        {skill.path}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <Zap size={16} color={agent.color} />
+                      <div>
+                        <div style={{
+                          fontSize: '0.86rem',
+                          fontWeight: 700,
+                          color: agent.color,
+                          fontFamily: 'var(--font-mono)'
+                        }}>
+                          {skill.name}
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                          Standard 3-Level SKILL.md Hierarchy
+                        </div>
                       </div>
                     </div>
+                    <code style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.72rem',
+                      background: 'var(--code-bg)',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-dim)'
+                    }}>
+                      {skill.path}
+                    </code>
                   </div>
                 ))}
               </div>
@@ -303,6 +457,8 @@ function AgentDetailModal({ agentKey, onClose }) {
       </div>
     </div>
   );
+
+  return createPortal(modalElement, document.body);
 }
 
 function sectionHeader() {

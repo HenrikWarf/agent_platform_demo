@@ -13,7 +13,7 @@ export default function App() {
   // Lift chat messages to App so they persist across tab switches
   const welcomeMsg = {
     role: 'assistant',
-    content: 'Welcome to the **Google Cloud Agent Platform**! Ask me to analyze customer data from BigQuery, craft omnichannel marketing strategies, or generate high-converting creative copy. I will coordinate specialized agents via **Agent-to-Agent (A2A) protocol** protected by **Model Armor**.',
+    content: 'Welcome to the **Crazy Fashion Marketing Platform**! I\'m your AI marketing assistant powered by **Google Cloud Agent Engine**. Ask me to analyze customer segments, design campaign strategies for our Nordic fashion collections, or generate on-brand creative copy. I coordinate specialized agents protected by **Model Armor**.',
     a2a_trace: [],
     model_armor: { passed: true }
   };
@@ -38,11 +38,11 @@ export default function App() {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span className="brand-title">Google Cloud Agent Platform</span>
-              <span className="brand-badge">Vertex AI Agent Engine</span>
+              <span className="brand-title">Crazy Fashion — Agent Platform</span>
+              <span className="brand-badge">Agent Engine</span>
             </div>
             <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-              Multi-Agent Marketing Demo | A2A Protocol | Model Armor | BigQuery
+              Multi-Agent Marketing | A2A Protocol | Model Armor | BigQuery
             </span>
           </div>
         </div>

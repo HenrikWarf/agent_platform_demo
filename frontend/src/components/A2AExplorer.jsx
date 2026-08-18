@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Globe, Send, RefreshCw, CheckCircle, AlertCircle, Copy, ChevronDown, ChevronRight, Zap, Radio, Code2, FileJson } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Globe, Send, RefreshCw, CheckCircle, AlertCircle, Copy, ChevronDown, ChevronRight, Zap, Radio, Code2, FileJson, X } from 'lucide-react';
 
 const API_BASE = '';
 
@@ -17,6 +18,21 @@ export default function A2AExplorer() {
   const [showRawRequest, setShowRawRequest] = useState(false);
   const [showRawResponse, setShowRawResponse] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
+
+  useEffect(() => {
+    if (!agentCard) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setAgentCard(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [agentCard]);
 
   const copyToClipboard = (text, field) => {
     window.navigator.clipboard.writeText(typeof text === 'string' ? text : JSON.stringify(text, null, 2));
@@ -156,6 +172,137 @@ export default function A2AExplorer() {
     userSelect: 'none',
   };
 
+  const renderAgentCardModal = () => {
+    if (!agentCard) return null;
+    return createPortal(
+      <div
+        onClick={() => setAgentCard(null)}
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(10, 12, 16, 0.72)', backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 99999, padding: '2rem 1.5rem',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '18px',
+            width: '100%',
+            maxWidth: '780px',
+            maxHeight: '88vh',
+            overflowY: 'auto',
+            padding: '1.8rem',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.2rem',
+          }}
+        >
+          {/* Modal Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <FileJson size={22} color="var(--color-primary)" />
+              <span style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>Agent Card Discovery</span>
+              <div style={chipStyle('var(--color-success)')}>
+                <CheckCircle size={12} /> Live A2A Endpoint
+              </div>
+            </div>
+            <button
+              onClick={() => setAgentCard(null)}
+              title="Close modal (Esc)"
+              style={{
+                background: 'var(--chip-bg)', border: '1px solid var(--border-color)',
+                borderRadius: '8px', width: '34px', height: '34px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-muted)', transition: 'all 0.15s'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-main)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--chip-bg)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Identity */}
+          <div style={{ ...cardStyle, background: 'var(--chip-bg)' }}>
+            <div style={labelStyle}>Agent Identity</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.2rem' }}>{agentCard.name}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.3rem', lineHeight: 1.5 }}>{agentCard.description}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem', marginTop: '1rem' }}>
+              <div>
+                <div style={labelStyle}>Version</div>
+                <div style={valueStyle}>{agentCard.version || 'N/A'}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Streaming</div>
+                <div style={valueStyle}>{agentCard.capabilities?.streaming ? '✅ Yes' : '❌ No'}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Input Modes</div>
+                <div style={valueStyle}>{(agentCard.defaultInputModes || []).join(', ')}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Interfaces */}
+          <div style={{ ...cardStyle, background: 'var(--chip-bg)' }}>
+            <div style={labelStyle}>Supported Interfaces</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.4rem' }}>
+              {(agentCard.supportedInterfaces || []).map((iface, i) => (
+                <div key={i} style={chipStyle('var(--color-primary)')}>
+                  <Radio size={11} />
+                  {iface.protocolBinding} v{iface.protocolVersion}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Skills */}
+          {agentCard.skills && agentCard.skills.length > 0 && (
+            <div style={{ ...cardStyle, background: 'var(--chip-bg)' }}>
+              <div style={labelStyle}>Advertised Skills ({agentCard.skills.length})</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.4rem' }}>
+                {agentCard.skills.map((skill, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.7rem', background: 'var(--bg-card)', borderRadius: '8px', fontSize: '0.8rem', border: '1px solid var(--border-color)' }}>
+                    <Zap size={13} color="var(--color-warning)" />
+                    <span style={{ fontWeight: 700, color: 'var(--text-main)', minWidth: '140px' }}>{skill.id}:{skill.name}</span>
+                    <span style={{ color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {(skill.description || '').substring(0, 100)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Raw JSON Collapsible */}
+          <div style={{ ...cardStyle, background: 'var(--chip-bg)' }}>
+            <div style={collapsibleHeader} onClick={() => setShowRawCard(!showRawCard)}>
+              {showRawCard ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <Code2 size={14} />
+              Raw Agent Card JSON
+              <button
+                onClick={(e) => { e.stopPropagation(); copyToClipboard(agentCard, 'card'); }}
+                style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem' }}
+              >
+                <Copy size={13} color={copiedField === 'card' ? 'var(--color-success)' : 'var(--text-dim)'} />
+              </button>
+            </div>
+            {showRawCard && (
+              <pre style={codeBlockStyle}>{JSON.stringify(agentCard, null, 2)}</pre>
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   return (
     <div style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '1.4rem', height: '100%', overflowY: 'auto', width: '100%' }}>
 
@@ -204,126 +351,6 @@ export default function A2AExplorer() {
             <div style={{ ...cardStyle, borderColor: 'var(--color-danger)', background: 'rgba(220, 38, 38, 0.06)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-danger)', fontSize: '0.85rem' }}>
                 <AlertCircle size={16} /> {cardError}
-              </div>
-            </div>
-          )}
-
-          {/* Agent Card Modal Overlay */}
-          {agentCard && (
-            <div
-              onClick={() => setAgentCard(null)}
-              style={{
-                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 9999, padding: '2rem',
-              }}
-            >
-              <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '16px',
-                  width: '100%',
-                  maxWidth: '720px',
-                  maxHeight: '85vh',
-                  overflowY: 'auto',
-                  padding: '1.8rem',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                }}
-              >
-                {/* Modal Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <FileJson size={22} color="var(--color-primary)" />
-                    <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>Agent Card</span>
-                    <div style={chipStyle('var(--color-success)')}>
-                      <CheckCircle size={12} /> Live
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setAgentCard(null)}
-                    style={{
-                      background: 'var(--chip-bg)', border: '1px solid var(--border-color)',
-                      borderRadius: '8px', padding: '0.4rem 0.8rem', cursor: 'pointer',
-                      fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-dim)',
-                    }}
-                  >✕ Close</button>
-                </div>
-
-                {/* Identity */}
-                <div style={{ ...cardStyle, background: 'var(--chip-bg)' }}>
-                  <div style={labelStyle}>Agent Identity</div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.2rem' }}>{agentCard.name}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.3rem', lineHeight: 1.5 }}>{agentCard.description}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem', marginTop: '1rem' }}>
-                    <div>
-                      <div style={labelStyle}>Version</div>
-                      <div style={valueStyle}>{agentCard.version || 'N/A'}</div>
-                    </div>
-                    <div>
-                      <div style={labelStyle}>Streaming</div>
-                      <div style={valueStyle}>{agentCard.capabilities?.streaming ? '✅ Yes' : '❌ No'}</div>
-                    </div>
-                    <div>
-                      <div style={labelStyle}>Input Modes</div>
-                      <div style={valueStyle}>{(agentCard.defaultInputModes || []).join(', ')}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Interfaces */}
-                <div style={{ ...cardStyle, background: 'var(--chip-bg)' }}>
-                  <div style={labelStyle}>Supported Interfaces</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.4rem' }}>
-                    {(agentCard.supportedInterfaces || []).map((iface, i) => (
-                      <div key={i} style={chipStyle('var(--color-primary)')}>
-                        <Radio size={11} />
-                        {iface.protocolBinding} v{iface.protocolVersion}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Skills */}
-                {agentCard.skills && agentCard.skills.length > 0 && (
-                  <div style={{ ...cardStyle, background: 'var(--chip-bg)' }}>
-                    <div style={labelStyle}>Advertised Skills ({agentCard.skills.length})</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.4rem' }}>
-                      {agentCard.skills.map((skill, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.7rem', background: 'var(--bg-card)', borderRadius: '8px', fontSize: '0.8rem', border: '1px solid var(--border-color)' }}>
-                          <Zap size={13} color="var(--color-warning)" />
-                          <span style={{ fontWeight: 700, color: 'var(--text-main)', minWidth: '140px' }}>{skill.id}:{skill.name}</span>
-                          <span style={{ color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {(skill.description || '').substring(0, 100)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Raw JSON Collapsible */}
-                <div style={{ ...cardStyle, background: 'var(--chip-bg)' }}>
-                  <div style={collapsibleHeader} onClick={() => setShowRawCard(!showRawCard)}>
-                    {showRawCard ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    <Code2 size={14} />
-                    Raw Agent Card JSON
-                    <button
-                      onClick={(e) => { e.stopPropagation(); copyToClipboard(agentCard, 'card'); }}
-                      style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem' }}
-                    >
-                      <Copy size={13} color={copiedField === 'card' ? 'var(--color-success)' : 'var(--text-dim)'} />
-                    </button>
-                  </div>
-                  {showRawCard && (
-                    <pre style={codeBlockStyle}>{JSON.stringify(agentCard, null, 2)}</pre>
-                  )}
-                </div>
               </div>
             </div>
           )}
@@ -460,6 +487,8 @@ export default function A2AExplorer() {
           )}
         </div>
       </div>
+
+      {renderAgentCardModal()}
     </div>
   );
 }
