@@ -25,7 +25,7 @@ dependencies = [
     "aiohttp>=3.13.4",
     "opentelemetry-resourcedetector-gcp<=1.12.0a0",
 ]
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.13"
 
 [dependency-groups]
 dev = [
@@ -39,8 +39,15 @@ eval = [
 ]
 
 [tool.uv]
-# Ensure uv uses public PyPI (overrides any global pip config pointing to private registries)
-index-url = "https://pypi.org/simple/"
+environments = [
+    "sys_platform == 'linux'",
+    "sys_platform == 'darwin'",
+]
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
 
 [build-system]
 requires = ["hatchling"]

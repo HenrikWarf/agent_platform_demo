@@ -8,9 +8,10 @@ import os
 import pathlib
 
 import google.auth
-from google.adk import App
+from google.adk.apps import App
 from google.adk.agents import Agent, SequentialAgent
-from google.adk.skills import load_skill_from_dir, SkillToolset
+from google.adk.skills import load_skill_from_dir
+from google.adk.tools.skill_toolset import SkillToolset
 from google.adk.integrations.agent_registry import AgentRegistry
 
 from app.schemas import StrategySchema, ContentSchema
@@ -20,7 +21,7 @@ from app.company_context import COMPANY_CONTEXT
 
 _, project_id = google.auth.default()
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id or "agent-demo-09")
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
 # ─── Managed MCP BigQuery Server (Agent Registry) ─────────────────────────────
@@ -32,7 +33,7 @@ MCP_SERVER_RESOURCE = os.environ.get(
 
 registry = AgentRegistry(
     project_id=project_id or "agent-demo-09",
-    location=os.environ.get("GOOGLE_CLOUD_LOCATION", "global"),
+    location="global",
 )
 mcp_toolset = registry.get_mcp_toolset(MCP_SERVER_RESOURCE)
 
