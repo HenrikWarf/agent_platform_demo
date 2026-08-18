@@ -215,7 +215,7 @@
     .progress-bar-fill {
       height: 100%;
       background: linear-gradient(90deg, #4285f4, #1a73e8);
-      width: 9.09%;
+      width: 8.33%;
       transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -624,7 +624,7 @@
     }
 
     .dot-btn.active {
-      width: 24px;
+      width: 22px;
       background-color: var(--gcp-blue);
       border-radius: 6px;
     }
@@ -759,7 +759,7 @@
       <select id="slideJumpSelect" class="slide-jump-select" aria-label="Jump to Slide">
         <!-- Injected via JavaScript -->
       </select>
-      <span class="slide-counter" id="slideCounterDisplay">1 / 11</span>
+      <span class="slide-counter" id="slideCounterDisplay">1 / 12</span>
       <button class="icon-btn" id="wideModeBtn" title="Toggle Wide Presenter Mode (W)">↔</button>
       <button class="icon-btn" id="swapLayoutBtn" title="Swap Left/Right Layout (S)">⇄</button>
       <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme (T)">☀️</button>
@@ -791,7 +791,7 @@
     <section class="content-panel" id="contentPanel">
       <div class="slide-badge-row">
         <span class="section-pill" id="sectionPill">Cover</span>
-        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 11</span>
+        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 12</span>
       </div>
 
       <h1 class="slide-title" id="slideTitle">Loading Slide...</h1>
@@ -865,7 +865,7 @@
   </div>
 
   <script>
-    // ─── Complete 11-Slide Data Model (Agent Engine before Agent Gateway & Model Armor) ─
+    // ─── Complete 12-Slide Data Model (11 Architectural Slides + Summary Recap Slide) ─
     const SLIDES_DATA = [
       {
         id: 1,
@@ -1134,6 +1134,38 @@
           }
         ],
         services: ["agentregistry.googleapis.com", "discoveryengine.googleapis.com (Gemini Enterprise)", "Google Workspace", "agents-cli publish"]
+      },
+      {
+        id: 12,
+        sectionNum: "Recap",
+        sectionBadge: "Executive Summary",
+        title: "Architecture Summary & Key Takeaways",
+        subtitle: "Unified Enterprise Blueprint from Autonomous Multi-Agent Development to Production Fleet Governance",
+        image: "11_executive_summary_recap.jpg",
+        takeaway: "Google Cloud provides an integrated, production-grade platform covering the entire agent lifecycle: from ADK orchestration and Agent Engine runtime to zero-trust Model Armor security, MCP tools, continuous evaluation, and Gemini Enterprise distribution.",
+        points: [
+          {
+            title: "1. BUILD: Google ADK & A2A Protocol",
+            desc: "Hierarchical supervisors, Sequential pipelines, open A2A Protocol federation, and the 6-step <code>agents-cli</code> development lifecycle (Scaffold → Build → Eval → Deploy → Publish → Observe)."
+          },
+          {
+            title: "2. RUN & SECURE: Agent Engine & Model Armor",
+            desc: "Managed serverless container runtime with stateful Session Service, vector Memory Bank, and a 5-pillar zero-trust AI Firewall intercepting prompt injection, PII exfiltration, and malware."
+          },
+          {
+            title: "3. INTEGRATE: MCP Ecosystem & Enterprise RAG",
+            desc: "Standardized Model Context Protocol (MCP) data tools, Vertex AI RAG Engine (RagCorpora), Google-quality Agent Search, and automated Check Grounding API hallucination elimination."
+          },
+          {
+            title: "4. GOVERN: Skills Standard & Agent Registry",
+            desc: "3-level <code>SKILL.md</code> modular capabilities, centralized enterprise fleet catalog (<code>agentregistry.googleapis.com</code>), dynamic on-demand runtime binding, and Natural Language Constraints (NLC)."
+          },
+          {
+            title: "5. OPTIMIZE & DISTRIBUTE: Quality Flywheel & Gemini Enterprise",
+            desc: "Continuous 5-step evaluation loop with LLM judges & 10-minute online monitors, 4-tier distributed Cloud Trace observability, and 1-click publishing to corporate Gemini Enterprise across Google Workspace."
+          }
+        ],
+        services: ["google-adk", "Agent Engine", "Model Armor", "MCP", "RAG Engine", "Agent Registry", "GenAI Eval", "Cloud Trace", "Gemini Enterprise"]
       }
     ];
 
