@@ -997,8 +997,6 @@ enterprise_omnichannel_agent = Agent(
 
 ### 6.1 GCP BigQuery Analytical Architecture & Customer Data Warehouse
 
-![Google BigQuery Data Warehouse & AI Data Agents](architecture/06_bigquery_ai_data_agents.jpg)
-
 **Google BigQuery** is GCP's fully managed, serverless enterprise data warehouse. In this application, BigQuery serves as the operational analytical store and single source of truth for all marketing analytics and customer data in project `agent-demo-09`:
 
 * **Dataset**: `agent-demo-09:marketing_analytics`

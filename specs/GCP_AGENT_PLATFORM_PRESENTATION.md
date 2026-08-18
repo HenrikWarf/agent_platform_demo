@@ -10,23 +10,22 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 2. [Slide 2: Multi-Agent Orchestration with Google ADK & A2A Protocol](#slide-2-multi-agent-orchestration-with-google-adk--a2a-protocol)
 3. [Slide 3: Zero-Trust Security Perimeter — Agent Gateway & Model Armor](#slide-3-zero-trust-security-perimeter--agent-gateway--model-armor)
 4. [Slide 4: Vertex AI Agent Engine & Managed Runtime Services](#slide-4-vertex-ai-agent-engine--managed-runtime-services)
-5. [Slide 5: Google BigQuery Data Warehouse & AI Data Agents](#slide-5-google-bigquery-data-warehouse--ai-data-agents)
-6. [Slide 6: Model Context Protocol (MCP) — Google Managed & Custom Enterprise Services](#slide-6-model-context-protocol-mcp--google-managed--custom-enterprise-services)
-7. [Slide 7: Continuous Quality Flywheel, Evaluation & Online Monitors](#slide-7-continuous-quality-flywheel-evaluation--online-monitors)
-8. [Slide 8: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent](#slide-8-4-tier-observability-cloud-trace--bigquery-analytics-agent)
-9. [Slide 9: Agent Registry & Gemini Enterprise Workplace Publishing](#slide-9-agent-registry--gemini-enterprise-workplace-publishing)
+5. [Slide 5: Model Context Protocol (MCP) — Google Managed & Custom Enterprise Services](#slide-5-model-context-protocol-mcp--google-managed--custom-enterprise-services)
+6. [Slide 6: Continuous Quality Flywheel, Evaluation & Online Monitors](#slide-6-continuous-quality-flywheel-evaluation--online-monitors)
+7. [Slide 7: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent](#slide-7-4-tier-observability-cloud-trace--bigquery-analytics-agent)
+8. [Slide 8: Agent Registry & Gemini Enterprise Workplace Publishing](#slide-8-agent-registry--gemini-enterprise-workplace-publishing)
 
 ---
 
 ## Slide 1: End-to-End Enterprise Architecture Overview
 
-> **Key Takeaway:** A production-grade multi-agent platform on Google Cloud combines agent development frameworks (ADK), edge security (Model Armor), serverless runtime (Agent Engine), enterprise data (BigQuery), continuous evaluation, and workplace distribution (Gemini Enterprise).
+> **Key Takeaway:** A production-grade multi-agent platform on Google Cloud combines agent development frameworks (ADK), edge security (Model Armor), serverless runtime (Agent Engine), enterprise data, continuous evaluation, and workplace distribution (Gemini Enterprise).
 
 ![GCP Multi-Agent Platform Architecture Overview](architecture/00_overview_gcp_agent_platform_architecture.jpg)
 
 ### 🎙️ Speaker Notes & Key Points:
-* **The 10 Integrated Layers**: Unifies developer experience, runtime hosting, ingress security, tool protocols, data warehousing, observability, evaluation, and end-user distribution.
-* **Separation of Concerns**: Decouples conversational interaction (React / Cloud Run) from cognitive reasoning (Vertex AI Agent Engine) and data execution (Google BigQuery).
+* **The Integrated Enterprise Stack**: Unifies developer experience, runtime hosting, ingress security, tool protocols, observability, evaluation, and end-user distribution.
+* **Separation of Concerns**: Decouples conversational interaction (React / Cloud Run) from cognitive reasoning (Vertex AI Agent Engine) and external data execution.
 * **Enterprise Guardrails**: AI-native safety (Model Armor) sits at the network boundary, ensuring all ingress prompts and egress completions are inspected in real time.
 
 ---
@@ -78,24 +77,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 5: Google BigQuery Data Warehouse & AI Data Agents
-
-> **Key Takeaway:** BigQuery acts as both the high-performance customer data warehouse and the cognitive data plane with Gemini in BigQuery Data Canvas for natural language data discovery.
-
-![Google BigQuery Data Warehouse & AI Data Agents](architecture/06_bigquery_ai_data_agents.jpg)
-
-### 🎙️ Speaker Notes & Key Points:
-* **Operational Customer Warehouse (`marketing_analytics`)**:
-  * `customer_rfm_summary`: Pre-computed Recency, Frequency, Monetary segmentation.
-  * `customer_demographics_360`: Customer profile, income, industry, and location attributes.
-  * `customer_transactions`: Complete transactional purchase audit history.
-* **BigQuery AI Data Agents**:
-  * Natural language to optimized BigQuery SQL translation.
-  * Interactive data canvas for multi-table cohort visualization and trend analysis.
-
----
-
-## Slide 6: Model Context Protocol (MCP) — Google Managed & Custom Enterprise Services
+## Slide 5: Model Context Protocol (MCP) — Google Managed & Custom Enterprise Services
 
 > **Key Takeaway:** Standardized Agent-to-Tool interoperability via the Model Context Protocol (MCP) seamlessly integrates first-party Google-managed data stores and custom self-hosted enterprise microservices under unified Agent Gateway security.
 
@@ -120,7 +102,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 7: Continuous Quality Flywheel, Evaluation & Online Monitors
+## Slide 6: Continuous Quality Flywheel, Evaluation & Online Monitors
 
 > **Key Takeaway:** Vertex AI Evaluation Service closes the quality gap through a continuous 5-step Quality Flywheel spanning local rapid grading, CI/CD batch evals, and 10-minute production online monitors.
 
@@ -137,7 +119,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 8: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent
+## Slide 7: 4-Tier Observability, Cloud Trace & BigQuery Analytics Agent
 
 > **Key Takeaway:** End-to-end distributed observability unites OpenTelemetry span tracing with a pre-built BigQuery Analytics Agent for natural-language telemetry inspection.
 
@@ -153,7 +135,7 @@ This presentation flow translates the end-to-end multi-agent marketing architect
 
 ---
 
-## Slide 9: Agent Registry & Gemini Enterprise Workplace Publishing
+## Slide 8: Agent Registry & Gemini Enterprise Workplace Publishing
 
 > **Key Takeaway:** Deployed agents are governed in the Agent Registry catalog and published directly into Gemini Enterprise Apps for friction-free corporate workplace adoption.
 
