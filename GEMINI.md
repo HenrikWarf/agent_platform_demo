@@ -1,9 +1,9 @@
 # GCP Multi-Agent Marketing Platform - Project Guide & State Log
 
 ## Overview
-This repository implements an enterprise-grade multi-agent marketing application using the **Google Agent Development Kit (ADK)**, **Agent-to-Agent (A2A) Protocol**, **Google BigQuery**, **Agent Gateway & Model Armor**, and **Gemini** models.
+This repository implements an enterprise-grade multi-agent marketing application for **Crazy Fashion** (Nordic fashion retailer) using the **Google Agent Development Kit (ADK)**, **Agent-to-Agent (A2A) Protocol**, **Google BigQuery**, **Agent Gateway & Model Armor**, and **Gemini** models.
 
-The system processes marketing objectives, runs BigQuery customer segment analytics, formulates omnichannel strategies, and generates targeted brand content.
+The system processes marketing objectives for Crazy Fashion, runs BigQuery customer segment analytics across 5 tables (300 customers, 50 products, 900 transactions, 1500 events), formulates omnichannel strategies, and generates brand-aligned creative content.
 
 ---
 
@@ -68,10 +68,15 @@ The system processes marketing objectives, runs BigQuery customer segment analyt
 ### 2. BigQuery Data Architecture
 - **GCP Project**: `agent-demo-09`
 - **Dataset**: `marketing_analytics`
+- **Company Context**: Crazy Fashion (Nordic fashion retailer, modeled after H&M)
 - **Tables**:
-  - `customer_rfm_summary`: 200 records (`customer_id`, `rfm_segment`, `recency_days`, `frequency`, `monetary_value`)
-  - `customer_demographics_360`: 200 records (`customer_id`, `age`, `income`, `location`, `industry`)
-  - `customer_transactions`: 400 records
+  - `customer_rfm_summary`: 300 records (`customer_id`, `rfm_segment`, `recency_days`, `frequency_orders`, `total_monetary_eur`)
+  - `customer_demographics_360`: 300 records (`customer_id`, `full_name`, `age`, `gender`, `location_city`, `location_country`, `income_bracket`, `preferred_category`, `loyalty_tier`, `crazy_club_points`, `churn_risk_score`)
+  - `customer_transactions`: 900 records (`transaction_id`, `customer_id`, `product_id`, `product_name`, `category`, `amount_eur`, `quantity`, `channel`, `store_city`)
+  - `product_catalog`: 50 records (`product_id`, `product_name`, `category`, `subcategory`, `price_eur`, `sustainability_certified`, `collection`)
+  - `customer_events`: 1500 records (`event_id`, `customer_id`, `event_type`, `event_date`, `product_id`, `channel`, `device`)
+- **Segments**: `VIP Fashionistas`, `Loyal Regulars`, `Seasonal Shoppers`, `New Explorers`, `Dormant At-Risk`
+- **Currency**: EUR (€)
 - **Data Seeder**: [deploy/seed_bigquery_data.py](file:///Users/henrikw/Projects/agent_platform_demo/deploy/seed_bigquery_data.py) (uses batch `load_table_from_json` with `WRITE_TRUNCATE`).
 
 ### 3. Frontend Features
@@ -155,3 +160,4 @@ agents-cli publish gemini-enterprise --project agent-demo-09 --region us-central
 21. **A2A Agent Card Modal**: Expanded inline agent card display to full-screen centered modal overlay with blurred backdrop.
 22. **RE SA IAM Fix**: Granted `roles/aiplatform.user` to Reasoning Engine SA to fix 401 UNAUTHENTICATED errors when calling Gemini models.
 23. **GEMINI_API_KEY Removal**: Removed `GEMINI_API_KEY` env var from Agent Runtime — it conflicted with Vertex AI ADC auth, causing 401 errors. Agent now authenticates via SA credentials only.
+24. **Crazy Fashion Rebrand**: Created `app/company_context.py` with full Crazy Fashion company profile. Rewrote BigQuery seed data (3→5 tables: 300 customers with Nordic names, 50 fashion products, 900 transactions, 1500 behavioral events, all EUR). Updated all agent instructions, skills, backend, and frontend branding.
