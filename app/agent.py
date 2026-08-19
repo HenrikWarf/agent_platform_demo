@@ -19,6 +19,7 @@ from app.company_context import COMPANY_CONTEXT
 
 # ─── Vertex AI configuration ──────────────────────────────────────────────────
 
+os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
 _, project_id = google.auth.default()
 os.environ["GOOGLE_CLOUD_PROJECT"] = os.environ.get("GOOGLE_CLOUD_PROJECT") or project_id or "agent-demo-09"
 os.environ["GOOGLE_CLOUD_LOCATION"] = os.environ.get("GEMINI_LOCATION", "global")
@@ -36,6 +37,9 @@ registry = AgentRegistry(
     location="global",
 )
 mcp_toolset = registry.get_mcp_toolset(MCP_SERVER_RESOURCE)
+if hasattr(mcp_toolset, "_connection_params") and mcp_toolset._connection_params:
+    if ".mtls.googleapis.com" in mcp_toolset._connection_params.url:
+        mcp_toolset._connection_params.url = mcp_toolset._connection_params.url.replace(".mtls.", ".")
 
 # ─── Load Skills from local skill directories ─────────────────────────────────
 
