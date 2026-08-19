@@ -32,14 +32,47 @@ MCP_SERVER_RESOURCE = os.environ.get(
     "projects/agent-demo-09/locations/global/mcpServers/agentregistry-00000000-0000-0000-b464-716766602694",
 )
 
-registry = AgentRegistry(
-    project_id=project_id or "agent-demo-09",
-    location="global",
-)
-mcp_toolset = registry.get_mcp_toolset(MCP_SERVER_RESOURCE)
-if hasattr(mcp_toolset, "_connection_params") and mcp_toolset._connection_params:
-    if ".mtls.googleapis.com" in mcp_toolset._connection_params.url:
-        mcp_toolset._connection_params.url = mcp_toolset._connection_params.url.replace(".mtls.", ".")
+
+def _init_mcp_toolset(max_retries: int = 3, base_delay: float = 2.0):
+    """Initialize the MCP toolset with retry logic.
+
+    Agent Identity credentials inside Reasoning Engine containers may not be
+    ready at module-import time, causing transient 401s from Agent Registry.
+    """
+    import time
+    import logging
+
+    logger = logging.getLogger(__name__)
+    last_exc = None
+
+    for attempt in range(max_retries):
+        try:
+            reg = AgentRegistry(
+                project_id=project_id or "agent-demo-09",
+                location="global",
+            )
+            toolset = reg.get_mcp_toolset(MCP_SERVER_RESOURCE)
+            # Normalize mTLS URL to standard endpoint
+            if hasattr(toolset, "_connection_params") and toolset._connection_params:
+                if ".mtls.googleapis.com" in toolset._connection_params.url:
+                    toolset._connection_params.url = toolset._connection_params.url.replace(".mtls.", ".")
+            logger.info("MCP BigQuery toolset initialized (attempt %d)", attempt + 1)
+            return toolset
+        except Exception as exc:
+            last_exc = exc
+            delay = base_delay * (2 ** attempt)
+            logger.warning(
+                "MCP toolset init attempt %d/%d failed: %s. Retrying in %.1fs...",
+                attempt + 1, max_retries, exc, delay,
+            )
+            time.sleep(delay)
+
+    raise RuntimeError(
+        f"Failed to initialize MCP BigQuery toolset after {max_retries} attempts"
+    ) from last_exc
+
+
+mcp_toolset = _init_mcp_toolset()
 
 # ─── Load Skills from local skill directories ─────────────────────────────────
 
