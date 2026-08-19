@@ -5,10 +5,10 @@
   "agent_directory": "app",
   "deployment_timestamp": "2026-08-18T14:07:21.304328+00:00",
   "pending_operation": {
-    "operation_name": "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936/operations/5163755724471271424",
+    "operation_name": "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936/operations/2231349417099657216",
     "project": "agent-demo-09",
     "location": "us-central1",
     "deployment_target": "agent_runtime",
-    "started_at": "2026-08-19T07:46:23.698697+00:00"
+    "started_at": "2026-08-19T07:55:08.564820+00:00"
   }
 }

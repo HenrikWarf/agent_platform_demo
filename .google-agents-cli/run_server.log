@@ -1,0 +1,261 @@
+=== Starting server at 2026-08-18T14:01:51.549241+00:00 ===
+Command: uv run uvicorn app.fast_api_app:app --host 127.0.0.1 --port 18080
+CWD: /Users/henrikw/Projects/agent_platform_demo
+=== Started server process 66571 ===
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/cli/fast_api.py:263: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+INFO:     Started server process [66572]
+INFO:     Waiting for application startup.
+App "app" can transfer between agents but has no context_cache_config. Every transfer swaps the system instruction and the tool set, so the request prefix changes and the whole prompt is re-sent uncached after each transfer. Set context_cache_config on the app to give each agent its own cache.
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:169: UserWarning: [EXPERIMENTAL] AgentCardBuilder: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_card = await AgentCardBuilder(
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/mcp_tool/mcp_toolset.py:459: UserWarning: [EXPERIMENTAL] feature FeatureName._MCP_GRACEFUL_ERROR_HANDLING is enabled.
+  session = await self._mcp_session_manager.create_session(
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.BASE_AUTHENTICATED_TOOL is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:177: UserWarning: [EXPERIMENTAL] A2aAgentExecutor: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_executor=A2aAgentExecutor(runner=runner),
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/a2a/executor/a2a_agent_executor.py:76: UserWarning: [EXPERIMENTAL] A2aAgentExecutorConfig: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  self._config = config or A2aAgentExecutorConfig()
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50474 - "GET / HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:50475 - "GET /dev-ui/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50476 - "POST /apps/app/users/cli-user/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50477 - "POST /run_sse HTTP/1.1" 200 OK
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/transfer_to_agent_tool.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled.
+  function_decl = super()._get_declaration()
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [66572]
+=== Starting server at 2026-08-18T14:06:03.764497+00:00 ===
+Command: uv run uvicorn app.fast_api_app:app --host 127.0.0.1 --port 18080
+CWD: /Users/henrikw/Projects/agent_platform_demo
+=== Started server process 67631 ===
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/cli/fast_api.py:263: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+INFO:     Started server process [67632]
+INFO:     Waiting for application startup.
+App "app" can transfer between agents but has no context_cache_config. Every transfer swaps the system instruction and the tool set, so the request prefix changes and the whole prompt is re-sent uncached after each transfer. Set context_cache_config on the app to give each agent its own cache.
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:169: UserWarning: [EXPERIMENTAL] AgentCardBuilder: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_card = await AgentCardBuilder(
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/mcp_tool/mcp_toolset.py:459: UserWarning: [EXPERIMENTAL] feature FeatureName._MCP_GRACEFUL_ERROR_HANDLING is enabled.
+  session = await self._mcp_session_manager.create_session(
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.BASE_AUTHENTICATED_TOOL is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:177: UserWarning: [EXPERIMENTAL] A2aAgentExecutor: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_executor=A2aAgentExecutor(runner=runner),
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/a2a/executor/a2a_agent_executor.py:76: UserWarning: [EXPERIMENTAL] A2aAgentExecutorConfig: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  self._config = config or A2aAgentExecutorConfig()
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50853 - "GET / HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:50854 - "GET /dev-ui/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50855 - "POST /apps/app/users/cli-user/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50856 - "POST /run_sse HTTP/1.1" 200 OK
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/transfer_to_agent_tool.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled.
+  function_decl = super()._get_declaration()
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [67632]
+=== Starting server at 2026-08-18T14:11:19.873662+00:00 ===
+Command: uv run uvicorn app.fast_api_app:app --host 127.0.0.1 --port 18080
+CWD: /Users/henrikw/Projects/agent_platform_demo
+=== Started server process 68534 ===
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/cli/fast_api.py:263: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+INFO:     Started server process [68535]
+INFO:     Waiting for application startup.
+App "app" can transfer between agents but has no context_cache_config. Every transfer swaps the system instruction and the tool set, so the request prefix changes and the whole prompt is re-sent uncached after each transfer. Set context_cache_config on the app to give each agent its own cache.
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:169: UserWarning: [EXPERIMENTAL] AgentCardBuilder: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_card = await AgentCardBuilder(
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/mcp_tool/mcp_toolset.py:459: UserWarning: [EXPERIMENTAL] feature FeatureName._MCP_GRACEFUL_ERROR_HANDLING is enabled.
+  session = await self._mcp_session_manager.create_session(
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.BASE_AUTHENTICATED_TOOL is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:177: UserWarning: [EXPERIMENTAL] A2aAgentExecutor: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_executor=A2aAgentExecutor(runner=runner),
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/a2a/executor/a2a_agent_executor.py:76: UserWarning: [EXPERIMENTAL] A2aAgentExecutorConfig: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  self._config = config or A2aAgentExecutorConfig()
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:51088 - "GET / HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:51089 - "GET /dev-ui/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51090 - "POST /apps/app/users/cli-user/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51091 - "POST /run_sse HTTP/1.1" 200 OK
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/transfer_to_agent_tool.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled.
+  function_decl = super()._get_declaration()
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [68535]
+=== Starting server at 2026-08-18T14:12:08.591599+00:00 ===
+Command: uv run uvicorn app.fast_api_app:app --host 127.0.0.1 --port 18080
+CWD: /Users/henrikw/Projects/agent_platform_demo
+=== Started server process 68789 ===
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/cli/fast_api.py:263: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+INFO:     Started server process [68790]
+INFO:     Waiting for application startup.
+App "app" can transfer between agents but has no context_cache_config. Every transfer swaps the system instruction and the tool set, so the request prefix changes and the whole prompt is re-sent uncached after each transfer. Set context_cache_config on the app to give each agent its own cache.
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:169: UserWarning: [EXPERIMENTAL] AgentCardBuilder: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_card = await AgentCardBuilder(
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/mcp_tool/mcp_toolset.py:459: UserWarning: [EXPERIMENTAL] feature FeatureName._MCP_GRACEFUL_ERROR_HANDLING is enabled.
+  session = await self._mcp_session_manager.create_session(
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.BASE_AUTHENTICATED_TOOL is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:177: UserWarning: [EXPERIMENTAL] A2aAgentExecutor: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_executor=A2aAgentExecutor(runner=runner),
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/a2a/executor/a2a_agent_executor.py:76: UserWarning: [EXPERIMENTAL] A2aAgentExecutorConfig: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  self._config = config or A2aAgentExecutorConfig()
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:51153 - "GET / HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:51154 - "GET /dev-ui/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51155 - "POST /apps/app/users/cli-user/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51156 - "POST /run_sse HTTP/1.1" 200 OK
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/transfer_to_agent_tool.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled.
+  function_decl = super()._get_declaration()
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [68790]
+=== Starting server at 2026-08-18T14:12:26.323824+00:00 ===
+Command: uv run uvicorn app.fast_api_app:app --host 127.0.0.1 --port 18081
+CWD: /Users/henrikw/Projects/agent_platform_demo
+=== Started server process 68953 ===
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/cli/fast_api.py:263: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+INFO:     Started server process [68954]
+INFO:     Waiting for application startup.
+App "app" can transfer between agents but has no context_cache_config. Every transfer swaps the system instruction and the tool set, so the request prefix changes and the whole prompt is re-sent uncached after each transfer. Set context_cache_config on the app to give each agent its own cache.
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:169: UserWarning: [EXPERIMENTAL] AgentCardBuilder: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_card = await AgentCardBuilder(
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/mcp_tool/mcp_toolset.py:459: UserWarning: [EXPERIMENTAL] feature FeatureName._MCP_GRACEFUL_ERROR_HANDLING is enabled.
+  session = await self._mcp_session_manager.create_session(
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.BASE_AUTHENTICATED_TOOL is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:177: UserWarning: [EXPERIMENTAL] A2aAgentExecutor: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_executor=A2aAgentExecutor(runner=runner),
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/a2a/executor/a2a_agent_executor.py:76: UserWarning: [EXPERIMENTAL] A2aAgentExecutorConfig: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  self._config = config or A2aAgentExecutorConfig()
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18081 (Press CTRL+C to quit)
+INFO:     127.0.0.1:51207 - "GET / HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:51208 - "GET /dev-ui/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51209 - "POST /apps/app/users/cli-user/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51210 - "POST /run_sse HTTP/1.1" 200 OK
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/transfer_to_agent_tool.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled.
+  function_decl = super()._get_declaration()
+Direct use of automatic function calling (AFC) in AsyncModels.generate_content is not recommended. Instead, we recommend to use AFC in AsyncChat.send_message. Similarly, direct use of AFC in AsyncModels.generate_content_stream is not recommended. Instead, we recommend to use AFC in AsyncChat.send_message_stream.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [68954]
+=== Starting server at 2026-08-19T07:41:53.432488+00:00 ===
+Command: uv run uvicorn app.fast_api_app:app --host 127.0.0.1 --port 18080
+CWD: /Users/henrikw/Projects/agent_platform_demo
+=== Started server process 77417 ===
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/cli/fast_api.py:263: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+INFO:     Started server process [77418]
+INFO:     Waiting for application startup.
+App "app" can transfer between agents but has no context_cache_config. Every transfer swaps the system instruction and the tool set, so the request prefix changes and the whole prompt is re-sent uncached after each transfer. Set context_cache_config on the app to give each agent its own cache.
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:169: UserWarning: [EXPERIMENTAL] AgentCardBuilder: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_card = await AgentCardBuilder(
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/mcp_tool/mcp_toolset.py:459: UserWarning: [EXPERIMENTAL] feature FeatureName._MCP_GRACEFUL_ERROR_HANDLING is enabled.
+  session = await self._mcp_session_manager.create_session(
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.BASE_AUTHENTICATED_TOOL is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:177: UserWarning: [EXPERIMENTAL] A2aAgentExecutor: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_executor=A2aAgentExecutor(runner=runner),
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/a2a/executor/a2a_agent_executor.py:76: UserWarning: [EXPERIMENTAL] A2aAgentExecutorConfig: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  self._config = config or A2aAgentExecutorConfig()
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57814 - "GET / HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:57815 - "GET /dev-ui/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57816 - "POST /apps/app/users/cli-user/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57817 - "POST /run_sse HTTP/1.1" 200 OK
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/transfer_to_agent_tool.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled.
+  function_decl = super()._get_declaration()
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [77418]
+=== Starting server at 2026-08-19T08:05:57.697545+00:00 ===
+Command: uv run uvicorn app.fast_api_app:app --host 127.0.0.1 --port 18080
+CWD: /Users/henrikw/Projects/agent_platform_demo
+=== Started server process 82505 ===
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/cli/fast_api.py:263: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+INFO:     Started server process [82506]
+INFO:     Waiting for application startup.
+App "app" can transfer between agents but has no context_cache_config. Every transfer swaps the system instruction and the tool set, so the request prefix changes and the whole prompt is re-sent uncached after each transfer. Set context_cache_config on the app to give each agent its own cache.
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:169: UserWarning: [EXPERIMENTAL] AgentCardBuilder: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_card = await AgentCardBuilder(
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/mcp_tool/mcp_toolset.py:459: UserWarning: [EXPERIMENTAL] feature FeatureName._MCP_GRACEFUL_ERROR_HANDLING is enabled.
+  session = await self._mcp_session_manager.create_session(
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.BASE_AUTHENTICATED_TOOL is enabled.
+  check_feature_enabled()
+/Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py:177: UserWarning: [EXPERIMENTAL] A2aAgentExecutor: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  agent_executor=A2aAgentExecutor(runner=runner),
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/a2a/executor/a2a_agent_executor.py:76: UserWarning: [EXPERIMENTAL] A2aAgentExecutorConfig: ADK Implementation for A2A support (A2aAgentExecutor, RemoteA2aAgent and corresponding supporting components etc.) is in experimental mode and is subject to breaking changes. A2A protocol and SDK are themselves not experimental. Once it's stable enough the experimental mode will be removed. Your feedback is welcome.
+  self._config = config or A2aAgentExecutorConfig()
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60538 - "GET / HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:60539 - "GET /dev-ui/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60540 - "POST /apps/app/users/cli-user/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60541 - "POST /run_sse HTTP/1.1" 200 OK
+/Users/henrikw/Projects/agent_platform_demo/.venv/lib/python3.12/site-packages/google/adk/tools/transfer_to_agent_tool.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled.
+  function_decl = super()._get_declaration()
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+mTLS was requested but AsyncAuthorizedSession channel is not mTLS
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [82506]
