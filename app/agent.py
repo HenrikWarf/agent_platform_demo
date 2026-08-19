@@ -7,7 +7,15 @@ All agents are contextualized for Crazy Fashion (Nordic fashion retailer).
 import os
 import pathlib
 
-import google.auth
+# ─── Vertex AI / mTLS configuration ───────────────────────────────────────────
+# These MUST be set BEFORE importing google.auth so the AgentRegistry SDK
+# does not configure an mTLS AuthorizedSession (RE containers have client certs
+# available, causing the SDK to use mtls.googleapis.com which returns 401).
+os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
+os.environ["GOOGLE_API_USE_CLIENT_CERTIFICATE"] = "false"
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+
+import google.auth  # noqa: E402 — must come after env var setup
 from google.adk.apps import App
 from google.adk.agents import Agent, SequentialAgent
 from google.adk.skills import load_skill_from_dir
@@ -17,13 +25,11 @@ from google.adk.integrations.agent_registry import AgentRegistry
 from app.schemas import StrategySchema, ContentSchema
 from app.company_context import COMPANY_CONTEXT
 
-# ─── Vertex AI configuration ──────────────────────────────────────────────────
+# ─── Project configuration ────────────────────────────────────────────────────
 
-os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
 _, project_id = google.auth.default()
 os.environ["GOOGLE_CLOUD_PROJECT"] = os.environ.get("GOOGLE_CLOUD_PROJECT") or project_id or "agent-demo-09"
 os.environ["GOOGLE_CLOUD_LOCATION"] = os.environ.get("GEMINI_LOCATION", "global")
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 # ─── Managed MCP BigQuery Server (Agent Registry) ─────────────────────────────
 
@@ -52,10 +58,6 @@ def _init_mcp_toolset(max_retries: int = 3, base_delay: float = 2.0):
                 location="global",
             )
             toolset = reg.get_mcp_toolset(MCP_SERVER_RESOURCE)
-            # Normalize mTLS URL to standard endpoint
-            if hasattr(toolset, "_connection_params") and toolset._connection_params:
-                if ".mtls.googleapis.com" in toolset._connection_params.url:
-                    toolset._connection_params.url = toolset._connection_params.url.replace(".mtls.", ".")
             logger.info("MCP BigQuery toolset initialized (attempt %d)", attempt + 1)
             return toolset
         except Exception as exc:
