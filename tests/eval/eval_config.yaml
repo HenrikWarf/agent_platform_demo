@@ -1,11 +1,33 @@
 metrics_to_run:
   - custom_response_quality
+  - tool_and_routing_quality
+  - skill_framework_compliance
+  - brand_voice_alignment
+  - safety_compliance
+  - agent_turn_count
 
 custom_metrics:
-  # Default: local LLM-as-judge (see response_quality.py). Runs in-process via
-  # google-genai on Agent Platform (ADC) or Google AI Studio (GEMINI_API_KEY).
+  # Overall response quality, relevance, and accuracy
   - name: custom_response_quality
     custom_function_file: response_quality.py
+
+  # BigQuery MCP tool execution and orchestrator routing evaluation
+  - name: tool_and_routing_quality
+    custom_function_file: tool_and_routing_quality.py
+
+  # Adherence to skill frameworks (campaign-framework, brand-voice-craft, bigquery-customer-analytics)
+  - name: skill_framework_compliance
+    custom_function_file: skill_compliance_evaluator.py
+
+  # Brand voice, Nordic tone, sustainability, and EUR currency
+  - name: brand_voice_alignment
+    custom_function_file: brand_voice_evaluator.py
+
+  # Safety, prompt injection resistance, and policy compliance
+  - name: safety_compliance
+    custom_function_file: safety_evaluator.py
+
+  # Deterministic trajectory turn count
   - name: agent_turn_count
     custom_function: |
       def evaluate(instance):

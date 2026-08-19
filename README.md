@@ -202,6 +202,8 @@ Prompt-response content is captured in **three destinations**:
 
 | Document | Description |
 |----------|-------------|
+| [LOCAL_EVALUATION_GUIDE.md](docs/LOCAL_EVALUATION_GUIDE.md) | Local multi-agent evaluation guide, CLI commands, custom metrics, and Quality Flywheel |
+| [EVALUATION_BASELINE_AND_PROGRESSION.md](specs/EVALUATION_BASELINE_AND_PROGRESSION.md) | Archived v1.0.0 prompt baseline, agent structure snapshot, and 15-case scorecard |
 | [APPLICATION_WALKTHROUGH.md](specs/APPLICATION_WALKTHROUGH.md) | End-to-end implementation walkthrough with code snippets |
 | [ARCHITECTURE_BLUEPRINT.md](specs/ARCHITECTURE_BLUEPRINT.md) | Architecture blueprint and design decisions |
 | [GCP_AGENT_PLATFORM_SERVICES.md](specs/GCP_AGENT_PLATFORM_SERVICES.md) | Deep-dive into every GCP service used |
