@@ -164,6 +164,39 @@
           }
         ]
       }
+    },
+    {
+      "eval_case_id": "eval_16_email_only_winback",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Draft a win-back email template only for our Dormant At-Risk customers. Include subject line, preview text, email body, and CTA button. Do not generate social media posts or SMS copy."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "eval_17_sms_only_vip_rewards",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Draft an SMS flash reward text message only for Platinum VIP members under 160 characters with promo code PLATINUM50. Do not generate an email template or social posts."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "eval_18_social_only_sustainable_capsule",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Create 2 Instagram social media posts only highlighting our Circular Garment Collecting initiative and sustainable capsule collections. Do not generate email template or SMS copy."
+          }
+        ]
+      }
     }
   ]
 }

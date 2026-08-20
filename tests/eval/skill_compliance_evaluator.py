@@ -50,9 +50,10 @@ Skill Rules:
    - Exactly 3 testable A/B testing hypotheses.
    - Projected revenue recovery in EUR (€).
 2. `brand-voice-craft` (for copywriting tasks):
-   - Email template: subject line (max 10 words), preview text (1 sentence), body (3-4 sentences), CTA button (max 5 words).
-   - Exactly 2 social media posts with platform name and copy.
-   - SMS copy: strictly max 160 characters.
+   - Scopes output strictly to the requested channel(s) (Email, Social, or SMS). For multi-channel requests, outputs all three.
+   - Email template (when requested): subject line (max 10 words), preview text (1 sentence), body (3-4 sentences), CTA button (max 5 words).
+   - Social media posts (when requested): platform name and copy.
+   - SMS copy (when requested): strictly max 160 characters.
    - Brand voice: confident, inclusive, sustainability-aware, and EUR (€) pricing.
 3. `bigquery-customer-analytics` (for data tasks):
    - Data summaries are fact-grounded in BigQuery query results without fabricated numbers.
