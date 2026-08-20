@@ -171,10 +171,12 @@ The presentation application follows a 2-column split-stage layout designed for 
 To view the interactive presentation deck locally:
 
 ```bash
-# Option 1: Open directly in your default browser (macOS)
+# Option 1: Run the dedicated start script (serves on port 8085 and auto-opens in browser)
+./specs/evalution_presentation/start_presentation.sh
+
+# Option 2: Open static file directly in browser
 open specs/evalution_presentation/index.html
 
-# Option 2: Serve via local Python HTTP server
-cd specs/evalution_presentation && python3 -m http.server 8085
-# Then navigate to http://localhost:8085
+# Option 3: Manual Python server command
+python3 -m http.server 8085 --directory specs/evalution_presentation
 ```
