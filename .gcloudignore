@@ -28,7 +28,7 @@ specs/
 !skills/**/SKILL.md
 LICENSE
 
-# Development
+# Development & local tools
 venv/
 .venv/
 node_modules/
@@ -37,9 +37,18 @@ __pycache__/
 *.pyo
 .DS_Store
 .pytest_cache/
+.ruff_cache/
+.vscode/
 tests/
 eval/
+examples/
+scratch/
+scripts/
+simulator/
+.adk/
+.google-agents-cli/
 
-# Build artifacts
+# Build artifacts & eval traces
+artifacts/
 agent_engine_manifest.json
 deployment_metadata.json
