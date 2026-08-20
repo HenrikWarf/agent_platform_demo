@@ -9,37 +9,118 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AgentGraphVisualizer from './AgentGraphVisualizer';
 
-const getAgentColor = (agent) => {
-  if (!agent) return 'var(--color-primary)';
-  const a = agent.toLowerCase();
-  if (a.includes('analytics')) return 'var(--color-success)';
-  if (a.includes('recommendation') || a.includes('recommender')) return '#10b981';
-  if (a.includes('strategy')) return 'var(--color-purple)';
-  if (a.includes('content')) return 'var(--color-warning)';
-  if (a.includes('gateway') || a.includes('armor') || a.includes('security')) return '#3b82f6';
-  return 'var(--color-primary)';
+const AGENT_THEMES = {
+  orchestrator: {
+    key: 'orchestrator',
+    name: 'Marketing Orchestrator',
+    shortName: 'Orchestrator',
+    color: '#4f46e5',
+    bg: 'rgba(79, 70, 229, 0.06)',
+    activeBg: 'rgba(79, 70, 229, 0.12)',
+    border: 'rgba(79, 70, 229, 0.22)',
+    activeBorder: 'rgba(79, 70, 229, 0.5)',
+    borderLeft: '#4f46e5',
+    badgeBg: 'rgba(79, 70, 229, 0.12)',
+    badgeBorder: 'rgba(79, 70, 229, 0.3)',
+    badgeColor: '#4f46e5',
+    glow: 'rgba(79, 70, 229, 0.25)',
+  },
+  analytics: {
+    key: 'analytics',
+    name: 'Analytics Agent',
+    shortName: 'Analytics',
+    color: '#0284c7',
+    bg: 'rgba(2, 132, 199, 0.06)',
+    activeBg: 'rgba(2, 132, 199, 0.12)',
+    border: 'rgba(2, 132, 199, 0.22)',
+    activeBorder: 'rgba(2, 132, 199, 0.5)',
+    borderLeft: '#0284c7',
+    badgeBg: 'rgba(2, 132, 199, 0.12)',
+    badgeBorder: 'rgba(2, 132, 199, 0.3)',
+    badgeColor: '#0284c7',
+    glow: 'rgba(2, 132, 199, 0.25)',
+  },
+  recommendation: {
+    key: 'recommendation',
+    name: 'Recommendation Pipeline',
+    shortName: 'Recommender',
+    color: '#059669',
+    bg: 'rgba(16, 185, 129, 0.06)',
+    activeBg: 'rgba(16, 185, 129, 0.12)',
+    border: 'rgba(16, 185, 129, 0.22)',
+    activeBorder: 'rgba(16, 185, 129, 0.5)',
+    borderLeft: '#10b981',
+    badgeBg: 'rgba(16, 185, 129, 0.12)',
+    badgeBorder: 'rgba(16, 185, 129, 0.3)',
+    badgeColor: '#059669',
+    glow: 'rgba(16, 185, 129, 0.25)',
+  },
+  strategy: {
+    key: 'strategy',
+    name: 'Strategy Pipeline',
+    shortName: 'Strategy',
+    color: '#7c3aed',
+    bg: 'rgba(124, 58, 237, 0.06)',
+    activeBg: 'rgba(124, 58, 237, 0.12)',
+    border: 'rgba(124, 58, 237, 0.22)',
+    activeBorder: 'rgba(124, 58, 237, 0.5)',
+    borderLeft: '#7c3aed',
+    badgeBg: 'rgba(124, 58, 237, 0.12)',
+    badgeBorder: 'rgba(124, 58, 237, 0.3)',
+    badgeColor: '#7c3aed',
+    glow: 'rgba(124, 58, 237, 0.25)',
+  },
+  content: {
+    key: 'content',
+    name: 'Content Pipeline',
+    shortName: 'Content',
+    color: '#d97706',
+    bg: 'rgba(217, 119, 6, 0.06)',
+    activeBg: 'rgba(217, 119, 6, 0.12)',
+    border: 'rgba(217, 119, 6, 0.22)',
+    activeBorder: 'rgba(217, 119, 6, 0.5)',
+    borderLeft: '#d97706',
+    badgeBg: 'rgba(217, 119, 6, 0.12)',
+    badgeBorder: 'rgba(217, 119, 6, 0.3)',
+    badgeColor: '#d97706',
+    glow: 'rgba(217, 119, 6, 0.25)',
+  },
+  gateway: {
+    key: 'gateway',
+    name: 'Agent Gateway & Model Armor',
+    shortName: 'Model Armor',
+    color: '#e11d48',
+    bg: 'rgba(225, 29, 72, 0.06)',
+    activeBg: 'rgba(225, 29, 72, 0.12)',
+    border: 'rgba(225, 29, 72, 0.22)',
+    activeBorder: 'rgba(225, 29, 72, 0.5)',
+    borderLeft: '#e11d48',
+    badgeBg: 'rgba(225, 29, 72, 0.12)',
+    badgeBorder: 'rgba(225, 29, 72, 0.3)',
+    badgeColor: '#e11d48',
+    glow: 'rgba(225, 29, 72, 0.25)',
+  },
 };
 
-const getAgentBg = (agent) => {
-  if (!agent) return 'rgba(37, 99, 235, 0.09)';
-  const a = agent.toLowerCase();
-  if (a.includes('analytics')) return 'rgba(16, 185, 129, 0.09)';
-  if (a.includes('recommendation') || a.includes('recommender')) return 'rgba(16, 185, 129, 0.12)';
-  if (a.includes('strategy')) return 'rgba(161, 66, 244, 0.09)';
-  if (a.includes('content')) return 'rgba(245, 158, 11, 0.09)';
-  if (a.includes('gateway') || a.includes('armor') || a.includes('security')) return 'rgba(59, 130, 246, 0.09)';
-  return 'rgba(37, 99, 235, 0.09)';
+const getAgentTheme = (agent, agentName) => {
+  const query = `${agent || ''} ${agentName || ''}`.toLowerCase();
+  if (query.includes('analytics') || query.includes('bigquery') || query.includes('sql') || query.includes('data')) return AGENT_THEMES.analytics;
+  if (query.includes('recommendation') || query.includes('recommender') || query.includes('catalog')) return AGENT_THEMES.recommendation;
+  if (query.includes('strategy')) return AGENT_THEMES.strategy;
+  if (query.includes('content') || query.includes('creative') || query.includes('copy') || query.includes('brand')) return AGENT_THEMES.content;
+  if (query.includes('gateway') || query.includes('armor') || query.includes('security') || query.includes('guardrail')) return AGENT_THEMES.gateway;
+  return AGENT_THEMES.orchestrator;
 };
 
 /* ── Structured Objective Catalog & Interest Categories ────────────────────────── */
 
 const OBJECTIVE_CATEGORIES = [
-  { id: 'recommended', label: 'Dynamic & Follow-ups', icon: Sparkles, color: 'var(--color-primary)', desc: 'Context-aware suggestions dynamically generated from recent messages & target cohort.' },
-  { id: 'analytics', label: 'BigQuery Data', icon: Database, color: 'var(--color-success)', desc: 'SQL customer queries: RFM segments, demographics, behavioral events, and transaction streams.' },
-  { id: 'recommendations', label: 'Product Recommendations', icon: ShoppingBag, color: '#10b981', desc: '5-product assortment curation tailored to customer segment attributes, spending capacity, and past purchases.' },
-  { id: 'strategy', label: 'Campaign Strategy', icon: TrendingUp, color: 'var(--color-purple)', desc: 'Omnichannel frameworks: 3-pillar architectures, channel mix weights, and A/B test hypotheses.' },
-  { id: 'content', label: 'Creative Copy', icon: Mail, color: 'var(--color-warning)', desc: 'Brand-aligned Nordic creative copy: email sequences, Instagram posts, and SMS under 160 chars.' },
-  { id: 'campaign', label: 'Full Omnichannel', icon: Layers, color: '#3b82f6', desc: 'End-to-end multi-agent pipeline: BigQuery Data -> Campaign Strategy -> Creative Assets.' },
+  { id: 'recommended', label: 'Dynamic & Follow-ups', icon: Sparkles, color: '#4f46e5', desc: 'Context-aware suggestions dynamically generated from recent messages & target cohort.' },
+  { id: 'analytics', label: 'BigQuery Data', icon: Database, color: '#0284c7', desc: 'SQL customer queries: RFM segments, demographics, behavioral events, and transaction streams.' },
+  { id: 'recommendations', label: 'Product Recommendations', icon: ShoppingBag, color: '#059669', desc: '5-product assortment curation tailored to customer segment attributes, spending capacity, and past purchases.' },
+  { id: 'strategy', label: 'Campaign Strategy', icon: TrendingUp, color: '#7c3aed', desc: 'Omnichannel frameworks: 3-pillar architectures, channel mix weights, and A/B test hypotheses.' },
+  { id: 'content', label: 'Creative Copy', icon: Mail, color: '#d97706', desc: 'Brand-aligned Nordic creative copy: email sequences, Instagram posts, and SMS under 160 chars.' },
+  { id: 'campaign', label: 'Full Omnichannel', icon: Layers, color: '#4f46e5', desc: 'End-to-end multi-agent pipeline: BigQuery Data -> Campaign Strategy -> Creative Assets.' },
 ];
 
 const CATEGORY_QUESTIONS = {
@@ -916,66 +997,115 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                     </button>
 
                     {expandedStepMsgIdx === i && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
-                        {stepList.map((step, sIdx) => (
-                        <div key={sIdx} style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '0.55rem',
-                          background: 'var(--bg-secondary)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '6px',
-                          padding: '0.45rem 0.65rem',
-                          fontSize: '0.72rem'
-                        }}>
-                          <div style={{ marginTop: '0.15rem' }}>
-                            <CheckCircle2 size={12} color="var(--color-success)" />
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <span style={{
-                                  fontSize: '0.64rem',
-                                  fontWeight: 700,
-                                  background: getAgentBg(step.agent),
-                                  color: getAgentColor(step.agent),
-                                  padding: '0.06rem 0.3rem',
-                                  borderRadius: '3px'
-                                }}>
-                                  {step.agent_name || step.agent}
-                                </span>
-                                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{step.title}</span>
-                              </div>
-                              <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>{step.timestamp}</span>
-                            </div>
-                            {step.detail && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.55rem' }}>
+                        {stepList.map((step, sIdx) => {
+                          const theme = getAgentTheme(step.agent, step.agent_name);
+                          return (
+                            <div key={sIdx} style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '0.65rem',
+                              background: theme.bg,
+                              border: `1px solid ${theme.border}`,
+                              borderLeft: `4px solid ${theme.borderLeft}`,
+                              borderRadius: '7px',
+                              padding: '0.5rem 0.75rem',
+                              fontSize: '0.72rem',
+                              transition: 'all 0.2s ease'
+                            }}>
                               <div style={{
-                                color: 'var(--text-muted)',
-                                marginTop: '0.15rem',
-                                fontSize: '0.7rem',
-                                fontFamily: step.stage === 'tool_call' ? 'var(--font-mono)' : 'inherit'
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: theme.badgeBg,
+                                color: theme.color,
+                                border: `1px solid ${theme.badgeBorder}`,
+                                flexShrink: 0,
+                                marginTop: '0.05rem'
                               }}>
-                                {step.detail}
+                                {step.icon === 'database' && <Database size={12} />}
+                                {step.icon === 'shopping-bag' && <ShoppingBag size={12} />}
+                                {step.icon === 'trending-up' && <TrendingUp size={12} />}
+                                {step.icon === 'mail' && <Mail size={12} />}
+                                {step.icon === 'terminal' && <Terminal size={12} />}
+                                {step.icon === 'shield' && <Shield size={12} />}
+                                {step.icon === 'file-text' && <FileText size={12} />}
+                                {(!step.icon || step.icon === 'cpu' || step.icon === 'check') && <CheckCircle2 size={12} />}
                               </div>
-                            )}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.25rem' }}>
-                              {step.skill && (
-                                <span style={{ fontSize: '0.62rem', background: 'rgba(37, 99, 235, 0.08)', color: 'var(--color-primary)', border: '1px solid rgba(37, 99, 235, 0.2)', padding: '0.05rem 0.3rem', borderRadius: '3px' }}>
-                                  Skill: {step.skill}
-                                </span>
-                              )}
-                              {step.tool && (
-                                <span style={{ fontSize: '0.62rem', background: 'rgba(16, 185, 129, 0.08)', color: 'var(--color-success)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '0.05rem 0.3rem', borderRadius: '3px' }}>
-                                  Tool: {step.tool}
-                                </span>
-                              )}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <span style={{
+                                      fontSize: '0.64rem',
+                                      fontWeight: 700,
+                                      background: theme.badgeBg,
+                                      color: theme.color,
+                                      border: `1px solid ${theme.badgeBorder}`,
+                                      padding: '0.06rem 0.35rem',
+                                      borderRadius: '3px'
+                                    }}>
+                                      {step.agent_name || theme.name}
+                                    </span>
+                                    <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{step.title}</span>
+                                  </div>
+                                  <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>{step.timestamp}</span>
+                                </div>
+                                {step.detail && (
+                                  <div style={{
+                                    color: 'var(--text-muted)',
+                                    marginTop: '0.18rem',
+                                    fontSize: '0.7rem',
+                                    fontFamily: step.stage === 'tool_call' ? 'var(--font-mono)' : 'inherit',
+                                    lineHeight: '1.4'
+                                  }}>
+                                    {step.detail}
+                                  </div>
+                                )}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.25rem' }}>
+                                  {step.skill && (
+                                    <span style={{
+                                      fontSize: '0.62rem',
+                                      fontWeight: 700,
+                                      background: theme.badgeBg,
+                                      color: theme.color,
+                                      border: `1px solid ${theme.badgeBorder}`,
+                                      padding: '0.06rem 0.35rem',
+                                      borderRadius: '3px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem'
+                                    }}>
+                                      <Zap size={10} /> Skill: {step.skill}
+                                    </span>
+                                  )}
+                                  {step.tool && (
+                                    <span style={{
+                                      fontSize: '0.62rem',
+                                      fontWeight: 700,
+                                      background: 'rgba(0, 0, 0, 0.04)',
+                                      color: 'var(--text-muted)',
+                                      border: '1px solid var(--border-color)',
+                                      padding: '0.06rem 0.35rem',
+                                      borderRadius: '3px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      fontFamily: 'var(--font-mono)'
+                                    }}>
+                                      <Terminal size={10} /> Tool: {step.tool}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })()}
             </div>
@@ -1033,28 +1163,33 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
               {liveSteps.map((step, sIdx) => {
                 const isLatest = sIdx === liveSteps.length - 1;
+                const theme = getAgentTheme(step.agent, step.agent_name);
                 return (
                   <div key={step.id || sIdx} style={{
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '0.65rem',
-                    padding: '0.55rem 0.75rem',
-                    background: isLatest ? 'var(--bg-secondary)' : 'transparent',
+                    padding: '0.6rem 0.8rem',
+                    background: isLatest ? theme.activeBg : theme.bg,
                     borderRadius: '8px',
-                    border: isLatest ? '1px solid var(--border-highlight)' : '1px solid transparent',
+                    border: `1px solid ${isLatest ? theme.activeBorder : theme.border}`,
+                    borderLeft: `4px solid ${theme.borderLeft}`,
+                    boxShadow: isLatest ? `0 2px 12px ${theme.glow}` : 'none',
+                    transition: 'all 0.25s ease',
                     animation: 'fadeIn 0.2s ease-out'
                   }}>
                     <div style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '6px',
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '7px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      background: getAgentBg(step.agent),
-                      color: getAgentColor(step.agent),
+                      background: theme.badgeBg,
+                      color: theme.color,
+                      border: `1px solid ${theme.badgeBorder}`,
                       flexShrink: 0,
-                      marginTop: '0.1rem'
+                      marginTop: '0.05rem'
                     }}>
                       {step.icon === 'database' && <Database size={13} />}
                       {step.icon === 'shopping-bag' && <ShoppingBag size={13} />}
@@ -1069,16 +1204,18 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <span style={{
                             fontSize: '0.66rem',
                             fontWeight: 700,
-                            background: getAgentBg(step.agent),
-                            color: getAgentColor(step.agent),
-                            padding: '0.08rem 0.35rem',
-                            borderRadius: '4px'
+                            background: theme.badgeBg,
+                            color: theme.color,
+                            border: `1px solid ${theme.badgeBorder}`,
+                            padding: '0.08rem 0.4rem',
+                            borderRadius: '4px',
+                            letterSpacing: '0.01em'
                           }}>
-                            {step.agent_name || step.agent}
+                            {step.agent_name || theme.name}
                           </span>
                           <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>
                             {step.title}
@@ -1093,23 +1230,23 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                         <div style={{
                           fontSize: '0.72rem',
                           color: 'var(--text-muted)',
-                          marginTop: '0.18rem',
-                          lineHeight: '1.4',
+                          marginTop: '0.2rem',
+                          lineHeight: '1.45',
                           fontFamily: step.stage === 'tool_call' ? 'var(--font-mono)' : 'inherit'
                         }}>
                           {step.detail}
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.25rem' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.3rem' }}>
                         {step.skill && (
                           <span style={{
                             fontSize: '0.64rem',
                             fontWeight: 700,
-                            background: 'rgba(37, 99, 235, 0.08)',
-                            color: 'var(--color-primary)',
-                            border: '1px solid rgba(37, 99, 235, 0.25)',
-                            padding: '0.06rem 0.35rem',
+                            background: theme.badgeBg,
+                            color: theme.color,
+                            border: `1px solid ${theme.badgeBorder}`,
+                            padding: '0.08rem 0.4rem',
                             borderRadius: '4px',
                             display: 'flex',
                             alignItems: 'center',
@@ -1122,14 +1259,15 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                           <span style={{
                             fontSize: '0.64rem',
                             fontWeight: 700,
-                            background: 'rgba(16, 185, 129, 0.08)',
-                            color: 'var(--color-success)',
-                            border: '1px solid rgba(16, 185, 129, 0.25)',
-                            padding: '0.06rem 0.35rem',
+                            background: 'rgba(0, 0, 0, 0.05)',
+                            color: 'var(--text-muted)',
+                            border: '1px solid var(--border-color)',
+                            padding: '0.08rem 0.4rem',
                             borderRadius: '4px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.25rem'
+                            gap: '0.25rem',
+                            fontFamily: 'var(--font-mono)'
                           }}>
                             <Terminal size={10} /> Tool: {step.tool}
                           </span>
@@ -1139,12 +1277,12 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
 
                     <div style={{ flexShrink: 0, marginTop: '0.15rem' }}>
                       {isLatest ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.68rem', color: 'var(--color-primary)', fontWeight: 700 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.68rem', color: theme.color, fontWeight: 700 }}>
                           <Sparkles size={12} className="spin" />
                           In Progress
                         </span>
                       ) : (
-                        <CheckCircle2 size={14} color="var(--color-success)" />
+                        <CheckCircle2 size={15} color={theme.color} />
                       )}
                     </div>
                   </div>

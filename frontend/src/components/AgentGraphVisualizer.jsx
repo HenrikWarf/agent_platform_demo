@@ -38,7 +38,7 @@ Routing:
     name: 'Analytics Agent',
     role: 'BigQuery Customer SQL',
     model: 'gemini-3.6-flash',
-    color: 'var(--color-success)',
+    color: '#0284c7',
     icon: Database,
     skill: 'marketing_analytics',
     description: 'Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation across 200 aligned customer records.',
@@ -698,18 +698,24 @@ function skillPill(color) {
 
 function getSenderColor(sender) {
   if (!sender) return 'var(--text-muted)';
-  if (sender.includes('orchestrator')) return 'var(--color-primary)';
-  if (sender.includes('analytics')) return 'var(--color-success)';
-  if (sender.includes('strategy')) return 'var(--color-purple)';
-  if (sender.includes('content')) return 'var(--color-warning)';
+  const s = sender.toLowerCase();
+  if (s.includes('orchestrator')) return '#4f46e5';
+  if (s.includes('analytics') || s.includes('bigquery') || s.includes('sql')) return '#0284c7';
+  if (s.includes('recommendation') || s.includes('recommender') || s.includes('catalog')) return '#059669';
+  if (s.includes('strategy')) return '#7c3aed';
+  if (s.includes('content') || s.includes('creative')) return '#d97706';
+  if (s.includes('gateway') || s.includes('armor') || s.includes('security')) return '#e11d48';
   return 'var(--text-muted)';
 }
 
 function formatAgentName(name) {
   if (!name) return 'Agent';
-  if (name.includes('orchestrator')) return 'Orchestrator';
-  if (name.includes('analytics')) return 'Analytics';
-  if (name.includes('strategy')) return 'Strategy';
-  if (name.includes('content')) return 'Content';
+  const n = name.toLowerCase();
+  if (n.includes('orchestrator')) return 'Orchestrator';
+  if (n.includes('analytics')) return 'Analytics';
+  if (n.includes('recommendation') || n.includes('recommender')) return 'Recommender';
+  if (n.includes('strategy')) return 'Strategy';
+  if (n.includes('content')) return 'Content';
+  if (n.includes('gateway') || n.includes('armor')) return 'Model Armor';
   return name;
 }
