@@ -44,14 +44,100 @@ Rather than overloading a single agent with both strategy and copywriting, the p
 
 | Pipeline | Sequential Agents | Skill Bound | Output Schema | Primary Responsibility |
 | :--- | :--- | :--- | :--- | :--- |
+| **Recommendation Pipeline** | `recommendation_reasoner` ➔ `recommendation_formatter` | `skills/product-recommender/` | `ProductRecommendationSchema` | Segment-aligned merchandising: exactly 5 curated products from BigQuery catalog with prices in EUR, eco-status, and data-driven rationale. |
 | **Strategy Pipeline** | `strategy_reasoner` ➔ `strategy_formatter` | `skills/campaign-framework/` | `StrategySchema` | High-level strategy: campaign pillars, channel mix weights, dispatch cadence, EUR projections, and A/B test hypotheses. |
 | **Content Pipeline** | `content_reasoner` ➔ `content_formatter` | `skills/brand-voice-craft/` | `ContentSchema` | Channel-selective creative copy: Email template, Social media posts, and SMS messages aligned with Crazy Fashion brand voice. |
 
 ---
 
-## 2. Strategy Schema (`StrategySchema`)
+## 2. Product Recommendation Schema (`ProductRecommendationSchema`)
 
 ### 2.1 Pydantic Model Definition ([`app/schemas.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/schemas.py))
+
+```python
+from pydantic import BaseModel, Field
+
+class RecommendedProduct(BaseModel):
+    product_id: str = Field(description="Product ID from product_catalog, e.g. 'PROD-001'")
+    product_name: str = Field(description="Full product name, e.g. 'FRÖST Recycled Puffer Jacket'")
+    category: str = Field(description="Product category, e.g. 'Outerwear'")
+    price_eur: float = Field(description="Product retail price in EUR")
+    sustainability_certified: bool = Field(description="Whether the product is certified sustainable")
+    recommendation_reason: str = Field(
+        description="2-3 sentence data-driven explanation of why this product fits the segment's attributes and preferences"
+    )
+
+
+class ProductRecommendationSchema(BaseModel):
+    target_segment: str = Field(description="Customer segment name, e.g. 'VIP Fashionistas'")
+    segment_profile_summary: str = Field(description="2-3 sentence summary of the segment's key attributes, spend capacity, and purchasing patterns")
+    recommended_products: list[RecommendedProduct] = Field(description="Exactly 5 curated products from the Crazy Fashion catalog")
+    overall_curation_strategy: str = Field(description="2-3 sentence overview of the merchandising curation strategy for this segment")
+```
+
+### 2.2 Recommendation Validation Rules
+1. **Exactly 5 Products**: Must curate exactly 5 items from `agent-demo-09.marketing_analytics.product_catalog`.
+2. **Data-Driven Grounding**: Each product recommendation must be justified with segment-specific traits (e.g. AOV, loyalty tier, preferred category, eco-consciousness).
+3. **Currency & Accuracy**: Prices must be numeric floats in **EUR (€)** accurately reflecting the product catalog.
+4. **Assortment Balance**: Merchandising strategy must balance anchor hero pieces with accessible accessories or seasonal layers.
+
+### 2.3 Example Recommendation JSON Output
+
+```json
+{
+  "target_segment": "VIP Fashionistas",
+  "segment_profile_summary": "High-spending tier with average AOV exceeding €140 and Platinum loyalty status. Shows strong preference for tailored Outerwear, sustainable materials, and luxury styling.",
+  "recommended_products": [
+    {
+      "product_id": "PROD-001",
+      "product_name": "FRÖST Recycled Puffer Jacket",
+      "category": "Outerwear",
+      "price_eur": 129.99,
+      "sustainability_certified": true,
+      "recommendation_reason": "Aligns with VIP spend capacity and high interest in premium sustainable outerwear for the Nordic autumn season."
+    },
+    {
+      "product_id": "PROD-008",
+      "product_name": "NORDIC Wool Tailored Coat",
+      "category": "Outerwear",
+      "price_eur": 179.99,
+      "sustainability_certified": true,
+      "recommendation_reason": "Hero tailoring piece matching Platinum tier preference for timeless Stockholm showroom aesthetics."
+    },
+    {
+      "product_id": "PROD-014",
+      "product_name": "FJORD Silk Blend Midi Dress",
+      "category": "Womenswear",
+      "price_eur": 89.99,
+      "sustainability_certified": false,
+      "recommendation_reason": "High-margin occasion wear frequently paired with outerwear in VIP transaction baskets."
+    },
+    {
+      "product_id": "PROD-022",
+      "product_name": "BERGEN Organic Cashmere Knit",
+      "category": "Knitwear",
+      "price_eur": 119.99,
+      "sustainability_certified": true,
+      "recommendation_reason": "Premium layering piece with certified organic fibers, offering high perceived value for loyalty point redemption."
+    },
+    {
+      "product_id": "PROD-035",
+      "product_name": "STOCKHOLM Minimalist Leather Tote",
+      "category": "Accessories",
+      "price_eur": 99.99,
+      "sustainability_certified": false,
+      "recommendation_reason": "Complementary luxury accessory with high repeat purchase frequency among Scandinavian urban shoppers."
+    }
+  ],
+  "overall_curation_strategy": "Focus on high-AOV, eco-certified outerwear and premium knitwear layered with iconic accessories to reinforce Crazy Fashion's modern Scandinavian brand image."
+}
+```
+
+---
+
+## 3. Strategy Schema (`StrategySchema`)
+
+### 3.1 Pydantic Model Definition ([`app/schemas.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/schemas.py))
 
 ```python
 from pydantic import BaseModel, Field
@@ -78,13 +164,13 @@ class StrategySchema(BaseModel):
     ab_testing_hypotheses: list[str] = Field(description="Exactly 3 A/B testing hypotheses")
 ```
 
-### 2.2 Strategy Validation Rules
+### 3.2 Strategy Validation Rules
 1. **Pillars**: Must produce **exactly 3** campaign pillars leveraging Crazy Fashion strengths (Sustainability, Crazy Club Loyalty, Seasonal Drops, Inclusivity).
 2. **Channel Mix**: Must define **exactly 4** marketing channels with percentage weights summing to 100% and specific send cadences (e.g. `2x per week`, `Day 1, Day 14`).
 3. **Currency**: All monetary targets and revenue recovery projections must be denominated in **EUR (€)**.
 4. **No Raw Copy**: The Strategy pipeline does **not** write raw email copy or social captions; it defines the architecture that informs the Content pipeline.
 
-### 2.3 Example Strategy JSON Output
+### 3.3 Example Strategy JSON Output
 
 ```json
 {
@@ -99,14 +185,14 @@ class StrategySchema(BaseModel):
       "channels": ["Email", "SMS"]
     },
     {
-      "pillar": "Circular Garment Recycling Drive",
-      "description": "Engage eco-conscious lapsed buyers by offering double Crazy Club points for in-store garment drop-offs.",
-      "channels": ["Email", "Instagram"]
+      "pillar": "Sustainable Essentials Showcase",
+      "description": "Highlight certified eco-friendly outerwear and knitwear collections to appeal to conscious Scandinavian shoppers.",
+      "channels": ["Instagram & Social", "Email"]
     },
     {
-      "pillar": "VIP Early Access Capsule",
-      "description": "Deliver exclusive 48-hour early shopping window for the newly dropped autumn outerwear line.",
-      "channels": ["App Push", "SMS"]
+      "pillar": "Frictionless Omnichannel Re-Entry",
+      "description": "Promote click-and-collect in local Nordic flagship stores with double loyalty points on return visits.",
+      "channels": ["App Push Notifications", "SMS"]
     }
   ],
   "channel_mix": [
@@ -141,9 +227,9 @@ class StrategySchema(BaseModel):
 
 ---
 
-## 3. Content Schema (`ContentSchema`)
+## 4. Content Schema (`ContentSchema`)
 
-### 3.1 Pydantic Model Definition ([`app/schemas.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/schemas.py))
+### 4.1 Pydantic Model Definition ([`app/schemas.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/schemas.py))
 
 The `ContentSchema` is designed with **optional fields** to support **strict channel selectivity**:
 
@@ -179,11 +265,11 @@ class ContentSchema(BaseModel):
 
 ---
 
-## 4. Channel Selection Rules & Payload Examples
+## 5. Channel Selection Rules & Payload Examples
 
 The Content Agent inspects the user prompt to determine whether to generate a single channel or the complete multi-channel suite:
 
-### 4.1 Email Only Request
+### 5.1 Email Only Request
 *Prompt*: *"Draft a win-back email template only for our Dormant At-Risk customers."*
 
 ```json
@@ -199,7 +285,7 @@ The Content Agent inspects the user prompt to determine whether to generate a si
 }
 ```
 
-### 4.2 SMS Only Request
+### 5.2 SMS Only Request
 *Prompt*: *"Draft an SMS flash reward text message only for Platinum VIP members under 160 characters with promo code PLATINUM50."*
 
 ```json
@@ -210,7 +296,7 @@ The Content Agent inspects the user prompt to determine whether to generate a si
 }
 ```
 
-### 4.3 Social Media Only Request
+### 5.3 Social Media Only Request
 *Prompt*: *"Create 2 Instagram social media posts only highlighting our Circular Garment Collecting initiative."*
 
 ```json
@@ -230,7 +316,7 @@ The Content Agent inspects the user prompt to determine whether to generate a si
 }
 ```
 
-### 4.4 Full Omnichannel Request
+### 5.4 Full Omnichannel Request
 *Prompt*: *"Generate all multi-channel marketing creative assets for our Autumn Collection launch."*
 
 ```json
@@ -257,23 +343,26 @@ The Content Agent inspects the user prompt to determine whether to generate a si
 
 ---
 
-## 5. UI Deliverable Cards ([`frontend/src/components/ChatInterface.jsx`](file:///Users/henrikw/Projects/agent_platform_demo/frontend/src/components/ChatInterface.jsx))
+## 6. UI Deliverable Cards ([`frontend/src/components/ChatInterface.jsx`](file:///Users/henrikw/Projects/agent_platform_demo/frontend/src/components/ChatInterface.jsx))
 
 In the frontend chat interface, deliverable cards render conditionally based on which payload fields are populated:
 
-1. **Campaign Strategy Card**:
+1. **Product Recommendation Card**:
+   - Header with `ShoppingBag` icon, segment badge, cohort summary, and merchandising strategy banner.
+   - Responsive Grid of 5 Product Cards with EUR price, category, eco-certified tag, product ID, and rationale.
+2. **Campaign Strategy Card**:
    - Header with `TrendingUp` icon, campaign title, and projected EUR recovery badge.
    - 3 Column Grid for **Campaign Pillars** (with channel badges).
    - 4 Column Grid for **Channel Mix & Cadence**.
    - Collapsible Accordion for **A/B Testing Hypotheses**.
-2. **Creative Assets Card**:
+3. **Creative Assets Card**:
    - **Email Preview**: Subject line, preview subtitle, formatted body box, and gradient CTA button (`👉 Claim Voucher`).
    - **Social Posts**: Side-by-side cards for Instagram / LinkedIn with platform tags and captions.
    - **SMS / Mobile Push**: Mobile preview container with `MessageSquare` icon and character counter (`N / 160 chars`).
 
 ---
 
-## 6. Local Evaluation & Verification
+## 7. Local Evaluation & Verification
 
 To verify that the Strategy and Content pipelines adhere strictly to their schemas and channel-selection rules:
 

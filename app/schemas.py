@@ -58,3 +58,22 @@ class ContentSchema(BaseModel):
         default=None,
         description="SMS message (max 160 characters), provided when SMS copy is requested or for full campaigns"
     )
+
+
+# ─── Product Recommendation Schema ──────────────────────────────────────────
+
+class RecommendedProduct(BaseModel):
+    product_id: str = Field(description="Product identifier, e.g. 'PROD-001'")
+    product_name: str = Field(description="Product title, e.g. 'NOVA Oversized Blazer'")
+    category: str = Field(description="Product category, e.g. 'Womenswear', 'Menswear', 'Accessories'")
+    price_eur: float = Field(description="Price in EUR (€), e.g. 89.99")
+    sustainability_certified: bool = Field(description="Whether the item is certified sustainable/recycled")
+    recommendation_reason: str = Field(description="2-3 sentence data-driven reasoning why this product fits the target customer segment attributes")
+
+
+class ProductRecommendationSchema(BaseModel):
+    target_segment: str = Field(description="Name of the customer segment analyzed, e.g. 'VIP Fashionistas', 'Dormant At-Risk'")
+    segment_profile_summary: str = Field(description="2-3 sentence summary of the segment's demographic profile, spend capacity, and category affinity")
+    recommended_products: list[RecommendedProduct] = Field(description="Exactly 5 curated product recommendations from the catalog")
+    overall_curation_strategy: str = Field(description="2-3 sentence summary of the overall merchandising and pricing strategy for this cohort")
+

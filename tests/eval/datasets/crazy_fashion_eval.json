@@ -197,6 +197,28 @@
           }
         ]
       }
+    },
+    {
+      "eval_case_id": "eval_19_product_recommendations_vip",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Recommend 5 curated products from our catalog for our 'VIP Fashionistas' segment based on their high spending capacity and luxury preference. Include data-driven reasoning for each product."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "eval_20_product_recommendations_dormant",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Suggest 5 tailored products from the catalog to win back our 'Dormant At-Risk' customers with seasonal essentials and giftable accessories."
+          }
+        ]
+      }
     }
   ]
 }

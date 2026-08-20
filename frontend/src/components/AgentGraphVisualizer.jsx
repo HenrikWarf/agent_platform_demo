@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Cpu, ShieldCheck, Database, FileText, Sparkles, ArrowRight, Zap, X, Wrench, BookOpen, MessageSquare, Copy, Check, Terminal } from 'lucide-react';
+import { Cpu, ShieldCheck, Database, FileText, Sparkles, ArrowRight, Zap, X, Wrench, BookOpen, MessageSquare, Copy, Check, Terminal, ShoppingBag } from 'lucide-react';
 
 /* ── Agent Metadata ────────────────────────────────────────────────────────── */
 
@@ -127,6 +127,36 @@ Do NOT use any tools. Generate the content using your own creativity.`,
     tools: [],
     skills: [
       { name: 'brand-voice-craft', path: 'skills/brand-voice-craft/SKILL.md' }
+    ]
+  },
+  recommendation: {
+    name: 'Recommendation Agent',
+    role: 'SequentialAgent Pipeline',
+    model: 'gemini-3.6-flash',
+    color: '#10b981',
+    icon: ShoppingBag,
+    skill: 'product_recommender',
+    description: 'SequentialAgent pipeline: curates 5 tailored product recommendations from the BigQuery catalog based on customer segment attributes and purchase patterns.',
+    capabilities: [
+      'Analyzes customer segment traits and RFM metrics',
+      'Queries BigQuery product catalog and transaction data',
+      'Curates exactly 5 high-affinity products with data-driven reasons',
+      'Formulates overall merchandising and pricing strategy',
+    ],
+    instruction: `Analyze customer segment attributes and recommend tailored products.
+
+Curate:
+- Exactly 5 products from agent-demo-09.marketing_analytics.product_catalog
+- Product ID, Name, Category, Price in EUR, Eco-certified status
+- 2-3 sentence data-driven reasoning for each recommendation
+- Overarching merchandising strategy for the cohort
+
+Adhere to ProductRecommendationSchema.`,
+    tools: [
+      { name: 'query_customer_data', description: 'Queries product catalog and customer purchase affinity in BigQuery.' }
+    ],
+    skills: [
+      { name: 'product-recommender', path: 'skills/product-recommender/SKILL.md' }
     ]
   }
 };
@@ -480,6 +510,7 @@ export default function AgentGraphVisualizer({ a2aTrace, modelArmor }) {
   const agents = [
     { key: 'orchestrator', ...AGENT_META.orchestrator },
     { key: 'analytics', ...AGENT_META.analytics },
+    { key: 'recommendation', ...AGENT_META.recommendation },
     { key: 'strategy', ...AGENT_META.strategy },
     { key: 'content', ...AGENT_META.content },
   ];

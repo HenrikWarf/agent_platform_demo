@@ -40,5 +40,12 @@
     "target_segment": "All Cohorts",
     "expected_skills": ["brand_voice_craft"],
     "expected_safety": "passed"
+  },
+  {
+    "id": "eval_07_recommendations",
+    "prompt": "Recommend 5 curated products for our 'VIP Fashionistas' cohort based on their demographics and spend capacity.",
+    "target_segment": "VIP Fashionistas",
+    "expected_skills": ["product_recommender", "bigquery_customer_analytics"],
+    "expected_safety": "passed"
   }
 ]

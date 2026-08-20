@@ -316,7 +316,42 @@ class AgentRuntimeClient:
                     recorded_steps.append(step_strat_fmt)
                     yield {"type": "step", "step": step_strat_fmt}
 
-                # 6. Check for Content Pipeline routing
+                # 6. Check for Recommendation Pipeline routing
+                if ("recommendation" in author or "recommendation" in transfer_to) and "rec_routing" not in seen_author_stages:
+                    seen_author_stages.add("rec_routing")
+                    step_rec = {
+                        "id": f"step_rec_{uuid.uuid4().hex[:6]}",
+                        "timestamp": now_str(),
+                        "stage": "reasoning",
+                        "agent": "recommendation_pipeline",
+                        "agent_name": "Product Recommendation Pipeline",
+                        "title": "Routing to Recommendation Pipeline",
+                        "detail": "Applying skill 'product-recommender' to curate 5 tailored items from BigQuery product catalog",
+                        "skill": "product-recommender",
+                        "status": "running",
+                        "icon": "shopping-bag",
+                    }
+                    recorded_steps.append(step_rec)
+                    yield {"type": "step", "step": step_rec}
+
+                # 7. Check for Recommendation Formatting
+                if ("recommendation_formatter" in author or "recommendation_json" in author) and "rec_fmt" not in seen_author_stages:
+                    seen_author_stages.add("rec_fmt")
+                    step_rec_fmt = {
+                        "id": f"step_rec_fmt_{uuid.uuid4().hex[:6]}",
+                        "timestamp": now_str(),
+                        "stage": "formatting",
+                        "agent": "recommendation_pipeline",
+                        "agent_name": "Recommendation Pipeline (Structured Output)",
+                        "title": "Validating Product Recommendation Schema",
+                        "detail": "Formatting structured Pydantic ProductRecommendationSchema with 5 data-driven product matches",
+                        "status": "completed",
+                        "icon": "file-text",
+                    }
+                    recorded_steps.append(step_rec_fmt)
+                    yield {"type": "step", "step": step_rec_fmt}
+
+                # 8. Check for Content Pipeline routing
                 if ("content" in author or "content" in transfer_to) and "content_routing" not in seen_author_stages:
                     seen_author_stages.add("content_routing")
                     step_content = {
@@ -334,7 +369,7 @@ class AgentRuntimeClient:
                     recorded_steps.append(step_content)
                     yield {"type": "step", "step": step_content}
 
-                # 7. Check for Content Formatting
+                # 9. Check for Content Formatting
                 if ("content_json" in author or "content_formatter" in author) and "content_fmt" not in seen_author_stages:
                     seen_author_stages.add("content_fmt")
                     step_content_fmt = {
@@ -427,6 +462,7 @@ class AgentRuntimeClient:
         analytics = {}
         strategy = {}
         content = {}
+        recommendation = {}
         a2a_trace = []
         sql_executed = ""
         seen_agents = []
@@ -453,6 +489,11 @@ class AgentRuntimeClient:
                     if parsed and ("email_template" in parsed or "social_posts" in parsed or "sms_copy" in parsed):
                         content = {"generated_assets": parsed}
                         continue
+                elif author in ("recommendation_formatter", "recommendation_agent") and not recommendation:
+                    parsed = self._try_parse_json(text)
+                    if parsed and ("recommended_products" in parsed or "target_segment" in parsed):
+                        recommendation = parsed
+                        continue
 
                 # Keep as summary text (orchestrator speaks last)
                 last_text = text
@@ -477,8 +518,8 @@ class AgentRuntimeClient:
             if transfer_to and (not seen_agents or seen_agents[-1] != transfer_to):
                 seen_agents.append(transfer_to)
 
-        # If strategy/content weren't found from specific authors, try parsing from any text
-        if not strategy or not content:
+        # If strategy/content/recommendation weren't found from specific authors, try parsing from any text
+        if not strategy or not content or not recommendation:
             for event in events:
                 text = self._extract_text(event.get("content", {}))
                 if text:
@@ -488,21 +529,27 @@ class AgentRuntimeClient:
                             strategy = parsed
                         elif not content and ("email_template" in parsed or "social_posts" in parsed or "sms_copy" in parsed):
                             content = {"generated_assets": parsed}
+                        elif not recommendation and ("recommended_products" in parsed):
+                            recommendation = parsed
 
         # Build A2A trace as sender→receiver pairs
         # Filter out internal formatter agents from the trace display
         display_agents = [a for a in seen_agents if "formatter" not in a]
         skill_map = {
             "analytics_agent": "bigquery_customer_analytics",
+            "recommendation_agent": "product_recommender",
+            "recommendation_pipeline": "product_recommender",
             "strategy_agent": "omnichannel_strategy",
             "strategy_pipeline": "omnichannel_strategy",
             "content_agent": "brand_voice",
             "content_pipeline": "brand_voice",
         }
         intent = "ANALYTICS_ONLY"
-        if any("strategy" in a for a in seen_agents):
+        if any("recommendation" in a for a in seen_agents):
+            intent = "RECOMMENDATIONS_ONLY"
+        elif any("strategy" in a for a in seen_agents):
             intent = "STRATEGY_ONLY"
-        if any("content" in a for a in seen_agents):
+        elif any("content" in a for a in seen_agents):
             intent = "FULL_CAMPAIGN"
 
         for i in range(len(display_agents) - 1):
@@ -522,6 +569,7 @@ class AgentRuntimeClient:
             "status": "SUCCESS",
             "summary": summary,
             "analytics": analytics,
+            "recommendation": recommendation,
             "strategy": strategy,
             "content": content,
             "sql_executed": sql_executed,
@@ -616,9 +664,9 @@ class AgentRuntimeClient:
                 "agent_id": "marketing_orchestrator",
                 "name": "Marketing Campaign Orchestrator",
                 "type": "orchestrator",
-                "description": "Routes objectives to Analytics, Strategy, and Content agents.",
+                "description": "Routes objectives to Analytics, Recommendations, Strategy, and Content agents.",
                 "skills": [],
-                "sub_agents": ["analytics_agent", "strategy_pipeline", "content_pipeline"],
+                "sub_agents": ["analytics_agent", "recommendation_pipeline", "strategy_pipeline", "content_pipeline"],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
             {
@@ -627,6 +675,15 @@ class AgentRuntimeClient:
                 "type": "specialist",
                 "description": "Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation.",
                 "skills": ["bigquery-customer-analytics"],
+                "sub_agents": [],
+                "runtime": "agent_runtime" if self.is_configured else "not_deployed",
+            },
+            {
+                "agent_id": "recommendation_pipeline",
+                "name": "Product Recommendation Pipeline",
+                "type": "specialist",
+                "description": "Curates tailored 5-product assortments and merchandising strategies for customer cohorts.",
+                "skills": ["product-recommender"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },

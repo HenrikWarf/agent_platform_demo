@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Send, Sparkles, Cpu, FileText, CheckCircle2, Share2, Mail,
   TrendingUp, Trash2, Database, Layers, Shuffle, ArrowRight,
-  Maximize2, Minimize2, Zap, ChevronDown, ChevronUp, Terminal, Shield, MessageSquare
+  Maximize2, Minimize2, Zap, ChevronDown, ChevronUp, Terminal, Shield, MessageSquare,
+  ShoppingBag, Tag
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -12,6 +13,7 @@ const getAgentColor = (agent) => {
   if (!agent) return 'var(--color-primary)';
   const a = agent.toLowerCase();
   if (a.includes('analytics')) return 'var(--color-success)';
+  if (a.includes('recommendation') || a.includes('recommender')) return '#10b981';
   if (a.includes('strategy')) return 'var(--color-purple)';
   if (a.includes('content')) return 'var(--color-warning)';
   if (a.includes('gateway') || a.includes('armor') || a.includes('security')) return '#3b82f6';
@@ -22,6 +24,7 @@ const getAgentBg = (agent) => {
   if (!agent) return 'rgba(37, 99, 235, 0.09)';
   const a = agent.toLowerCase();
   if (a.includes('analytics')) return 'rgba(16, 185, 129, 0.09)';
+  if (a.includes('recommendation') || a.includes('recommender')) return 'rgba(16, 185, 129, 0.12)';
   if (a.includes('strategy')) return 'rgba(161, 66, 244, 0.09)';
   if (a.includes('content')) return 'rgba(245, 158, 11, 0.09)';
   if (a.includes('gateway') || a.includes('armor') || a.includes('security')) return 'rgba(59, 130, 246, 0.09)';
@@ -33,6 +36,7 @@ const getAgentBg = (agent) => {
 const OBJECTIVE_CATEGORIES = [
   { id: 'recommended', label: 'Dynamic & Follow-ups', icon: Sparkles, color: 'var(--color-primary)', desc: 'Context-aware suggestions dynamically generated from recent messages & target cohort.' },
   { id: 'analytics', label: 'BigQuery Data', icon: Database, color: 'var(--color-success)', desc: 'SQL customer queries: RFM segments, demographics, behavioral events, and transaction streams.' },
+  { id: 'recommendations', label: 'Product Recommendations', icon: ShoppingBag, color: '#10b981', desc: '5-product assortment curation tailored to customer segment attributes, spending capacity, and past purchases.' },
   { id: 'strategy', label: 'Campaign Strategy', icon: TrendingUp, color: 'var(--color-purple)', desc: 'Omnichannel frameworks: 3-pillar architectures, channel mix weights, and A/B test hypotheses.' },
   { id: 'content', label: 'Creative Copy', icon: Mail, color: 'var(--color-warning)', desc: 'Brand-aligned Nordic creative copy: email sequences, Instagram posts, and SMS under 160 chars.' },
   { id: 'campaign', label: 'Full Omnichannel', icon: Layers, color: '#3b82f6', desc: 'End-to-end multi-agent pipeline: BigQuery Data -> Campaign Strategy -> Creative Assets.' },
@@ -74,6 +78,36 @@ const CATEGORY_QUESTIONS = {
       agent: "Analytics Agent",
       badge: "Transactions",
       color: "var(--color-success)"
+    }
+  ],
+  recommendations: [
+    {
+      title: "VIP Luxury & Outerwear Curation",
+      prompt: "Recommend 5 premium, sustainability-certified products for our 'VIP Fashionistas' cohort with EUR pricing and detailed data-driven reasoning.",
+      agent: "Recommendation Pipeline",
+      badge: "VIP Curation",
+      color: "#10b981"
+    },
+    {
+      "title": "Dormant At-Risk Win-Back Assortment",
+      "prompt": "Recommend 5 high-converting bestseller products to reactivate our 'Dormant At-Risk' customers with voucher pairing suggestions.",
+      "agent": "Recommendation Pipeline",
+      "badge": "Win-Back",
+      "color": "#10b981"
+    },
+    {
+      "title": "New Explorers Trend Assortment",
+      "prompt": "Suggest 5 entry-price, trend-forward pieces for 'New Explorers' under €60 to encourage their second purchase.",
+      "agent": "Recommendation Pipeline",
+      "badge": "Entry Trend",
+      "color": "#10b981"
+    },
+    {
+      "title": "Loyal Regulars Seasonal Refresh",
+      "prompt": "Curate 5 versatile organic cotton and knitwear products for our 'Loyal Regulars' with loyalty point accelerator perks.",
+      "agent": "Recommendation Pipeline",
+      "badge": "Loyal Refresh",
+      "color": "#10b981"
     }
   ],
   strategy: [
@@ -632,6 +666,74 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                 <MarkdownRenderer content={msg.content} isUser={msg.role === 'user'} />
               </div>
 
+              {/* Product Recommendation Output Card */}
+              {msg.data?.recommendation && Object.keys(msg.data.recommendation).length > 0 && (
+                <div style={docBoxStyle('#10b981')}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(16,185,129,0.25)', paddingBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ShoppingBag size={14} /> Curated 5-Product Assortment (Product Recommender)
+                    </span>
+                    <span style={{ fontSize: '0.72rem', background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 600 }}>
+                      {msg.data.recommendation.target_segment || 'Target Cohort'}
+                    </span>
+                  </div>
+
+                  {msg.data.recommendation.segment_profile_summary && (
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.4rem 0 0.3rem 0', lineHeight: '1.45' }}>
+                      <strong>Cohort Insights:</strong> {msg.data.recommendation.segment_profile_summary}
+                    </p>
+                  )}
+
+                  {msg.data.recommendation.overall_curation_strategy && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.76rem', color: '#10b981', background: 'rgba(16,185,129,0.08)', padding: '0.4rem 0.7rem', borderRadius: '6px', margin: '0.3rem 0 0.6rem 0' }}>
+                      <TrendingUp size={13} />
+                      <span><strong>Merchandising Strategy:</strong> {msg.data.recommendation.overall_curation_strategy}</span>
+                    </div>
+                  )}
+
+                  {/* 5-Product Recommendation Grid */}
+                  {Array.isArray(msg.data.recommendation.recommended_products) && msg.data.recommendation.recommended_products.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.4rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Tag size={13} color="#10b981" /> 5 Tailored Product Highlights:
+                      </span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.5rem' }}>
+                        {msg.data.recommendation.recommended_products.map((prod, pIdx) => (
+                          <div key={pIdx} style={{ background: 'var(--code-bg)', padding: '0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                                {prod.product_name}
+                              </span>
+                              <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                €{typeof prod.price_eur === 'number' ? prod.price_eur.toFixed(2) : prod.price_eur}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', background: 'var(--chip-bg)', padding: '0.1rem 0.35rem', borderRadius: '4px', color: 'var(--text-dim)' }}>
+                                {prod.product_id}
+                              </span>
+                              <span style={{ fontSize: '0.65rem', background: 'rgba(37,99,235,0.1)', color: 'var(--color-primary)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+                                {prod.category}
+                              </span>
+                              {prod.sustainability_certified && (
+                                <span style={{ fontSize: '0.65rem', background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '0.1rem 0.35rem', borderRadius: '4px', fontWeight: 600 }}>
+                                  🌿 Eco-Certified
+                                </span>
+                              )}
+                            </div>
+
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0', lineHeight: '1.4' }}>
+                              {prod.recommendation_reason}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Strategy Output Card */}
               {msg.data?.strategy && Object.keys(msg.data.strategy).length > 0 && (
                 <div style={docBoxStyle('var(--color-purple)')}>
@@ -955,6 +1057,7 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                       marginTop: '0.1rem'
                     }}>
                       {step.icon === 'database' && <Database size={13} />}
+                      {step.icon === 'shopping-bag' && <ShoppingBag size={13} />}
                       {step.icon === 'trending-up' && <TrendingUp size={13} />}
                       {step.icon === 'mail' && <Mail size={13} />}
                       {step.icon === 'terminal' && <Terminal size={13} />}

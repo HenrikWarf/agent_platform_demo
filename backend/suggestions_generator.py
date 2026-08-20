@@ -79,16 +79,17 @@ def generate_dynamic_followups(
         "Multi-Agent Capabilities Available:\n"
         "1. Analytics Agent: Executes BigQuery SQL queries on customer_rfm_summary, customer_demographics_360, "
         "customer_transactions, product_catalog, and customer_events.\n"
-        "2. Strategy Pipeline: Builds 3-pillar omnichannel campaign frameworks, 100% channel mix weightings, "
+        "2. Recommendation Pipeline: Curates 5 data-driven product recommendations from product_catalog matched to segment traits and past purchases.\n"
+        "3. Strategy Pipeline: Builds 3-pillar omnichannel campaign frameworks, 100% channel mix weightings, "
         "projected revenue recoveries in EUR, and testable A/B hypotheses.\n"
-        "3. Content Pipeline: Crafts brand-aligned Nordic creative copy (email template with subject/preview/body/CTA, "
-        "2 Instagram posts with hashtags, and SMS under 160 characters).\n"
-        "4. Multi-Agent Orchestrator: End-to-end full pipeline execution connecting data -> strategy -> creative.\n\n"
+        "4. Content Pipeline: Crafts brand-aligned Nordic creative copy (email template, social media posts, SMS under 160 chars).\n"
+        "5. Multi-Agent Orchestrator: End-to-end full pipeline execution connecting data -> recommendations -> strategy -> creative.\n\n"
         "Distribution Requirements for the 6 Questions:\n"
         "- 1-2 BigQuery SQL drill-down questions (agent: 'Analytics Agent', category: 'analytics', color: 'var(--color-success)')\n"
+        "- 1 Product recommendation question (agent: 'Recommendation Pipeline', category: 'recommendation', color: '#10b981')\n"
         "- 1-2 Campaign strategy / A/B testing questions (agent: 'Strategy Pipeline', category: 'strategy', color: 'var(--color-purple)')\n"
-        "- 1-2 Creative copy asset generation questions (agent: 'Content Pipeline', category: 'content', color: 'var(--color-warning)')\n"
-        "- 1 End-to-end multi-agent orchestration or cross-channel validation question (agent: 'Multi-Agent Orchestrator', category: 'campaign', color: '#3b82f6')\n\n"
+        "- 1 Creative copy asset generation question (agent: 'Content Pipeline', category: 'content', color: 'var(--color-warning)')\n"
+        "- 1 End-to-end multi-agent orchestration question (agent: 'Multi-Agent Orchestrator', category: 'campaign', color: '#3b82f6')\n\n"
         "All questions must directly build upon the topics, customer segments, collections, and insights discussed in the conversation."
     )
 
@@ -111,22 +112,17 @@ def generate_dynamic_followups(
                 response_schema=DynamicSuggestionsResult,
             ),
         )
-        parsed: DynamicSuggestionsResult = response.parsed
-        if parsed and parsed.questions:
-            return [q.model_dump() for q in parsed.questions[:6]]
-    except Exception as exc:
-        logger.error(f"Failed to generate dynamic suggestions via Gemini: {exc}")
+        if response.parsed and response.parsed.questions:
+            return [q.model_dump() for q in response.parsed.questions]
+    except Exception as e:
+        logger.warning(f"Dynamic suggestions call failed ({e}). Using smart fallbacks.")
 
-    # Fallback to rich contextual defaults if API call is unavailable
-    return _get_fallback_suggestions(current_segment)
-
-
-def _get_fallback_suggestions(segment: str) -> list[dict[str, Any]]:
-    """Contextual fallback pool if Gemini API is unreachable."""
+    # Context-aware fallback templates
+    segment = current_segment if current_segment != "All Cohorts (Full Dataset)" else "VIP Fashionistas"
     return [
         {
-            "title": "RFM Spend & Churn Drill-Down",
-            "prompt": f"Query BigQuery to calculate average order value in EUR, recency in days, and churn risk for '{segment}'.",
+            "title": f"Drill-down on {segment}",
+            "prompt": f"Analyze the top product categories and average order value for our '{segment}' cohort in BigQuery.",
             "agent": "Analytics Agent",
             "badge": "BigQuery SQL",
             "color": "var(--color-success)",
@@ -134,12 +130,12 @@ def _get_fallback_suggestions(segment: str) -> list[dict[str, Any]]:
             "segment": segment
         },
         {
-            "title": "Channel Cart Abandonment",
-            "prompt": f"Analyze behavioral events in BigQuery for '{segment}': compare cart_abandon vs purchase across App and Online.",
-            "agent": "Analytics Agent",
-            "badge": "Behavioral",
-            "color": "var(--color-success)",
-            "category": "analytics",
+            "title": "5-Product Segment Curation",
+            "prompt": f"Recommend 5 curated products for our '{segment}' cohort based on their demographics and purchase history.",
+            "agent": "Recommendation Pipeline",
+            "badge": "Curated Assortment",
+            "color": "#10b981",
+            "category": "recommendation",
             "segment": segment
         },
         {
@@ -171,7 +167,7 @@ def _get_fallback_suggestions(segment: str) -> list[dict[str, Any]]:
         },
         {
             "title": "End-to-End Campaign Execution",
-            "prompt": f"Run full pipeline for '{segment}': Extract customer metrics -> develop 3-pillar strategy -> craft creative assets.",
+            "prompt": f"Run full pipeline for '{segment}': Extract customer metrics -> recommend products -> develop 3-pillar strategy -> craft creative assets.",
             "agent": "Multi-Agent Orchestrator",
             "badge": "Full Flow",
             "color": "#3b82f6",

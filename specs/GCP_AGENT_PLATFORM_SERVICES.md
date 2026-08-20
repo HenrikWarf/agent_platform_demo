@@ -84,17 +84,16 @@ ADK provides enterprise-grade abstractions that eliminate boilerplate and enforc
                              │        (Root Agent / Router)     │
                              └─────────────────┬────────────────┘
                                                │
-               ┌───────────────────────────────┼───────────────────────────────┐
-               │ (Direct Delegate)             │ (Stateful Pipeline)           │ (Stateful Pipeline)
-               v                               v                               v
-┌──────────────────────────────┐ ┌──────────────────────────────┐ ┌──────────────────────────────┐
-│       Analytics Agent        │ │      Strategy Pipeline       │ │       Content Pipeline       │
-│  • Tools: query_customer_data│ │  (SequentialAgent)           │ │  (SequentialAgent)           │
-│  • Skills: bigquery_analytics│ │  1. strategy_reasoner (LLM)  │ │  1. content_reasoner (LLM)   │
-│  • MCP: mcp_data_toolset     │ │  2. strategy_formatter (JSON)│ │  2. content_formatter (JSON) │
-└──────────────────────────────┘ └──────────────────────────────┘ └──────────────────────────────┘
+                ┌──────────────────────────────┼──────────────────────────────┬──────────────────────────────┐
+                │ (Direct Delegate)            │ (Stateful Pipeline)          │ (Stateful Pipeline)          │ (Stateful Pipeline)
+                v                              v                              v                              v
+┌──────────────────────────────┐┌──────────────────────────────┐┌──────────────────────────────┐┌──────────────────────────────┐
+│       Analytics Agent        ││   Recommendation Pipeline    ││      Strategy Pipeline       ││       Content Pipeline       │
+│  • Tools: query_customer_data││  (SequentialAgent)           ││  (SequentialAgent)           ││  (SequentialAgent)           │
+│  • Skills: bigquery_analytics││  1. recommendation_reasoner  ││  1. strategy_reasoner (LLM)  ││  1. content_reasoner (LLM)   │
+│  • MCP: mcp_data_toolset     ││  2. recommendation_formatter ││  2. strategy_formatter (JSON)││  2. content_formatter (JSON) │
+└──────────────────────────────┘└──────────────────────────────┘└──────────────────────────────┘└──────────────────────────────┘
 ```
-
 1. **The Core Agent (`Agent`)**:
    The fundamental unit representing an LLM reasoner with a defined persona, instructions, and tools:
    ```python

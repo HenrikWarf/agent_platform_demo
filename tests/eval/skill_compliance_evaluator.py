@@ -12,6 +12,7 @@ class _SkillComplianceVerdict(BaseModel):
     strategy_skill_compliant: bool
     content_skill_compliant: bool
     analytics_skill_compliant: bool
+    recommendation_skill_compliant: bool
     explanation: str
 
 
@@ -36,7 +37,7 @@ def _extract_text(content):
 
 
 def evaluate(instance):
-    """Evaluates whether the agent output conforms to Crazy Fashion's 3 skills."""
+    """Evaluates whether the agent output conforms to Crazy Fashion's 4 skills."""
     prompt_text = _extract_text(instance.get("prompt", ""))
     response_text = _extract_text(instance.get("response", ""))
 
@@ -58,13 +59,17 @@ Skill Rules:
 3. `bigquery-customer-analytics` (for data tasks):
    - Data summaries are fact-grounded in BigQuery query results without fabricated numbers.
    - Monetary values in EUR (€).
-4. Direct Q&A / Safety:
+4. `product-recommender` (for merchandise recommendation tasks):
+   - Curates exactly 5 products from catalog with valid product_id, product_name, category, price_eur, and sustainability status.
+   - Provides clear 2-3 sentence data-driven reasoning for each recommended item linked to segment attributes.
+   - Outlines an overarching merchandising strategy for the segment.
+5. Direct Q&A / Safety:
    - For direct questions or adversarial requests, skill rules that do not apply should be marked compliant.
 
 User Prompt: {prompt_text}
 Agent Response: {response_text[:3500]}
 
-Return JSON with score (1 to 5), strategy_skill_compliant (bool), content_skill_compliant (bool), analytics_skill_compliant (bool), and explanation."""
+Return JSON with score (1 to 5), strategy_skill_compliant (bool), content_skill_compliant (bool), analytics_skill_compliant (bool), recommendation_skill_compliant (bool), and explanation."""
 
     gemini_location = os.environ.get("GEMINI_LOCATION", "global")
     client = genai.Client(location=gemini_location)
@@ -89,7 +94,8 @@ Return JSON with score (1 to 5), strategy_skill_compliant (bool), content_skill_
             "explanation": (
                 f"[Strategy Compliant: {verdict.strategy_skill_compliant} | "
                 f"Content Compliant: {verdict.content_skill_compliant} | "
-                f"Analytics Compliant: {verdict.analytics_skill_compliant}] {verdict.explanation}"
+                f"Analytics Compliant: {verdict.analytics_skill_compliant} | "
+                f"Recommendation Compliant: {verdict.recommendation_skill_compliant}] {verdict.explanation}"
             ),
         }
     except Exception as exc:
