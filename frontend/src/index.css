@@ -3,11 +3,11 @@
 :root, [data-theme="light"] {
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
-  --bg-navbar: rgba(255, 255, 255, 0.92);
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-hover: rgba(241, 245, 249, 0.95);
-  --border-color: rgba(0, 0, 0, 0.09);
-  --border-highlight: rgba(66, 133, 244, 0.4);
+  --bg-navbar: rgba(255, 255, 255, 0.98);
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --border-color: #e2e8f0;
+  --border-highlight: rgba(37, 99, 235, 0.4);
 
   --color-primary: #2563eb;
   --color-purple: #9333ea;
@@ -19,11 +19,11 @@
   --text-muted: #475569;
   --text-dim: #64748b;
 
-  --panel-bg: rgba(241, 245, 249, 0.85);
-  --code-bg: rgba(226, 232, 240, 0.85);
+  --panel-bg: #f8fafc;
+  --code-bg: #f1f5f9;
   --input-bg: #ffffff;
   --input-border: #cbd5e1;
-  --chip-bg: rgba(0, 0, 0, 0.04);
+  --chip-bg: #ffffff;
   --dropdown-bg: #ffffff;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;

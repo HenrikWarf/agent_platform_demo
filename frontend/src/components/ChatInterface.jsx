@@ -661,39 +661,41 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
 
         {/* Dynamic Objective Steering & Follow-Up Accordion */}
         <details style={{
-          background: 'var(--chip-bg)',
+          background: 'var(--bg-secondary)',
           border: '1px solid var(--border-color)',
           borderRadius: '12px',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
           overflow: 'hidden',
           flexShrink: 0,
-          transition: 'border-color 0.2s ease',
+          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
         }}>
           <summary style={{
             fontSize: '0.78rem',
             color: 'var(--text-main)',
             fontWeight: 700,
             cursor: 'pointer',
-            padding: '0.65rem 0.95rem',
+            padding: '0.7rem 1rem',
             listStyle: 'none',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             userSelect: 'none',
-            background: 'rgba(66, 133, 244, 0.04)'
+            background: 'var(--bg-secondary)',
+            borderBottom: '1px solid var(--border-color)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
               <span style={{ fontSize: '0.95rem' }}>💡</span>
-              <span>Objective Steering & Interactive Suggestions</span>
+              <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>Objective Steering & Interactive Suggestions</span>
               <span style={{
                 fontSize: '0.68rem',
-                fontWeight: 600,
-                background: 'var(--card-bg)',
+                fontWeight: 700,
+                background: 'rgba(37, 99, 235, 0.08)',
                 color: 'var(--color-primary)',
-                border: '1px solid var(--border-color)',
-                padding: '0.1rem 0.45rem',
-                borderRadius: '10px'
+                border: '1px solid rgba(37, 99, 235, 0.2)',
+                padding: '0.12rem 0.5rem',
+                borderRadius: '12px'
               }}>
-                {activeQuestions.length} Questions
+                {activeQuestions.length} Available
               </span>
             </div>
             <button
@@ -705,29 +707,31 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
               }}
               title="Shuffle & rotate suggestions"
               style={{
-                background: 'var(--card-bg)',
+                background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '6px',
                 color: 'var(--text-muted)',
                 fontSize: '0.7rem',
-                padding: '0.2rem 0.55rem',
+                fontWeight: 600,
+                padding: '0.25rem 0.6rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
                 transition: 'all 0.15s'
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
             >
               <Shuffle size={12} />
               Shuffle Ideas
             </button>
           </summary>
 
-          <div style={{ padding: '0.75rem 0.95rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-primary)' }}>
             {/* Category Steering Tabs */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
               {OBJECTIVE_CATEGORIES.map(cat => {
                 const Icon = cat.icon;
                 const isSelected = selectedCategory === cat.id;
@@ -738,16 +742,17 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                     onClick={() => setSelectedCategory(cat.id)}
                     style={{
                       fontSize: '0.72rem',
-                      fontWeight: isSelected ? 700 : 500,
-                      background: isSelected ? 'var(--color-primary)' : 'var(--card-bg)',
+                      fontWeight: isSelected ? 700 : 600,
+                      background: isSelected ? 'var(--color-primary)' : 'var(--bg-secondary)',
                       color: isSelected ? '#ffffff' : 'var(--text-main)',
                       border: isSelected ? '1px solid var(--color-primary)' : '1px solid var(--border-color)',
-                      padding: '0.3rem 0.65rem',
+                      padding: '0.35rem 0.75rem',
                       borderRadius: '20px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.35rem',
+                      boxShadow: isSelected ? '0 2px 8px rgba(37, 99, 235, 0.25)' : '0 1px 2px rgba(0,0,0,0.03)',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -760,12 +765,14 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
 
             {/* Category Description Banner */}
             <div style={{
-              fontSize: '0.72rem',
+              fontSize: '0.73rem',
               color: 'var(--text-muted)',
-              background: 'rgba(0,0,0,0.02)',
-              padding: '0.35rem 0.6rem',
-              borderRadius: '6px',
-              borderLeft: `3px solid ${currentCategoryObj?.color || 'var(--color-primary)'}`
+              background: 'var(--bg-secondary)',
+              padding: '0.45rem 0.75rem',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)',
+              borderLeft: `3px solid ${currentCategoryObj?.color || 'var(--color-primary)'}`,
+              lineHeight: '1.4'
             }}>
               {currentCategoryObj?.desc}
             </div>
@@ -774,10 +781,10 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '0.5rem',
-              maxHeight: '220px',
+              gap: '0.6rem',
+              maxHeight: '230px',
               overflowY: 'auto',
-              padding: '4px',
+              padding: '2px',
               paddingRight: '0.3rem'
             }}>
               {activeQuestions.map((q, idx) => (
@@ -785,48 +792,52 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                   key={idx}
                   onClick={() => handleSelectQuestion(q)}
                   style={{
-                    background: 'var(--card-bg)',
+                    background: 'var(--bg-secondary)',
                     border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    padding: '0.6rem 0.8rem',
+                    borderRadius: '10px',
+                    padding: '0.65rem 0.85rem',
                     cursor: 'pointer',
-                    transition: 'border-color 0.18s ease, background 0.18s ease',
+                    transition: 'border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.3rem',
+                    gap: '0.35rem',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
                     position: 'relative'
                   }}
                   className="prompt-chip"
                   onMouseEnter={e => {
                     e.currentTarget.style.borderColor = 'var(--color-primary)';
                     e.currentTarget.style.background = 'var(--bg-card-hover)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.08)';
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.borderColor = 'var(--border-color)';
-                    e.currentTarget.style.background = 'var(--card-bg)';
+                    e.currentTarget.style.background = 'var(--bg-secondary)';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.03)';
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <span style={{ color: 'var(--color-primary)' }}>▸</span> {q.title}
+                    <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span style={{ color: 'var(--color-primary)', fontSize: '0.8rem' }}>▸</span> {q.title}
                     </span>
                     <span style={{
-                      fontSize: '0.62rem',
-                      fontWeight: 600,
-                      padding: '0.1rem 0.35rem',
-                      borderRadius: '4px',
-                      background: q.badge ? 'rgba(66,133,244,0.12)' : 'var(--chip-bg)',
-                      color: q.color || 'var(--text-muted)'
+                      fontSize: '0.63rem',
+                      fontWeight: 700,
+                      padding: '0.12rem 0.45rem',
+                      borderRadius: '5px',
+                      background: 'rgba(37, 99, 235, 0.07)',
+                      color: q.color || 'var(--color-primary)',
+                      border: '1px solid rgba(0,0,0,0.06)'
                     }}>
                       {q.badge || q.agent}
                     </span>
                   </div>
 
                   <p style={{
-                    fontSize: '0.7rem',
+                    fontSize: '0.71rem',
                     color: 'var(--text-muted)',
                     margin: 0,
-                    lineHeight: '1.35',
+                    lineHeight: '1.4',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
@@ -835,11 +846,13 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                     {q.prompt}
                   </p>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.1rem', fontSize: '0.65rem', color: 'var(--text-dim)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.1rem', fontSize: '0.66rem', color: 'var(--text-dim)' }}>
                     {q.segment && q.segment !== 'All Cohorts (Full Dataset)' ? (
-                      <span style={{ color: 'var(--color-purple)', fontWeight: 600 }}>Cohort: {q.segment}</span>
+                      <span style={{ color: 'var(--color-purple)', fontWeight: 700, background: 'rgba(147, 51, 234, 0.08)', padding: '0.08rem 0.35rem', borderRadius: '4px' }}>
+                        Cohort: {q.segment}
+                      </span>
                     ) : <span />}
-                    <span style={{ color: 'var(--color-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <span style={{ color: 'var(--color-primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
                       Populate <ArrowRight size={10} />
                     </span>
                   </div>
