@@ -331,11 +331,16 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
   const [currentArmor, setCurrentArmor] = useState({ passed: true });
   const [selectedCategory, setSelectedCategory] = useState('recommended');
   const [shuffleSeed, setShuffleSeed] = useState(0);
-  const messagesEndRef = useRef(null);
+  const messageContainerRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messageContainerRef.current) {
+      messageContainerRef.current.scrollTo({
+        top: messageContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages, loading]);
 
   const activeQuestions = useMemo(() => {
@@ -357,10 +362,10 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
     if (questionObj.segment && questionObj.segment !== 'All Cohorts (Full Dataset)') {
       setSegment(questionObj.segment);
     }
-    // Smoothly focus input for editing or immediate send
+    // Smoothly focus input without causing viewport or container jumps
     setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
+      inputRef.current?.focus({ preventScroll: true });
+    }, 30);
   };
 
   const handleSubmit = (e) => {
@@ -476,7 +481,7 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
         </div>
 
         {/* Message Stream */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.2rem', paddingRight: '0.4rem', minHeight: 0 }}>
+        <div ref={messageContainerRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.2rem', paddingRight: '0.4rem', minHeight: 0 }}>
           {messages.map((msg, i) => (
             <div key={i} style={{
               display: 'flex',
@@ -652,7 +657,6 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
               <span>Orchestrating agents via A2A protocol (Analytics ➔ Strategy ➔ Content)...</span>
             </div>
           )}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Dynamic Objective Steering & Follow-Up Accordion */}
@@ -661,7 +665,8 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
           border: '1px solid var(--border-color)',
           borderRadius: '12px',
           overflow: 'hidden',
-          transition: 'all 0.2s ease',
+          flexShrink: 0,
+          transition: 'border-color 0.2s ease',
         }}>
           <summary style={{
             fontSize: '0.78rem',
@@ -772,7 +777,8 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
               gap: '0.5rem',
               maxHeight: '220px',
               overflowY: 'auto',
-              paddingRight: '0.2rem'
+              padding: '4px',
+              paddingRight: '0.3rem'
             }}>
               {activeQuestions.map((q, idx) => (
                 <div
@@ -782,9 +788,9 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                     background: 'var(--card-bg)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    padding: '0.55rem 0.75rem',
+                    padding: '0.6rem 0.8rem',
                     cursor: 'pointer',
-                    transition: 'all 0.18s ease',
+                    transition: 'border-color 0.18s ease, background 0.18s ease',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.3rem',
@@ -793,13 +799,11 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                   className="prompt-chip"
                   onMouseEnter={e => {
                     e.currentTarget.style.borderColor = 'var(--color-primary)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(66, 133, 244, 0.12)';
+                    e.currentTarget.style.background = 'var(--bg-card-hover)';
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.borderColor = 'var(--border-color)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.background = 'var(--card-bg)';
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
@@ -846,7 +850,7 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
         </details>
 
         {/* Input Bar */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.6rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.6rem', flexShrink: 0 }}>
           <input
             ref={inputRef}
             type="text"
