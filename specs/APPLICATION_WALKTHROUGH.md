@@ -56,6 +56,7 @@ This document provides an end-to-end, detailed technical walkthrough of every la
 The frontend is built with **React 18**, **Vite**, and **Lucide Icons**. It uses CSS custom properties for instant light/dark mode theme toggling without page reloads. The application includes 6 tabs: **Chat**, **Agent Graph**, **Skills Inspector**, **BigQuery Data**, **A2A Explorer**, and **Traffic Simulator & OTel**.
 
 #### Core Interactive Chat Capabilities
+- **Live Background Execution & Skill Trace**: Real-time SSE streaming indicator displaying step-by-step agent transitions, skill bindings (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`), BigQuery SQL tool executions, and Model Armor security checks.
 - **Dynamic AI Follow-Up Generator**: Calls `/api/suggestions/generate` (powered by Gemini 3.6 Flash on Vertex AI) to inspect recent conversation turns and propose 6 hyper-relevant, structured follow-up questions mapped to target agents (`Analytics Agent`, `Strategy Pipeline`, `Content Pipeline`, `Multi-Agent Orchestrator`).
 - **Interactive Objective Steering Accordion**: Categorized questions (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel) with shuffle and "✨ Generate AI Follow-ups" button. Clicking any question populates the prompt box smoothly.
 - **Full-Screen Chat Focus View**: A top control bar toggle (`Maximize2` / `Minimize2` and `Escape` key shortcut) expands the chat into a distraction-free full viewport overlay covering all menus and side panels.

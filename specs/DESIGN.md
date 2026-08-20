@@ -194,6 +194,7 @@ CSS custom properties for instant light/dark theme switching:
 ```
 
 ### 5.2 Response & Interactive UI Components
+- **Live Background Execution & Skill Trace**: Real-time SSE streaming visualizer showing active sub-agents (`marketing_orchestrator`, `analytics_agent`, `strategy_pipeline`, `content_pipeline`), skill bindings (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`), BigQuery SQL tool invocations, and Model Armor security checks.
 - **Collapsible SQL Accordion**: BigQuery SQL queries rendered in clean, flush-left collapsible `<details><summary>` accordions (`🔍 View Executed BigQuery SQL Query`).
 - **Dynamic AI Follow-Up Suggestions**: Server-side suggestions engine using Gemini 3.6 Flash on Vertex AI (`POST /api/suggestions/generate`) to inspect conversation turns and generate 6 context-rich follow-up prompts with target agent mappings.
 - **Interactive Objective Steering Accordion**: Objective categories (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel), shuffle button, and "✨ Generate AI Follow-ups" trigger button.
@@ -205,7 +206,7 @@ CSS custom properties for instant light/dark theme switching:
 ### 5.3 Component Architecture
 | Component | Responsibility |
 |-----------|---------------|
-| `ChatInterface.jsx` | Main chat with markdown rendering, SQL accordion, Dynamic AI Follow-ups, full-screen focus view |
+| `ChatInterface.jsx` | Main chat with SSE live background execution trace, markdown rendering, SQL accordion, Dynamic AI Follow-ups, full-screen focus view |
 | `A2AExplorer.jsx` | A2A protocol explorer with full-screen agent card modal |
 | `AgentGraphVisualizer.jsx` | Agent interaction flow graph |
 | `SimulatorControls.jsx` | Real traffic simulator with per-agent KPI breakdown |

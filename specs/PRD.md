@@ -50,6 +50,7 @@ The platform dynamically classifies user prompts into three execution paths:
 ### 3.5 UI/UX & Interactive Capabilities
 - **Theme Engine**: Light Mode default (`data-theme="light"`) with Dark Mode toggle switch.
 - **Dynamic AI Follow-Up Generator**: Server-side contextual suggestions engine (`/api/suggestions/generate`) powered by Gemini 3.6 Flash on Vertex AI.
+- **Live Background Execution & Skill Trace**: Real-time SSE streaming indicator displaying step-by-step agent transitions, skill bindings (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`), BigQuery SQL tool executions, and Model Armor security checks.
 - **Interactive Objective Steering Accordion**: Categorized sample objectives (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel) with shuffle and "✨ Generate AI Follow-ups" button.
 - **Full-Screen Chat Focus View**: Top control bar toggle (`Maximize2` / `Minimize2` and `Escape` key) expanding the chat view into a distraction-free full viewport overlay.
 - **Clean Contextual Dispatch**: Direct prompt transmission without artificial cohort prefix/suffix strings.

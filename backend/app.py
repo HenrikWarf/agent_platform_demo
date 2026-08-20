@@ -5,6 +5,7 @@ Exposes Agent Runtime proxy, Agent Registry Skills, BigQuery, and Evaluation end
 The backend is a thin API layer — all agent orchestration is delegated to the
 deployed ADK Agent on Vertex AI Agent Runtime via AgentRuntimeClient.
 """
+import json
 import logging
 import os
 import sys
@@ -14,6 +15,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 # Ensure project root directory is in Python path for direct or package execution
@@ -328,7 +330,7 @@ def process_chat(req: ChatRequest):
 
     result = runtime_client.query(
         prompt=req.prompt,
-        target_segment=req.target_segment
+        target_segment=req.target_segment or "All Cohorts (Full Dataset)"
     )
     result["agent_gateway"] = {
         "resource": Config.AGENT_GATEWAY_URL,
@@ -337,6 +339,20 @@ def process_chat(req: ChatRequest):
         "model_armor_floor_id": Config.MODEL_ARMOR_FLOOR_ID,
     }
     return result
+
+@app.post("/api/chat/stream")
+def process_chat_stream(req: ChatRequest):
+    """Streams real-time agent background execution steps, tool calls, and final response via SSE."""
+    logger.info(f"Received streaming chat request: '{req.prompt}'")
+
+    def event_generator():
+        for chunk in runtime_client.query_stream(
+            prompt=req.prompt,
+            target_segment=req.target_segment or "All Cohorts (Full Dataset)"
+        ):
+            yield f"data: {json.dumps(chunk)}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.post("/api/stream_reasoning_engine")
 @app.post("/api/query_reasoning_engine")

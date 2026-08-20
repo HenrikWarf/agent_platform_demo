@@ -38,11 +38,32 @@
       "receiver_id": "analytics_agent",
       "skill_used": "bigquery-customer-analytics"
     }
+  ],
+  "steps": [
+    {
+      "id": "step_orch_1",
+      "timestamp": "12:38:15",
+      "stage": "orchestrating",
+      "agent": "marketing_orchestrator",
+      "agent_name": "Orchestrator Agent (A2A Supervisor)",
+      "title": "A2A Multi-Agent Supervisor Initialized",
+      "detail": "Analyzing user objective intent and evaluating optimal routing path...",
+      "status": "completed",
+      "icon": "cpu"
+    }
   ]
 }
 ```
 
-### 1.2 Dynamic AI Follow-Up Suggestions Endpoint
+### 1.2 Live Background Execution Streaming Endpoint
+- **URL**: `POST /api/chat/stream`
+- **Media Type**: `text/event-stream` (Server-Sent Events)
+- **Description**: Streams live multi-agent execution steps, sub-agent transitions, skill invocations, and BigQuery tool calls as they occur in real time on Vertex AI Agent Runtime, culminating in the final deliverable cards payload.
+- **Event Types**:
+  - `data: {"type": "step", "step": { "id": "...", "timestamp": "...", "stage": "delegation", "agent": "analytics_agent", "title": "Routing to Analytics Agent", "detail": "Activating skill 'bigquery-customer-analytics'...", "skill": "bigquery-customer-analytics", "status": "running", "icon": "database" }}`
+  - `data: {"type": "final", "data": { ... full deliverable response ... }, "steps": [ ... full execution trace ... ]}`
+
+### 1.3 Dynamic AI Follow-Up Suggestions Endpoint
 - **URL**: `POST /api/suggestions/generate`
 - **Description**: Inspects recent conversation history and uses Gemini 3.6 Flash on Vertex AI (`location=global`) to generate 6 hyper-relevant, structured follow-up questions mapped to target agents.
 - **Request**:
