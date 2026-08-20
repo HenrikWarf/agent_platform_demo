@@ -28,6 +28,7 @@ env:
   GCP_REGION: us-central1
   GAR_REPOSITORY: agent-platform
   BIGQUERY_DATASET: marketing_analytics
+  GEMINI_LOCATION: global
 
 jobs:
   # ============================================================
@@ -39,7 +40,7 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'backend_only')) }}
       frontend: ${{ steps.filter.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'frontend_only')) }}
-      agents: ${{ steps.filter.outputs.agents == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }}
+      agents: ${{ steps.filter.outputs.agents == 'true' || steps.filter.outputs.eval == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }}
       skills: ${{ steps.filter.outputs.skills == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'skills_only')) }}
       infra: ${{ steps.filter.outputs.infra == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'infra_only')) }}
       any_deploy: ${{ steps.summarize.outputs.any_deploy }}
@@ -63,6 +64,8 @@ jobs:
             skills:
               - 'skills/**'
               - 'deploy/register_skills.py'
+            eval:
+              - 'tests/eval/**'
             infra:
               - 'deploy/agent_gateway.yaml'
               - 'deploy/enable_observability_permissions.sh'
@@ -74,7 +77,7 @@ jobs:
           echo "|-----------|---------|-------------|" >> $GITHUB_STEP_SUMMARY
           echo "| Backend   | ${{ steps.filter.outputs.backend }} | ${{ steps.filter.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'backend_only')) }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend  | ${{ steps.filter.outputs.frontend }} | ${{ steps.filter.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'frontend_only')) }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Agents    | ${{ steps.filter.outputs.agents }} | ${{ steps.filter.outputs.agents == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Agents    | ${{ steps.filter.outputs.agents }} | ${{ steps.filter.outputs.agents == 'true' || steps.filter.outputs.eval == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Skills    | ${{ steps.filter.outputs.skills }} | ${{ steps.filter.outputs.skills == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'skills_only')) }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Infra     | ${{ steps.filter.outputs.infra }} | ${{ steps.filter.outputs.infra == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'infra_only')) }} |" >> $GITHUB_STEP_SUMMARY
 
@@ -93,12 +96,93 @@ jobs:
           fi
 
   # ============================================================
-  # Job 2: Selective deployment (only changed components)
+  # Job 2: Pre-Deployment Evaluation Gate (Quality Flywheel)
+  # ============================================================
+  pre-deploy-eval:
+    name: Pre-Deployment ADK Multi-Agent Evaluation Gate
+    needs: [changes]
+    if: needs.changes.outputs.agents == 'true' || needs.changes.outputs.skills == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Resolve GCP Auth Strategy
+        id: auth_check
+        env:
+          SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          WIF_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+        run: |
+          if [ -n "$SA_KEY" ]; then
+            echo "AUTH_MODE=sa_key" >> $GITHUB_ENV
+          elif [ -n "$WIF_PROVIDER" ]; then
+            echo "AUTH_MODE=wif" >> $GITHUB_ENV
+          else
+            echo "AUTH_MODE=none" >> $GITHUB_ENV
+            echo "⚠️ No GCP credentials found in repository secrets. Skipping pre-deploy eval gate."
+            exit 0
+          fi
+
+      - name: Authenticate to GCP (Service Account Key)
+        if: env.AUTH_MODE == 'sa_key'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate to GCP (Workload Identity Federation)
+        if: env.AUTH_MODE == 'wif'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Google Cloud SDK
+        if: env.AUTH_MODE != 'none'
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Run ADK Evaluation Suite (15 Golden Scenarios & 6 Metrics)
+        if: env.AUTH_MODE != 'none'
+        env:
+          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
+          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ env.GCP_REGION }}
+          GEMINI_LOCATION: global
+        run: |
+          echo "🧪 Running Pre-Deployment ADK Evaluation Suite..."
+          uv tool install google-agents-cli
+          agents-cli eval run \
+            --dataset tests/eval/datasets/crazy_fashion_eval.json \
+            --config tests/eval/eval_config.yaml
+
+      - name: Upload Evaluation Artifacts
+        if: always() && env.AUTH_MODE != 'none'
+        uses: actions/upload-artifact@v4
+        with:
+          name: adk-eval-results-${{ github.sha }}
+          path: |
+            artifacts/grade_results/
+            artifacts/traces/
+          retention-days: 14
+
+      - name: Pre-Deploy Evaluation Summary
+        if: always()
+        run: |
+          echo "## 🧪 Pre-Deployment Evaluation Gate Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Evaluated 15 golden operational scenarios against 6 custom domain judges." >> $GITHUB_STEP_SUMMARY
+          echo "Full visual HTML report and scorecards are available in run artifacts." >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================
+  # Job 3: Selective deployment (only changed components)
   # ============================================================
   deploy-to-gcp:
     name: Selective Service Deployment to GCP
-    needs: [changes]
-    if: needs.changes.outputs.any_deploy == 'true'
+    needs: [changes, pre-deploy-eval]
+    if: always() && needs.changes.outputs.any_deploy == 'true' && (needs.pre-deploy-eval.result == 'success' || needs.pre-deploy-eval.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -221,29 +305,6 @@ jobs:
             --region ${{ env.GCP_REGION }} \
             --no-confirm-project
 
-      - name: Smoke Test Governed Endpoint
-        if: needs.changes.outputs.agents == 'true'
-        continue-on-error: true
-        run: |
-          echo "🔍 Smoke testing governed :streamQuery endpoint..."
-          RE_ID=$(cat deployment_metadata.json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('resource_name',''))" 2>/dev/null || echo "")
-          if [ -z "$RE_ID" ]; then
-            echo "⚠️ No deployment_metadata.json found. Skipping smoke test."
-            exit 0
-          fi
-          RESP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-            -H "Content-Type: application/json" \
-            "https://${{ env.GCP_REGION }}-aiplatform.googleapis.com/v1beta1/${RE_ID}:streamQuery" \
-            -d '{"class_method":"stream_query","input":{"app_name":"app","user_id":"ci-smoke-test","new_message":{"role":"user","parts":[{"text":"health check"}]}}}' \
-            --max-time 30 || echo "000")
-          echo "Governed endpoint response code: $RESP"
-          if [ "$RESP" = "200" ] || [ "$RESP" = "403" ]; then
-            echo "✅ Governed path is reachable (403 = Model Armor screened, which is correct)"
-          else
-            echo "⚠️ Unexpected response code: $RESP"
-          fi
-
       # --- 5. Publish Agent to Gemini Enterprise ---
       - name: Publish Agent to Gemini Enterprise
         if: needs.changes.outputs.agents == 'true'
@@ -281,26 +342,16 @@ jobs:
           echo "| Infra (Gateway/Observability) | ${{ needs.changes.outputs.infra }} |" >> $GITHUB_STEP_SUMMARY
 
   # ============================================================
-  # Job 3: Post-deployment evaluation against live Agent Runtime
+  # Job 4: Post-deployment live smoke test against Agent Runtime & Gateway
   # ============================================================
-  post-deploy-eval:
-    name: Post-Deploy Quality Evaluation
+  post-deploy-smoke-test:
+    name: Post-Deploy Live Smoke Test
     needs: [changes, deploy-to-gcp]
     if: needs.changes.outputs.agents == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
 
       - name: Resolve GCP Auth Strategy
         id: auth_check
@@ -314,7 +365,7 @@ jobs:
             echo "AUTH_MODE=wif" >> $GITHUB_ENV
           else
             echo "AUTH_MODE=none" >> $GITHUB_ENV
-            echo "⚠️ No GCP credentials found. Skipping eval."
+            echo "⚠️ No GCP credentials found. Skipping smoke test."
             exit 0
           fi
 
@@ -336,19 +387,30 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Run Golden Marketing Benchmark Eval
-        env:
-          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
-          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
-          GCP_REGION: ${{ env.GCP_REGION }}
-          GEMINI_LOCATION: global
+      - name: Live Governed Endpoint Smoke Test
         run: |
-          echo "🧪 Running post-deployment evaluation against live Agent Runtime..."
-          PYTHONPATH=. python eval/run_eval.py
+          echo "🔍 Smoke testing live Reasoning Engine endpoint with Model Armor screening..."
+          RE_ID=$(cat deployment_metadata.json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('resource_name',''))" 2>/dev/null || echo "")
+          if [ -z "$RE_ID" ]; then
+            echo "⚠️ No deployment_metadata.json found. Skipping smoke test."
+            exit 0
+          fi
+          RESP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+            -H "Content-Type: application/json" \
+            "https://${{ env.GCP_REGION }}-aiplatform.googleapis.com/v1beta1/${RE_ID}:streamQuery" \
+            -d '{"class_method":"stream_query","input":{"app_name":"app","user_id":"ci-smoke-test","new_message":{"role":"user","parts":[{"text":"health check"}]}}}' \
+            --max-time 30 || echo "000")
+          echo "Governed endpoint response code: $RESP"
+          if [ "$RESP" = "200" ] || [ "$RESP" = "403" ]; then
+            echo "✅ Live Agent Runtime is responsive (403 = Model Armor active, 200 = Success)"
+          else
+            echo "❌ Unexpected response code from live endpoint: $RESP"
+            exit 1
+          fi
 
-      - name: Eval Summary
+      - name: Smoke Test Summary
         if: always()
         run: |
-          echo "## 🧪 Post-Deploy Evaluation" >> $GITHUB_STEP_SUMMARY
-          echo "Evaluated the deployed Agent Runtime with golden marketing benchmark prompts." >> $GITHUB_STEP_SUMMARY
-
+          echo "## 🔍 Live Smoke Test" >> $GITHUB_STEP_SUMMARY
+          echo "Live Agent Runtime endpoint verified responsive via governed path." >> $GITHUB_STEP_SUMMARY
