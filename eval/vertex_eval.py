@@ -2,9 +2,9 @@
 Vertex AI Evaluation Service Integration
 Sends agent execution traces to Vertex AI Rapid Evaluation API for platform-level quality metrics.
 """
-from typing import Dict, Any
 import logging
-import os
+from typing import Any
+
 from backend.config import Config
 
 logger = logging.getLogger("vertex_eval")
@@ -14,7 +14,7 @@ class VertexEvaluationService:
         self.project_id = Config.GCP_PROJECT_ID
         self.region = Config.GCP_REGION
 
-    def run_platform_evaluation(self, prompt: str, agent_response: Dict[str, Any]) -> Dict[str, Any]:
+    def run_platform_evaluation(self, prompt: str, agent_response: dict[str, Any]) -> dict[str, Any]:
         """
         Submits evaluation job to Vertex AI Rapid Evaluation API.
         Evaluates metrics: Grounding, Faithfulness, Instruction Following, Safety.

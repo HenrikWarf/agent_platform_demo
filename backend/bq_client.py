@@ -2,9 +2,10 @@
 BigQuery Client for GCP Agent Platform
 Executes analytical queries directly against Google Cloud BigQuery customer dataset.
 """
-import textwrap
-from typing import Dict, Any, List
 import logging
+import textwrap
+from typing import Any
+
 try:
     from .config import Config
 except ImportError:
@@ -34,7 +35,7 @@ class BigQueryClient:
                 logger.error(f"Failed to initialize GCP BigQuery SDK client for project '{self.project_id}': {e}")
         return self._client
 
-    def get_rfm_segments(self, segment_filter: str = "Dormant At-Risk") -> Dict[str, Any]:
+    def get_rfm_segments(self, segment_filter: str = "Dormant At-Risk") -> dict[str, Any]:
         """Queries customer dataset for RFM segmentation metrics."""
         if not self.client:
             raise RuntimeError("BigQuery client is not active.")
@@ -94,7 +95,7 @@ class BigQueryClient:
                 }
         except Exception as e:
             logger.error(f"Error executing BigQuery SQL for segment '{segment_filter}': {e}")
-            raise RuntimeError(f"BigQuery query execution failed: {e}")
+            raise RuntimeError(f"BigQuery query execution failed: {e}") from e
 
     def get_table_total_rows(self, table_name: str = "customer_rfm_summary") -> int:
         """Fetches live row count from BigQuery table metadata."""
@@ -110,9 +111,9 @@ class BigQueryClient:
             return table_ref.num_rows
         except Exception as e:
             logger.error(f"Error fetching table metadata for {table_name}: {e}")
-            raise RuntimeError(f"Failed to fetch metadata for table '{table_name}': {e}")
+            raise RuntimeError(f"Failed to fetch metadata for table '{table_name}': {e}") from e
 
-    def get_sample_customers(self, table_name: str = "customer_rfm_summary", limit: int = 10) -> List[Dict[str, Any]]:
+    def get_sample_customers(self, table_name: str = "customer_rfm_summary", limit: int = 10) -> list[dict[str, Any]]:
         """Returns sample rows of customer profiles from specified BigQuery table."""
         allowed_tables = ["customer_rfm_summary", "customer_demographics_360", "customer_transactions"]
         if table_name not in allowed_tables:
@@ -123,7 +124,8 @@ class BigQueryClient:
 
         query = f"SELECT * FROM `{self.project_id}.{self.dataset_id}.{table_name}` LIMIT {limit}"
         try:
-            import decimal, datetime
+            import datetime
+            import decimal
             query_job = self.client.query(query)
             results = list(query_job.result())
             rows = []
@@ -140,15 +142,16 @@ class BigQueryClient:
             return rows
         except Exception as e:
             logger.error(f"Error executing BigQuery sample query for table '{table_name}': {e}")
-            raise RuntimeError(f"BigQuery sample query failed: {e}")
+            raise RuntimeError(f"BigQuery sample query failed: {e}") from e
 
-    def execute_custom_sql(self, sql_query: str) -> List[Dict[str, Any]]:
+    def execute_custom_sql(self, sql_query: str) -> list[dict[str, Any]]:
         """Executes a custom SQL query against the BigQuery dataset and returns dict rows."""
         if not self.client:
             raise RuntimeError("BigQuery client is not active.")
 
         try:
-            import decimal, datetime
+            import datetime
+            import decimal
             query_job = self.client.query(sql_query)
             results = list(query_job.result())
             rows = []
@@ -165,6 +168,6 @@ class BigQueryClient:
             return rows
         except Exception as e:
             logger.error(f"Error executing custom BigQuery SQL '{sql_query}': {e}")
-            raise RuntimeError(f"Custom BigQuery SQL execution failed: {e}")
+            raise RuntimeError(f"Custom BigQuery SQL execution failed: {e}") from e
 
 

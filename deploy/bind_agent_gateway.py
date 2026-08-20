@@ -17,7 +17,6 @@ import json
 import subprocess
 import sys
 
-
 GATEWAY_RESOURCE = "projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway"
 ENGINE_RESOURCE = None  # Auto-detected from deployment_metadata.json
 
@@ -25,7 +24,7 @@ ENGINE_RESOURCE = None  # Auto-detected from deployment_metadata.json
 def get_engine_resource():
     """Read the Reasoning Engine resource name from deployment_metadata.json."""
     try:
-        with open("deployment_metadata.json", "r") as f:
+        with open("deployment_metadata.json") as f:
             data = json.load(f)
         return data.get("remote_agent_runtime_id", "")
     except FileNotFoundError:
@@ -83,7 +82,7 @@ def bind_gateway(engine_resource: str, gateway_resource: str):
         print("✅ Agent Gateway bound to Reasoning Engine!")
         print(f"   Gateway:  {gateway_resource}")
         print(f"   Engine:   {engine_resource}")
-        print(f"   Mode:     CLIENT_TO_AGENT (ingress governance)")
+        print("   Mode:     CLIENT_TO_AGENT (ingress governance)")
         print()
         print("   All query/streamQuery traffic now routes through Agent Gateway")
         print("   with Model Armor security policies enforced.")
@@ -91,7 +90,7 @@ def bind_gateway(engine_resource: str, gateway_resource: str):
 
 if __name__ == "__main__":
     engine = ENGINE_RESOURCE or get_engine_resource()
-    print(f"🔗 Binding Agent Gateway to Reasoning Engine...")
+    print("🔗 Binding Agent Gateway to Reasoning Engine...")
     print(f"   Engine:  {engine}")
     print(f"   Gateway: {GATEWAY_RESOURCE}")
     print()

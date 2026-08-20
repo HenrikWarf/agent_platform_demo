@@ -5,27 +5,30 @@ Exposes Agent Runtime proxy, Agent Registry Skills, BigQuery, and Evaluation end
 The backend is a thin API layer — all agent orchestration is delegated to the
 deployed ADK Agent on Vertex AI Agent Runtime via AgentRuntimeClient.
 """
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Dict, Any, Optional
 import logging
 import os
 import sys
+import threading
+import time as _time
+from typing import Any
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 # Ensure project root directory is in Python path for direct or package execution
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
-    from backend.config import Config
-    from backend.bq_client import BigQueryClient
-    from backend.skill_registry import SkillRegistry
     from backend.agent_runtime_client import AgentRuntimeClient
+    from backend.bq_client import BigQueryClient
+    from backend.config import Config
+    from backend.skill_registry import SkillRegistry
 except ImportError:
-    from config import Config
-    from bq_client import BigQueryClient
-    from skill_registry import SkillRegistry
     from agent_runtime_client import AgentRuntimeClient
+    from bq_client import BigQueryClient
+    from config import Config
+    from skill_registry import SkillRegistry
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -34,9 +37,9 @@ logger = logging.getLogger("agent_platform_backend")
 # OpenTelemetry Cloud Trace Initialization
 try:
     from opentelemetry import trace
+    from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
 
     tracer_provider = TracerProvider()
     cloud_exporter = CloudTraceSpanExporter(project_id=Config.GCP_PROJECT_ID)
@@ -74,15 +77,12 @@ skill_registry = SkillRegistry()
 
 class ChatRequest(BaseModel):
     prompt: str
-    target_segment: Optional[str] = "At-Risk Premium"
+    target_segment: str | None = "At-Risk Premium"
 
 class SimulatorToggleRequest(BaseModel):
     active: bool
 
 # ─── Synthetic Traffic Simulator ──────────────────────────────────────────────
-
-import threading
-import time as _time
 
 SYNTHETIC_PROMPTS = [
     {"prompt": "What is the average monetary value for Champions segment?", "segment": "Champions", "agent": "analytics"},
@@ -267,7 +267,7 @@ def get_agent_engine_manifest():
     import json
     metadata_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "deployment_metadata.json"))
     if os.path.exists(metadata_path):
-        with open(metadata_path, "r", encoding="utf-8") as f:
+        with open(metadata_path, encoding="utf-8") as f:
             return json.load(f)
     return {
         "deployment_target": "agent_runtime",
@@ -336,7 +336,7 @@ def process_chat(req: ChatRequest):
 
 @app.post("/api/stream_reasoning_engine")
 @app.post("/api/query_reasoning_engine")
-def stream_reasoning_engine(request: Dict[str, Any]):
+def stream_reasoning_engine(request: dict[str, Any]):
     """Vertex AI Agent Runtime streaming endpoint."""
     input_data = request.get("input", {})
     prompt = input_data.get("prompt") or request.get("prompt", "Analyze customer segment performance")
@@ -366,8 +366,9 @@ def get_a2a_agent_card():
 @app.post("/api/a2a/send-message")
 def send_a2a_message(req: A2AMessageRequest):
     """Send a message to the agent via the A2A JSON-RPC protocol."""
-    import requests as http_requests
     import uuid
+
+    import requests as http_requests
     if not runtime_client._base_url:
         raise HTTPException(status_code=503, detail="Agent Runtime not configured")
     rpc_url = f"{runtime_client._base_url}/a2a/app"
@@ -433,7 +434,7 @@ def run_evaluation():
         return result
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 if __name__ == "__main__":
     import uvicorn

@@ -16,14 +16,14 @@ os.environ["GOOGLE_API_USE_CLIENT_CERTIFICATE"] = "false"
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 import google.auth  # noqa: E402 — must come after env var setup
-from google.adk.apps import App
 from google.adk.agents import Agent, SequentialAgent
+from google.adk.apps import App
+from google.adk.integrations.agent_registry import AgentRegistry
 from google.adk.skills import load_skill_from_dir
 from google.adk.tools.skill_toolset import SkillToolset
-from google.adk.integrations.agent_registry import AgentRegistry
 
-from app.schemas import StrategySchema, ContentSchema
 from app.company_context import COMPANY_CONTEXT
+from app.schemas import ContentSchema, StrategySchema
 
 # ─── Project configuration ────────────────────────────────────────────────────
 
@@ -45,8 +45,8 @@ def _init_mcp_toolset(max_retries: int = 3, base_delay: float = 2.0):
     Agent Identity credentials inside Reasoning Engine containers may not be
     ready at module-import time, causing transient 401s from Agent Registry.
     """
-    import time
     import logging
+    import time
 
     logger = logging.getLogger(__name__)
     last_exc = None

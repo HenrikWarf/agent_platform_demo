@@ -60,3 +60,34 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
 
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "__pycache__",
+    ".google-agents-cli",
+    ".adk",
+    "artifacts",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (syntax errors, undefined variables, unused imports)
+    "I",   # isort (import ordering)
+    "B",   # flake8-bugbear (common bug patterns)
+    "UP",  # pyupgrade (modern Python syntax)
+]
+ignore = [
+    "E501", # line too long (common in LLM system prompts and SQL templates)
+    "B008", # function call in argument default (standard FastAPI pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "backend", "skills", "eval"]
+

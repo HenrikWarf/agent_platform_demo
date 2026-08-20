@@ -9,15 +9,15 @@ and skill registry — while the actual multi-agent workflow runs on managed inf
 Uses the Agent Engine `/api` passthrough to call the container's `/run_sse` endpoint
 (ADK streaming API). Traffic routes through Agent Gateway when bound.
 """
-import os
 import json
 import logging
+import os
 import uuid
-from typing import Dict, Any, Optional
+from typing import Any
 
-import requests
 import google.auth
 import google.auth.transport.requests
+import requests
 
 logger = logging.getLogger("agent_runtime_client")
 
@@ -48,14 +48,14 @@ class AgentRuntimeClient:
         # Build URLs: _base_url for /api passthrough, _governed_url for :streamQuery
         self._base_url = self._build_passthrough_url()
 
-    def _read_deployment_metadata(self) -> Optional[str]:
+    def _read_deployment_metadata(self) -> str | None:
         """Read runtime ID from deployment_metadata.json if it exists."""
         metadata_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "deployment_metadata.json")
         )
         if os.path.exists(metadata_path):
             try:
-                with open(metadata_path, "r", encoding="utf-8") as f:
+                with open(metadata_path, encoding="utf-8") as f:
                     data = json.load(f)
                 runtime_id = data.get("remote_agent_runtime_id", "")
                 if runtime_id:
@@ -65,7 +65,7 @@ class AgentRuntimeClient:
                 logger.warning(f"Failed to read deployment_metadata.json: {e}")
         return None
 
-    def _build_passthrough_url(self) -> Optional[str]:
+    def _build_passthrough_url(self) -> str | None:
         """Build the Agent Engine base URLs from the runtime resource ID.
 
         Two URL patterns are used:
@@ -87,7 +87,7 @@ class AgentRuntimeClient:
             return f"https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/{self.runtime_id}/api"
         return None
 
-    def _get_auth_headers(self) -> Dict[str, str]:
+    def _get_auth_headers(self) -> dict[str, str]:
         """Get authenticated headers using Google Cloud default credentials."""
         if self._credentials is None:
             self._credentials, _ = google.auth.default()
@@ -112,7 +112,7 @@ class AgentRuntimeClient:
         logger.info(f"Created session {session_id} for user {user_id}")
         return session_id
 
-    def query(self, prompt: str, target_segment: str = "At-Risk Premium") -> Dict[str, Any]:
+    def query(self, prompt: str, target_segment: str = "At-Risk Premium") -> dict[str, Any]:
         """Send a prompt to Agent Runtime via :streamQuery and return structured results.
 
         Uses the governed :streamQuery endpoint which flows through Agent Gateway
@@ -194,7 +194,7 @@ class AgentRuntimeClient:
 
     def _format_response(
         self, events: list, prompt: str, target_segment: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Format ADK SSE events into the frontend response structure.
 
         Extracts the final agent text response and any structured data from:
@@ -208,16 +208,13 @@ class AgentRuntimeClient:
         sql_executed = ""
         seen_agents = []
         last_text = ""
-        current_agent = ""
 
         for event in events:
             # SSE events have a nested content structure
             event_content = event.get("content", {})
 
-            # Track current agent from event-level author
+            # Track author
             author = event.get("author", "")
-            if author:
-                current_agent = author
 
             # Extract text content
             text = self._extract_text(event_content)
@@ -311,7 +308,7 @@ class AgentRuntimeClient:
         }
 
     @staticmethod
-    def _extract_text(content: dict) -> Optional[str]:
+    def _extract_text(content: dict) -> str | None:
         """Extract text content from an ADK SSE event content block."""
         if isinstance(content, dict):
             parts = content.get("parts", [])
@@ -321,7 +318,7 @@ class AgentRuntimeClient:
         return None
 
     @staticmethod
-    def _try_parse_json(text: str) -> Optional[Dict[str, Any]]:
+    def _try_parse_json(text: str) -> dict[str, Any] | None:
         """Try to parse a text string as JSON. Returns None if parsing fails."""
         if not text or not text.strip():
             return None
@@ -330,7 +327,7 @@ class AgentRuntimeClient:
         if text.startswith("```"):
             lines = text.split("\n")
             # Remove first and last lines (```json and ```)
-            lines = [l for l in lines if not l.strip().startswith("```")]
+            lines = [line for line in lines if not line.strip().startswith("```")]
             text = "\n".join(lines).strip()
         try:
             parsed = json.loads(text)
@@ -341,7 +338,7 @@ class AgentRuntimeClient:
         return None
 
     @staticmethod
-    def _extract_tool_results(content: dict) -> Optional[Dict[str, Any]]:
+    def _extract_tool_results(content: dict) -> dict[str, Any] | None:
         """Extract tool call results from an ADK SSE event content block."""
         if isinstance(content, dict):
             parts = content.get("parts", [])
@@ -358,7 +355,7 @@ class AgentRuntimeClient:
         return None
 
     @staticmethod
-    def _extract_tool_name(content: dict) -> Optional[str]:
+    def _extract_tool_name(content: dict) -> str | None:
         """Extract the tool/function name from an ADK SSE event content block."""
         if isinstance(content, dict):
             parts = content.get("parts", [])

@@ -5,9 +5,10 @@ Application-level prompt injection defense, PII masking, and threat detection.
 Note: This is NOT the GCP Agent Gateway (which is a managed infrastructure resource).
 This is an application-level safety layer that runs inside the backend.
 """
-from typing import Dict, Any
 import logging
 import re
+from typing import Any
+
 try:
     from .config import Config
 except ImportError:
@@ -27,7 +28,7 @@ class PromptSafetyGuard:
         self.floor_id = Config.MODEL_ARMOR_FLOOR_ID
         self.gateway_url = Config.AGENT_GATEWAY_URL or "projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway"
 
-    def inspect_and_sanitize(self, prompt: str) -> Dict[str, Any]:
+    def inspect_and_sanitize(self, prompt: str) -> dict[str, Any]:
         """
         Executes Model Armor inspection policies on prompt input.
         Verifies prompt against malicious injection patterns, script tags, and PII exposure.

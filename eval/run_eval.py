@@ -3,8 +3,8 @@
 Evaluation Runner Entrypoint for GCP Agent Platform
 Executes golden benchmark prompts and outputs accuracy summary for CI/CD.
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 

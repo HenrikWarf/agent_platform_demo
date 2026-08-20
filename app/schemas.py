@@ -4,16 +4,15 @@ Pydantic schemas for structured agent output.
 Used by formatter sub-agents with output_schema to enforce
 valid JSON responses for the Strategy and Content pipelines.
 """
-from pydantic import BaseModel, Field
-from typing import List
 
+from pydantic import BaseModel, Field
 
 # ─── Strategy Schema ──────────────────────────────────────────────────────────
 
 class CampaignPillar(BaseModel):
     pillar: str = Field(description="Name of the campaign pillar, e.g. 'Personalized Win-Back'")
     description: str = Field(description="One-sentence description of the pillar")
-    channels: List[str] = Field(description="2-3 marketing channels for this pillar, e.g. ['Email', 'SMS']")
+    channels: list[str] = Field(description="2-3 marketing channels for this pillar, e.g. ['Email', 'SMS']")
 
 
 class ChannelMix(BaseModel):
@@ -27,9 +26,9 @@ class StrategySchema(BaseModel):
     business_goal: str = Field(description="One-sentence business objective")
     target_cohort: str = Field(description="Target customer segment name")
     projected_revenue_recovery: str = Field(description="Projected revenue figure, e.g. '$1.2M'")
-    campaign_pillars: List[CampaignPillar] = Field(description="Exactly 3 campaign pillars")
-    channel_mix: List[ChannelMix] = Field(description="Exactly 4 channel allocations")
-    ab_testing_hypotheses: List[str] = Field(description="Exactly 3 A/B testing hypotheses")
+    campaign_pillars: list[CampaignPillar] = Field(description="Exactly 3 campaign pillars")
+    channel_mix: list[ChannelMix] = Field(description="Exactly 4 channel allocations")
+    ab_testing_hypotheses: list[str] = Field(description="Exactly 3 A/B testing hypotheses")
 
 
 # ─── Content Schema ──────────────────────────────────────────────────────────
@@ -48,5 +47,5 @@ class SocialPost(BaseModel):
 
 class ContentSchema(BaseModel):
     email_template: EmailTemplate = Field(description="Email marketing template")
-    social_posts: List[SocialPost] = Field(description="Exactly 2 social media posts")
+    social_posts: list[SocialPost] = Field(description="Exactly 2 social media posts")
     sms_copy: str = Field(description="SMS message, max 160 characters")

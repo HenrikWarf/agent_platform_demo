@@ -12,10 +12,10 @@ Usage:
 Note: Agent Runtime agents are AUTO-REGISTERED in Agent Registry after
 `agents-cli deploy` — no manual `gcloud alpha agent-registry` calls needed.
 """
+import logging
 import os
 import subprocess
 import sys
-import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("publish_agent")

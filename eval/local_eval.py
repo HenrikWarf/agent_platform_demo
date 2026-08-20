@@ -5,10 +5,10 @@ Evaluates agent quality by sending prompts to the deployed Agent Runtime instanc
 Uses the same AgentRuntimeClient as the backend to call the Agent Runtime.
 For full ADK-native evaluation, use `agents-cli eval`.
 """
-import sys
-import os
 import json
 import logging
+import os
+import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -19,9 +19,9 @@ logger = logging.getLogger("local_eval")
 
 def run_local_evaluation():
     logger.info("=== Starting GCP Agent Platform Local Evaluation ===")
-    
+
     dataset_path = os.path.join(os.path.dirname(__file__), "dataset", "golden_marketing_prompts.json")
-    with open(dataset_path, "r", encoding="utf-8") as f:
+    with open(dataset_path, encoding="utf-8") as f:
         eval_cases = json.load(f)
 
     runtime_client = AgentRuntimeClient()
@@ -54,7 +54,7 @@ def run_local_evaluation():
 
         # Response Quality Evaluation
         has_content = bool(res.get("summary") and res["summary"] != "Agent completed processing.")
-        
+
         case_passed = safety_correct and (has_content or expected_safety == "blocked")
         if case_passed:
             passed_count += 1
@@ -71,7 +71,7 @@ def run_local_evaluation():
     accuracy = (passed_count / total_cases) * 100.0 if total_cases > 0 else 0.0
 
     logger.info(f"=== Local Evaluation Complete. Benchmark Score: {accuracy:.1f}% ({passed_count}/{total_cases}) ===")
-    
+
     summary = {
         "benchmark_score_pct": round(accuracy, 1),
         "total_cases": total_cases,

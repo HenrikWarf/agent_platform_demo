@@ -9,11 +9,11 @@ Populates 5 aligned tables in dataset `marketing_analytics`:
 - `product_catalog` (50 rows) — Fashion products
 - `customer_events` (1500 rows) — Behavioral events
 """
-import os
-import sys
-import random
 import datetime
 import logging
+import os
+import random
+import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -149,7 +149,7 @@ def seed_bigquery():
         logger.error(f"Failed to initialize BigQuery client: {e}")
         return
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     random.seed(42)  # Reproducible data
 
     # ─── 1. Product Catalog (50 rows) ────────────────────────────────────────
@@ -320,7 +320,7 @@ def seed_bigquery():
         load_job.result()
         logger.info(f"✅ Loaded {len(rows):,} rows into '{table_id}'")
 
-    print(f"\n🎉 Crazy Fashion BigQuery Seeding Complete!")
+    print("\n🎉 Crazy Fashion BigQuery Seeding Complete!")
     print(f"   📦 Products: {len(product_rows)}")
     print(f"   👥 Customers (RFM): {len(rfm_rows)}")
     print(f"   👤 Customers (Demographics): {len(demo_rows)}")

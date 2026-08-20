@@ -3,12 +3,9 @@ BigQuery Analytics & Marketing Tools for ADK Agent.
 Provides tool functions that the ADK Agent uses to query BigQuery,
 generate marketing strategies, and create marketing content.
 """
-import os
-import json
-import re
 import logging
-import textwrap
-from typing import Any
+import os
+import re
 
 from google.adk.tools import ToolContext
 
@@ -37,9 +34,9 @@ def _get_project_and_dataset():
 
 def _run_bq_query(sql: str, job_config=None) -> list[dict]:
     """Execute a BigQuery SQL query and return results as list of dicts."""
-    import decimal
     import datetime as dt
-    from google.cloud import bigquery
+    import decimal
+
 
     client = _get_bq_client()
     query_job = client.query(sql, job_config=job_config) if job_config else client.query(sql)

@@ -1,7 +1,8 @@
 """Local LLM-as-judge for `custom_response_quality` (see eval_config.yaml)."""
 
-import os
 import json
+import os
+
 from google import genai
 from google.genai import types
 from pydantic import BaseModel

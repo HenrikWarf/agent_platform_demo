@@ -13,12 +13,12 @@ Usage:
     python deploy/register_skills.py
     python deploy/register_skills.py --location global
 """
+import logging
 import os
 import subprocess
 import sys
 import tempfile
 import zipfile
-import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("register_skills")
@@ -120,7 +120,7 @@ def register_skill(skill_id: str, display_name: str, description: str, payload_p
     result = _run(create_cmd, "create")
     if result.returncode != 0:
         if "ALREADY_EXISTS" in result.stderr or "already exists" in result.stderr.lower():
-            logger.info(f"  Skill already exists, updating metadata...")
+            logger.info("  Skill already exists, updating metadata...")
             update_cmd = [
                 "gcloud", "alpha", "agent-registry", "skills", "update", prefixed_id,
                 "--location", LOCATION,
@@ -151,14 +151,14 @@ def register_skill(skill_id: str, display_name: str, description: str, payload_p
     rev_result = _run(revision_cmd, "revision")
     if rev_result.returncode != 0:
         if "ALREADY_EXISTS" in rev_result.stderr:
-            logger.info(f"  Revision already exists, skipping...")
+            logger.info("  Revision already exists, skipping...")
         else:
             logger.error(f"  ❌ Revision create failed: {rev_result.stderr.strip()}")
             return False
 
     # Step 3: Set default revision
     full_revision = f"projects/{PROJECT_ID}/locations/{LOCATION}/skills/{prefixed_id}/revisions/{revision_name}"
-    logger.info(f"  Step 3: Setting default revision...")
+    logger.info("  Step 3: Setting default revision...")
     default_cmd = [
         "gcloud", "alpha", "agent-registry", "skills", "update", prefixed_id,
         "--location", LOCATION,
@@ -171,7 +171,7 @@ def register_skill(skill_id: str, display_name: str, description: str, payload_p
         logger.warning(f"  ⚠️  Set default revision failed: {default_result.stderr.strip()}")
 
     # Step 4: Activate
-    logger.info(f"  Step 4: Activating skill...")
+    logger.info("  Step 4: Activating skill...")
     activate_cmd = [
         "gcloud", "alpha", "agent-registry", "skills", "update", prefixed_id,
         "--location", LOCATION,
