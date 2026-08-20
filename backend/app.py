@@ -77,7 +77,11 @@ skill_registry = SkillRegistry()
 
 class ChatRequest(BaseModel):
     prompt: str
-    target_segment: str | None = "At-Risk Premium"
+    target_segment: str | None = "All Cohorts (Full Dataset)"
+
+class GenerateSuggestionsRequest(BaseModel):
+    messages: list[dict[str, Any]] = []
+    current_segment: str | None = "All Cohorts (Full Dataset)"
 
 class SimulatorToggleRequest(BaseModel):
     active: bool
@@ -434,6 +438,28 @@ def run_evaluation():
         return result
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+# ─── Dynamic AI Follow-Up Suggestions Endpoint ──────────────────────────────
+
+@app.post("/api/suggestions/generate")
+def generate_suggestions(req: GenerateSuggestionsRequest):
+    """Calls Gemini 3.6 Flash on Vertex AI to inspect conversation context
+    and dynamically generate 6 hyper-relevant follow-up marketing questions.
+    """
+    try:
+        from backend.suggestions_generator import generate_dynamic_followups
+        questions = generate_dynamic_followups(
+            messages=req.messages,
+            current_segment=req.current_segment or "All Cohorts (Full Dataset)"
+        )
+        return {
+            "questions": questions,
+            "count": len(questions),
+            "source": "gemini-3.6-flash"
+        }
+    except Exception as e:
+        logger.error(f"Error generating dynamic suggestions: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 if __name__ == "__main__":

@@ -331,6 +331,9 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
   const [currentArmor, setCurrentArmor] = useState({ passed: true });
   const [selectedCategory, setSelectedCategory] = useState('recommended');
   const [shuffleSeed, setShuffleSeed] = useState(0);
+  const [aiSuggestions, setAiSuggestions] = useState(null);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiGeneratedAt, setAiGeneratedAt] = useState(null);
   const messageContainerRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -343,8 +346,49 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
     }
   }, [messages, loading]);
 
+  const handleGenerateAiSuggestions = async () => {
+    setGeneratingAI(true);
+    try {
+      const res = await fetch('/api/suggestions/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages.map(m => ({
+            role: m.role,
+            content: m.content,
+            data: m.data ? {
+              strategy: m.data.strategy ? { campaign_title: m.data.strategy.campaign_title } : null,
+              content: !!m.data.content,
+              analytics_data: !!m.data.analytics_data,
+              sql_executed: !!m.data.sql_executed
+            } : null
+          })),
+          current_segment: segment
+        })
+      });
+      if (!res.ok) throw new Error('Failed to generate suggestions');
+      const data = await res.json();
+      if (data.questions && data.questions.length > 0) {
+        setAiSuggestions(data.questions);
+        setAiGeneratedAt(new Date().toLocaleTimeString());
+        setSelectedCategory('recommended');
+      }
+    } catch (err) {
+      console.error('Error generating AI suggestions:', err);
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
   const activeQuestions = useMemo(() => {
     if (selectedCategory === 'recommended') {
+      if (aiSuggestions && aiSuggestions.length > 0) {
+        if (shuffleSeed > 0) {
+          const shift = shuffleSeed % aiSuggestions.length;
+          return aiSuggestions.slice(shift).concat(aiSuggestions.slice(0, shift));
+        }
+        return aiSuggestions;
+      }
       return getDynamicRecommendations(messages, segment, shuffleSeed);
     }
     const list = CATEGORY_QUESTIONS[selectedCategory] || [];
@@ -353,7 +397,7 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
       return list.slice(shift).concat(list.slice(0, shift));
     }
     return list;
-  }, [selectedCategory, messages, segment, shuffleSeed]);
+  }, [selectedCategory, messages, segment, shuffleSeed, aiSuggestions]);
 
   const currentCategoryObj = OBJECTIVE_CATEGORIES.find(c => c.id === selectedCategory);
 
@@ -698,35 +742,68 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                 {activeQuestions.length} Available
               </span>
             </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShuffleSeed(prev => prev + 1);
-              }}
-              title="Shuffle & rotate suggestions"
-              style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                color: 'var(--text-muted)',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                padding: '0.25rem 0.6rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                transition: 'all 0.15s'
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
-            >
-              <Shuffle size={12} />
-              Shuffle Ideas
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <button
+                type="button"
+                disabled={generatingAI}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleGenerateAiSuggestions();
+                }}
+                title="Call Gemini 3.6 Flash on Vertex AI to generate 6 live contextual follow-up questions"
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-primary), var(--color-purple))',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  padding: '0.25rem 0.65rem',
+                  cursor: generatingAI ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={e => { if (!generatingAI) e.currentTarget.style.opacity = '0.9'; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+              >
+                <Sparkles size={12} className={generatingAI ? 'spin' : ''} />
+                {generatingAI ? 'Generating with Gemini...' : '✨ Generate AI Follow-ups'}
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShuffleSeed(prev => prev + 1);
+                }}
+                title="Shuffle & rotate suggestions"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  padding: '0.25rem 0.6rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
+              >
+                <Shuffle size={12} />
+                Shuffle
+              </button>
+            </div>
           </summary>
 
           <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-primary)' }}>
@@ -768,13 +845,49 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
               fontSize: '0.73rem',
               color: 'var(--text-muted)',
               background: 'var(--bg-secondary)',
-              padding: '0.45rem 0.75rem',
+              padding: '0.5rem 0.8rem',
               borderRadius: '8px',
               border: '1px solid var(--border-color)',
               borderLeft: `3px solid ${currentCategoryObj?.color || 'var(--color-primary)'}`,
-              lineHeight: '1.4'
+              lineHeight: '1.4',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.4rem'
             }}>
-              {currentCategoryObj?.desc}
+              <span>
+                {selectedCategory === 'recommended' && aiGeneratedAt ? (
+                  <strong style={{ color: 'var(--color-primary)' }}>
+                    ✨ 6 Contextual Follow-up Questions Generated by Gemini 3.6 Flash at {aiGeneratedAt} based on your conversation history.
+                  </strong>
+                ) : (
+                  currentCategoryObj?.desc
+                )}
+              </span>
+              {selectedCategory === 'recommended' && (
+                <button
+                  type="button"
+                  disabled={generatingAI}
+                  onClick={handleGenerateAiSuggestions}
+                  style={{
+                    background: 'rgba(37, 99, 235, 0.08)',
+                    border: '1px solid rgba(37, 99, 235, 0.25)',
+                    borderRadius: '6px',
+                    color: 'var(--color-primary)',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    padding: '0.2rem 0.5rem',
+                    cursor: generatingAI ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                >
+                  <Sparkles size={11} className={generatingAI ? 'spin' : ''} />
+                  {generatingAI ? 'Calling Gemini...' : aiSuggestions ? 'Regenerate with Gemini' : 'Generate with Gemini'}
+                </button>
+              )}
             </div>
 
             {/* Granular Questions Grid */}
