@@ -32,12 +32,15 @@ echo "   Cloud Mode    : ${USE_GCP_CLOUD}"
 echo "   Backend Port  : ${PORT}"
 
 # 2. Python Virtual Environment Setup
-if [ ! -d "venv" ]; then
-  echo "📦 Creating Python virtual environment (venv)..."
-  python3 -m venv venv
+if [ -d ".venv" ]; then
+  source .venv/bin/activate
+elif [ -d "venv" ]; then
+  source venv/bin/activate
+else
+  echo "📦 Creating Python virtual environment (.venv)..."
+  python3 -m venv .venv
+  source .venv/bin/activate
 fi
-
-source venv/bin/activate
 
 echo "📦 Verifying Python dependencies..."
 pip install -q -r backend/requirements.txt
