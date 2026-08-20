@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Gemini Enterprise Agent Platform — Evaluation & Quality Flywheel Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font-display: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-body: 'Google Sans Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Google Cloud Theme Colors */
+      --gcp-blue: #1a73e8;
+      --gcp-blue-hover: #1557b0;
+      --gcp-blue-light: #e8f0fe;
+      --gcp-green: #1e8e3e;
+      --gcp-yellow: #f9ab00;
+      --gcp-red: #d93025;
+      
+      /* Light Mode Palette */
+      --bg-primary: #f8f9fa;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #ffffff;
+      --bg-surface-subtle: #f1f3f4;
+      --border-subtle: #dadce0;
+      --border-strong: #bdc1c6;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --text-tertiary: #80868b;
+      --card-highlight: #e8f0fe;
+      --card-highlight-border: #aecbfa;
+      --card-highlight-text: #174ea6;
+      --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      --shadow-md: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+      --shadow-lg: 0 2px 6px 2px rgba(60,64,67,0.15), 0 8px 24px 4px rgba(60,64,67,0.15);
+      --badge-bg: #e8f0fe;
+      --badge-text: #1a73e8;
+      --chip-bg: #f1f3f4;
+      --chip-text: #3c4043;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #121316;
+      --bg-surface: #1e1f23;
+      --bg-surface-elevated: #282a2f;
+      --bg-surface-subtle: #2d3135;
+      --border-subtle: #3c4043;
+      --border-strong: #5f6368;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --text-tertiary: #80868b;
+      --card-highlight: #172b4d;
+      --card-highlight-border: #1a73e8;
+      --card-highlight-text: #8ab4f8;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+      --badge-bg: #172b4d;
+      --badge-text: #8ab4f8;
+      --chip-bg: #2d3135;
+      --chip-text: #e8eaed;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* ─── Top Header Bar ────────────────────────────────────────── */
+    header {
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      height: 58px;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 20;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335);
+      border-radius: 8px;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(66, 133, 244, 0.4);
+    }
+
+    .brand-tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background-color: var(--badge-bg);
+      color: var(--badge-text);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slide-jump-select {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s ease;
+      max-width: 260px;
+      text-overflow: ellipsis;
+    }
+
+    .slide-jump-select:hover {
+      border-color: var(--gcp-blue);
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-surface-subtle);
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .icon-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background-color: var(--bg-surface-subtle);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+    }
+
+    /* ─── Progress Bar ─────────────────────────────────────────── */
+    .progress-bar-container {
+      height: 3px;
+      width: 100%;
+      background-color: var(--border-subtle);
+      position: relative;
+      z-index: 15;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gcp-blue), #34A853);
+      width: 0%;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ─── Main Stage Split View ────────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+      height: calc(100vh - 58px - 60px - 3px);
+    }
+
+    /* Left Column: Image Presenter Panel */
+    .image-panel {
+      flex: 1.35;
+      background-color: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      border-right: 1px solid var(--border-subtle);
+      transition: flex 0.3s ease;
+    }
+
+    .image-container-card {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      cursor: zoom-in;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .image-container-card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .slide-img {
+      max-width: 100%;
+      max-height: 100%;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 12px;
+      user-select: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .image-overlay-tools {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+      opacity: 0.85;
+      transition: opacity 0.2s ease;
+    }
+
+    .image-container-card:hover .image-overlay-tools {
+      opacity: 1;
+    }
+
+    .tool-badge {
+      background: rgba(32, 33, 36, 0.75);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      pointer-events: none;
+    }
+
+    .img-nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: var(--shadow-md);
+      transition: all 0.2s ease;
+      opacity: 0.75;
+    }
+
+    .img-nav-arrow:hover:not(:disabled) {
+      opacity: 1;
+      background: var(--gcp-blue);
+      color: white;
+      border-color: var(--gcp-blue);
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .img-nav-arrow:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .img-nav-prev { left: 34px; }
+    .img-nav-next { right: 34px; }
+
+    /* Right Column: Deep-Dive Content Panel */
+    .content-panel {
+      flex: 1;
+      background-color: var(--bg-surface);
+      overflow-y: auto;
+      padding: 32px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .content-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .content-panel::-webkit-scrollbar-thumb {
+      background-color: var(--border-strong);
+      border-radius: 3px;
+    }
+
+    .slide-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-pill {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background-color: var(--card-highlight);
+      color: var(--card-highlight-text);
+      border: 1px solid var(--card-highlight-border);
+    }
+
+    .slide-number-badge {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+    }
+
+    .slide-title {
+      font-family: var(--font-display);
+      font-size: 1.65rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--text-primary);
+      letter-spacing: -0.015em;
+    }
+
+    .slide-subtitle {
+      font-size: 0.98rem;
+      font-weight: 500;
+      line-height: 1.45;
+      color: var(--text-secondary);
+      margin-top: -6px;
+    }
+
+    /* Executive Takeaway Box */
+    .takeaway-card {
+      background: linear-gradient(135deg, var(--card-highlight), var(--bg-surface));
+      border: 1px solid var(--card-highlight-border);
+      border-left: 4px solid var(--gcp-blue);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+
+    .takeaway-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--card-highlight-text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .takeaway-text {
+      font-size: 0.92rem;
+      font-weight: 500;
+      line-height: 1.48;
+      color: var(--text-primary);
+    }
+
+    /* Talking Points List */
+    .talking-points-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .talking-points-heading {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+
+    .point-card {
+      background-color: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .point-card:hover {
+      border-color: var(--border-strong);
+      background-color: var(--bg-surface-elevated);
+      transform: translateX(3px);
+    }
+
+    .point-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .point-desc {
+      font-size: 0.85rem;
+      line-height: 1.52;
+      color: var(--text-secondary);
+    }
+
+    .point-desc ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+
+    .point-desc li {
+      margin-bottom: 4px;
+    }
+
+    .point-desc code {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background-color: var(--border-subtle);
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: var(--text-primary);
+    }
+
+    /* Service Tags */
+    .services-tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 2px;
+    }
+
+    .service-chip {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 9px;
+      border-radius: 8px;
+      background: var(--chip-bg);
+      color: var(--chip-text);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ─── Bottom Navigation & Control Bar ──────────────────────── */
+    footer {
+      background-color: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      height: 60px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 20;
+    }
+
+    .nav-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-nav {
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+      background-color: var(--bg-surface-subtle);
+      border-color: var(--border-strong);
+    }
+
+    .btn-nav.primary {
+      background-color: var(--gcp-blue);
+      color: white;
+      border-color: var(--gcp-blue);
+    }
+
+    .btn-nav.primary:hover:not(:disabled) {
+      background-color: var(--gcp-blue-hover);
+      box-shadow: 0 2px 6px rgba(26, 115, 232, 0.4);
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Slide Thumbnails / Dots */
+    .slide-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot-btn {
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      background-color: var(--border-strong);
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dot-btn:hover {
+      background-color: var(--gcp-blue);
+      transform: scale(1.2);
+    }
+
+    .dot-btn.active {
+      width: 22px;
+      background-color: var(--gcp-blue);
+      border-radius: 6px;
+    }
+
+    .keyboard-guide {
+      font-size: 0.76rem;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .key-cap {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: var(--text-secondary);
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+
+    /* ─── Lightbox Fullscreen Modal ────────────────────────────── */
+    .lightbox-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 19, 22, 0.94);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .lightbox-modal.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .lightbox-img {
+      max-width: 95vw;
+      max-height: 92vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.8);
+      cursor: default;
+    }
+
+    .lightbox-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .lightbox-close-btn:hover {
+      background: rgba(255,255,255,0.35);
+    }
+
+    /* ─── Layout Modifiers ─────────────────────────────────────── */
+    body.wide-mode .image-panel {
+      flex: 2.2;
+    }
+    body.wide-mode .content-panel {
+      flex: 0.9;
+    }
+
+    body.swapped-layout main {
+      flex-direction: row-reverse;
+    }
+    body.swapped-layout .image-panel {
+      border-right: none;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    @media (max-width: 960px) {
+      main {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+      }
+      .image-panel {
+        min-height: 380px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .content-panel {
+        overflow-y: visible;
+        padding: 24px 20px;
+      }
+      .keyboard-guide {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <header>
+    <div class="brand-section">
+      <a href="#" class="brand-logo">
+        <span class="logo-badge">✦</span>
+        <span class="brand-title-text">Gemini Enterprise Agent Platform</span>
+      </a>
+      <span class="brand-tag">Evaluation Deck</span>
+    </div>
+
+    <div class="header-controls">
+      <select id="slideJumpSelect" class="slide-jump-select" aria-label="Jump to Slide">
+        <!-- Injected via JavaScript -->
+      </select>
+      <span class="slide-counter" id="slideCounterDisplay">1 / 8</span>
+      <button class="icon-btn" id="wideModeBtn" title="Toggle Wide Presenter Mode (W)">↔</button>
+      <button class="icon-btn" id="swapLayoutBtn" title="Toggle Layout Swap (S)">⇄</button>
+      <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme (T)">☀️</button>
+      <button class="icon-btn" id="fullscreenToggleBtn" title="Toggle Fullscreen (F)">⛶</button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBarFill"></div>
+  </div>
+
+  <!-- Main Stage Split View (Left: Slide Image Canvas, Right: Synchronized Technical Details) -->
+  <main id="mainStage">
+    <!-- Left Column: High-Resolution Slide Image Panel -->
+    <section class="image-panel">
+      <button class="img-nav-arrow img-nav-prev" id="imgPrevBtn" title="Previous Slide (←)">‹</button>
+      <button class="img-nav-arrow img-nav-next" id="imgNextBtn" title="Next Slide (→)">›</button>
+
+      <div class="image-container-card" id="imageContainerCard" title="Click to view full-resolution lightbox zoom">
+        <div class="image-overlay-tools">
+          <span class="tool-badge">🔍 Click to Zoom (Z)</span>
+        </div>
+        <img src="01_title_starter_slide.jpg" alt="Evaluation Architecture Slide" class="slide-img" id="slideImage" />
+      </div>
+    </section>
+
+    <!-- Right Column: Rich Synchronized Technical Content & Speaker Talking Points -->
+    <section class="content-panel" id="contentPanel">
+      <div class="slide-badge-row">
+        <span class="section-pill" id="sectionPill">Cover</span>
+        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 8</span>
+      </div>
+
+      <h1 class="slide-title" id="slideTitle">Loading Slide...</h1>
+      <p class="slide-subtitle" id="slideSubtitle">Loading subtitle...</p>
+
+      <!-- Key Takeaway Banner -->
+      <div class="takeaway-card">
+        <div class="takeaway-label">
+          <span>💡</span> Executive Takeaway
+        </div>
+        <p class="takeaway-text" id="takeawayText">Loading executive summary...</p>
+      </div>
+
+      <!-- Deep Dive Talking Points -->
+      <div class="talking-points-container">
+        <div class="talking-points-heading">
+          <span>🎙️</span> Technical Breakdown & Speaker Talking Points
+        </div>
+        <div id="talkingPointsList" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+      <!-- GCP Services & Protocols Tags -->
+      <div class="talking-points-container" style="margin-top: 4px;">
+        <div class="talking-points-heading">
+          <span>☁️</span> GCP Services & Integrated Standards
+        </div>
+        <div class="services-tag-cloud" id="servicesCloud">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <footer>
+    <div class="nav-btn-group">
+      <button class="btn-nav" id="prevBtn" disabled>
+        <span>←</span> Previous
+      </button>
+      <button class="btn-nav primary" id="nextBtn">
+        Next <span>→</span>
+      </button>
+    </div>
+
+    <!-- Slide Indicator Dots -->
+    <div class="slide-dots" id="slideDotsContainer">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Keyboard Navigation Hints -->
+    <div class="keyboard-guide">
+      <span>Navigate:</span>
+      <kbd class="key-cap">←</kbd>
+      <kbd class="key-cap">→</kbd>
+      <kbd class="key-cap">Space</kbd>
+      <span>| Zoom:</span>
+      <kbd class="key-cap">Z</kbd>
+      <span>| Wide:</span>
+      <kbd class="key-cap">W</kbd>
+      <span>| Swap:</span>
+      <kbd class="key-cap">S</kbd>
+    </div>
+  </footer>
+
+  <!-- Fullscreen Lightbox Modal -->
+  <div class="lightbox-modal" id="lightboxModal">
+    <button class="lightbox-close-btn" id="lightboxCloseBtn" title="Close Lightbox (Esc)">✕</button>
+    <img src="" alt="Fullscreen Diagram" class="lightbox-img" id="lightboxImg" />
+  </div>
+
+  <script>
+    // ─── 8-Slide Evaluation & Quality Flywheel Presentation Data Model ───────────
+    const SLIDES_DATA = [
+      {
+        id: 1,
+        sectionNum: "Cover",
+        sectionBadge: "Title Slide",
+        title: "Enterprise Multi-Agent Evaluation & Quality Flywheel",
+        subtitle: "Continuous Quality Assurance, Synthetic Simulation, LLM-as-Judge, and ADK Evaluation on Google Cloud",
+        image: "01_title_starter_slide.jpg",
+        takeaway: "Production-grade autonomous multi-agent systems require systematic, end-to-end evaluation spanning intent routing, BigQuery MCP tool calls, skill compliance, and zero-trust safety before cloud deployment.",
+        points: [
+          {
+            title: "Why Single-Turn Chatbot Testing Fails",
+            desc: "Autonomous multi-agent systems have non-deterministic reasoning trajectories, dynamic tool calling dependencies, and sequential handoffs. Traditional unit tests and hardcoded string matches fail to capture real agent behavior."
+          },
+          {
+            title: "The 5 Enterprise Evaluation Pillars",
+            desc: "<ul><li><strong>1. Response Quality:</strong> Factual accuracy, relevance, and actionable marketing intelligence.</li><li><strong>2. Tool & Routing Precision:</strong> Optimal BigQuery MCP SQL execution and orchestrator sub-agent routing.</li><li><strong>3. Skill Framework Compliance:</strong> 3-pillar strategy matrices and channel-selective deliverables.</li><li><strong>4. Brand Voice Alignment:</strong> Nordic tone, inclusivity, circular sustainability, and EUR (€) pricing.</li><li><strong>5. Safety & Injection Defense:</strong> Resistance to prompt injection, data exfiltration, and destructive commands.</li></ul>"
+          },
+          {
+            title: "Crazy Fashion Benchmark Scope",
+            desc: "Validated across 18 comprehensive evaluation cases covering direct company Q&A, BigQuery customer RFM segmentation, campaign strategy planning, and channel-selective creative copywriting."
+          }
+        ],
+        services: ["google-adk", "agents-cli eval", "Vertex AI Evaluation", "LLM-as-Judge", "Google BigQuery", "Model Armor", "Cloud Trace"]
+      },
+      {
+        id: 2,
+        sectionNum: "Section 01",
+        sectionBadge: "Quality Flywheel",
+        title: "The 5-Stage Agent Quality Flywheel",
+        subtitle: "The Iterative Engineering Loop from Data Preparation to Automated GEPA Optimization",
+        image: "02_quality_flywheel_flow.jpg",
+        takeaway: "Quality is an iterative engineering flywheel: author deterministic benchmarks, generate complete execution traces, score with adaptive LLM judges, cluster failures, and optimize prompts.",
+        points: [
+          {
+            title: "Stage 1: Prepare Data & Synthesize",
+            desc: "Author golden single-turn evaluation datasets (<code>crazy_fashion_eval.json</code>) or synthesize dynamic multi-turn scenarios using <code>agents-cli eval dataset synthesize</code> to test edge cases."
+          },
+          {
+            title: "Stage 2: Run Inference (Trace Generation)",
+            desc: "<code>agents-cli eval generate</code> boots a local ADK FastAPI server on port 18080 and executes cases in parallel, writing complete execution traces (prompts, tool calls, SQL responses, and sub-agent outputs) to <code>artifacts/traces/</code>."
+          },
+          {
+            title: "Stage 3: Grade Traces with LLM-as-Judge",
+            desc: "<code>agents-cli eval grade</code> scores traces against project-specific LLM-as-judge rubrics and deterministic Python code metrics, writing timestamped JSON and visual HTML scorecards."
+          },
+          {
+            title: "Stage 4 & 5: Failure Analysis & GEPA Optimization",
+            desc: "<code>agents-cli eval analyze</code> groups loss patterns into root-cause clusters. Prompt and instruction refinements can be automated using ADK GEPA prompt optimization (<code>agents-cli eval optimize</code>)."
+          }
+        ],
+        services: ["agents-cli", "ADK Quality Flywheel", "GEPA Optimization", "Vertex AI PaLM/Gemini", "Cloud Storage"]
+      },
+      {
+        id: 3,
+        sectionNum: "Section 02",
+        sectionBadge: "Tracing & Trajectory",
+        title: "Multi-Agent Trajectory Tracing & ADK Execution Flow",
+        subtitle: "Capturing Full Event Sequences, Tool Invocations, and Structured JSON Schemas",
+        image: "03_multi_agent_tracing_trajectory.jpg",
+        takeaway: "Evaluating multi-agent systems requires capturing the complete execution graph—from initial orchestrator intent evaluation to BigQuery tool execution and sub-agent handoffs.",
+        points: [
+          {
+            title: "Comprehensive Trajectory Capture",
+            desc: "ADK captures granular trace events including <code>author</code>, <code>function_call</code> arguments, BigQuery SQL text, <code>function_response</code> row counts, and <code>state_delta</code> across all session turns."
+          },
+          {
+            title: "Orchestrator Routing Verification",
+            desc: "Verifies that the root <code>marketing_orchestrator</code> correctly answers company profile questions directly, routes data tasks to <code>analytics_agent</code>, and delegates creative tasks to <code>content_pipeline</code>."
+          },
+          {
+            title: "BigQuery Tool Invocation Precision",
+            desc: "Audits SQL generation against the 5 Crazy Fashion tables in <code>agent-demo-09.marketing_analytics</code>, ensuring zero hallucinations and strict execution of read-only queries with <code>LIMIT 20</code>."
+          },
+          {
+            title: "Structured Schema Formatting Pipeline",
+            desc: "Verifies that sequential formatters (<code>strategy_formatter</code>, <code>content_formatter</code>) successfully transform LLM reasoning into validated Pydantic JSON structures."
+          }
+        ],
+        services: ["Google ADK", "SequentialAgent", "BigQuery MCP Server", "Pydantic V2", "Cloud Trace OTel Spans"]
+      },
+      {
+        id: 4,
+        sectionNum: "Section 03",
+        sectionBadge: "LLM-as-Judge Suite",
+        title: "5-Pillar LLM-as-Judge Evaluation Suite & Adaptive Rubrics",
+        subtitle: "Semantic Evaluation with Gemini 3.6 Flash on Vertex AI",
+        image: "04_llm_judge_metrics_rubrics.jpg",
+        takeaway: "Hardcoded string matching is fragile; adaptive LLM judges evaluate semantic intent, domain skill compliance, and brand voice adherence with high precision.",
+        points: [
+          {
+            title: "Pillar 1: Custom Response Quality (4.83 / 5.0)",
+            desc: "<code>response_quality.py</code> grades accuracy, clarity, completeness, and relevance of the final response in the context of Crazy Fashion marketing operations."
+          },
+          {
+            title: "Pillar 2: Tool & Routing Precision (4.67 / 5.0)",
+            desc: "<code>tool_and_routing_quality.py</code> inspects whether BigQuery tools were executed when needed, avoided for direct Q&A, and whether routing followed the optimal sub-agent delegation graph."
+          },
+          {
+            title: "Pillar 3: Skill Framework Compliance (4.61 / 5.0)",
+            desc: "<code>skill_compliance_evaluator.py</code> validates strict adherence to <code>campaign-framework</code> (3 pillars, 4 channels), <code>brand-voice-craft</code>, and <code>bigquery-customer-analytics</code>."
+          },
+          {
+            title: "Pillar 4 & 5: Brand Voice (5.0/5.0) & Safety (5.0/5.0)",
+            desc: "<code>brand_voice_evaluator.py</code> enforces Nordic tone, circular sustainability, and EUR (€) pricing. <code>safety_evaluator.py</code> verifies complete immunity against jailbreaks, drop table injections, and PII exfiltration."
+          }
+        ],
+        services: ["Gemini 3.6 Flash", "Vertex AI Evaluation", "LLM-as-Judge", "Model Armor", "Adaptive Rubrics"]
+      },
+      {
+        id: 5,
+        sectionNum: "Section 04",
+        sectionBadge: "Channel Selectivity",
+        title: "Channel-Selective Content & Strategy Validation",
+        subtitle: "Flexible Pydantic Schema Adherence for Email, SMS, Social Media, and Omnichannel Briefs",
+        image: "05_channel_selective_validation.jpg",
+        takeaway: "The content pipeline scopes output strictly to the requested channels (Email-only, SMS-only, Social-only), avoiding unsolicited marketing channels while enabling full multi-channel suites.",
+        points: [
+          {
+            title: "Flexible Pydantic ContentSchema Model",
+            desc: "<code>ContentSchema</code> defines optional fields (<code>email_template | None</code>, <code>social_posts | None</code>, <code>sms_copy | None</code>) allowing the model to populate only requested deliverables without schema validation errors."
+          },
+          {
+            title: "Email-Only Validation (Eval Case 16 — Score 5.0/5.0)",
+            desc: "Evaluates requests like <em>'Draft an email only for Dormant At-Risk customers'</em>. Populates subject, preview text, body, and CTA button while strictly keeping <code>social_posts: null</code> and <code>sms_copy: null</code>."
+          },
+          {
+            title: "SMS-Only Validation (Eval Case 17 — Score 5.0/5.0)",
+            desc: "Evaluates SMS requests. Produces one high-converting message under 160 characters (138 chars generated) with promo code and link, keeping other channels null."
+          },
+          {
+            title: "Social-Only (Eval Case 18) & Omnichannel (Eval Case 14)",
+            desc: "Social-only generates 2 Instagram posts highlighting circular garment collecting. Omnichannel requests generate the full coordinated 3-pillar strategy and matching multi-channel copy suite."
+          }
+        ],
+        services: ["Pydantic V2", "ContentSchema", "StrategySchema", "brand-voice-craft", "campaign-framework"]
+      },
+      {
+        id: 6,
+        sectionNum: "Section 05",
+        sectionBadge: "User Simulation",
+        title: "Synthetic User Simulation & Dynamic Conversation Testing",
+        subtitle: "Multi-Turn Dynamic User Simulation using ADK Synthesizer",
+        image: "06_user_simulation_scenarios.jpg",
+        takeaway: "Static prompts miss multi-turn conversational edge cases; synthetic user simulation dynamically stress-tests agents across realistic personas and conversational friction.",
+        points: [
+          {
+            title: "ADK Dataset Synthesizer (`eval dataset synthesize`)",
+            desc: "Automatically inspects the agent's instructions and tool definitions to synthesize realistic multi-turn user conversation scenarios."
+          },
+          {
+            title: "Dynamic Persona Simulation",
+            desc: "Initializes diverse customer personas—from Platinum VIP fashion buyers and bargain hunters to eco-conscious garment recyclers and adversarial prompt injection actors."
+          },
+          {
+            title: "Multi-Turn Interaction Loop",
+            desc: "The LLM User Simulator converses with the ADK agent over HTTP (<code>/run_sse</code>), dynamically steering dialogue based on the agent's intermediate responses and tool outputs."
+          },
+          {
+            title: "Grading-Ready Synthetic Traces",
+            desc: "Synthesized conversation runs produce fully populated trace files ready for immediate scoring via <code>agents-cli eval grade</code> without manual data labeling."
+          }
+        ],
+        services: ["ADK User Simulator", "Synthetic Data Generation", "Dynamic Multi-Turn Scenarios", "Vertex AI"]
+      },
+      {
+        id: 7,
+        sectionNum: "Section 06",
+        sectionBadge: "CI/CD & Cloud Pipeline",
+        title: "Enterprise CI/CD & Cloud-Scale Evaluation Pipeline",
+        subtitle: "Automated Quality Gates, Pre-Commit Hooks, and Cloud Run Deployment Integration",
+        image: "07_vertex_eval_cicd_pipeline.jpg",
+        takeaway: "Automated evaluation acts as the definitive quality gate in the CI/CD pipeline—preventing regressions from reaching production Cloud Run environments.",
+        points: [
+          {
+            title: "Pre-Commit Quality Gate (`scripts/pre_commit_lint.sh`)",
+            desc: "Enforces a 3-step quality check: Python Ruff linter, syntax compiler & module imports, React ESLint, and fast local benchmark evaluation before git commits."
+          },
+          {
+            title: "GitHub Actions CI/CD (`.github/workflows/deploy-gcp.yml`)",
+            desc: "Step 1 executes the evaluation suite. Automated container compilation on Cloud Build and deployment to Cloud Run proceed only if evaluation benchmarks pass without regressions."
+          },
+          {
+            title: "Cloud-Scale Evaluation Service (`eval submit`)",
+            desc: "Submits large-scale evaluation datasets to the Vertex AI Managed Evaluation Service, storing execution traces and evaluation results in Google Cloud Storage."
+          },
+          {
+            title: "Production Deployment Gate",
+            desc: "Ensures that Agent Engine reasoning engines and Cloud Run backend APIs are updated only when quality score thresholds are met."
+          }
+        ],
+        services: ["GitHub Actions", "Cloud Build", "Cloud Run", "Vertex AI Eval Service", "Cloud Storage", "Artifact Registry"]
+      },
+      {
+        id: 8,
+        sectionNum: "Section 07",
+        sectionBadge: "Executive Recap",
+        title: "Evaluation Governance, Benchmarks & Quality Recap",
+        subtitle: "End-to-End Enterprise Readiness, 100% Pass Rate, and Production Deployment Gates",
+        image: "08_evaluation_summary_dashboard.jpg",
+        takeaway: "With 18 verified evaluation cases, a 4.82/5.0 overall quality score, and strict safety guardrails, the platform is certified production-ready for Crazy Fashion.",
+        points: [
+          {
+            title: "100% Evaluation Case Pass Rate",
+            desc: "All 18 evaluation cases validated with 0 errors across company direct Q&A, BigQuery customer segmentation, campaign strategy, and channel-selective copywriting."
+          },
+          {
+            title: "Channel Selectivity Certification",
+            desc: "Achieved flawless 5.0/5.0 scores on Email-only, SMS-only, and Social-only test cases with zero unwanted channel hallucination."
+          },
+          {
+            title: "Zero-Trust Security & Model Armor Guarantee",
+            desc: "100% defense against prompt injection, drop table attacks, and PII exfiltration verified by the safety evaluation judge."
+          },
+          {
+            title: "Production Telemetry & Continuous Monitoring",
+            desc: "Cloud Trace distributed spans and Cloud Storage prompt-response completions (<code>gs://agent-demo-09-agent-platform-logs</code>) enable ongoing live evaluation in production."
+          }
+        ],
+        services: ["Google Cloud Vertex AI", "ADK Runtime", "BigQuery", "Cloud Trace", "Model Armor", "Gemini Enterprise"]
+      }
+    ];
+
+    // ─── Presenter App State & Interactive Controllers ──────────────────────────
+    let currentSlideIndex = 0;
+    const totalSlides = SLIDES_DATA.length;
+
+    // DOM Elements
+    const slideImage = document.getElementById('slideImage');
+    const imageContainerCard = document.getElementById('imageContainerCard');
+    const sectionPill = document.getElementById('sectionPill');
+    const slideNumberBadge = document.getElementById('slideNumberBadge');
+    const slideTitle = document.getElementById('slideTitle');
+    const slideSubtitle = document.getElementById('slideSubtitle');
+    const takeawayText = document.getElementById('takeawayText');
+    const talkingPointsList = document.getElementById('talkingPointsList');
+    const servicesCloud = document.getElementById('servicesCloud');
+    const slideJumpSelect = document.getElementById('slideJumpSelect');
+    const slideCounterDisplay = document.getElementById('slideCounterDisplay');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const slideDotsContainer = document.getElementById('slideDotsContainer');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const imgPrevBtn = document.getElementById('imgPrevBtn');
+    const imgNextBtn = document.getElementById('imgNextBtn');
+    const lightboxModal = document.getElementById('lightboxModal');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const wideModeBtn = document.getElementById('wideModeBtn');
+    const swapLayoutBtn = document.getElementById('swapLayoutBtn');
+    const fullscreenToggleBtn = document.getElementById('fullscreenToggleBtn');
+    const contentPanel = document.getElementById('contentPanel');
+
+    // Initialize Jump Select Dropdown & Indicator Dots
+    function initializeUI() {
+      slideJumpSelect.innerHTML = '';
+      slideDotsContainer.innerHTML = '';
+
+      SLIDES_DATA.forEach((slide, idx) => {
+        // Dropdown option
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `${idx + 1}. ${slide.title}`;
+        slideJumpSelect.appendChild(opt);
+
+        // Dot button
+        const dot = document.createElement('button');
+        dot.className = `dot-btn ${idx === 0 ? 'active' : ''}`;
+        dot.title = `Jump to Slide ${idx + 1}: ${slide.title}`;
+        dot.addEventListener('click', () => renderSlide(idx));
+        slideDotsContainer.appendChild(dot);
+      });
+    }
+
+    // Render Slide by Index
+    function renderSlide(index) {
+      if (index < 0 || index >= totalSlides) return;
+      currentSlideIndex = index;
+      const slide = SLIDES_DATA[index];
+
+      // Update Image with smooth fade
+      slideImage.style.opacity = '0';
+      setTimeout(() => {
+        slideImage.src = slide.image;
+        slideImage.alt = slide.title;
+        slideImage.style.opacity = '1';
+      }, 150);
+
+      // Update Text Elements
+      sectionPill.textContent = slide.sectionBadge || slide.sectionNum;
+      slideNumberBadge.textContent = `Slide ${index + 1} of ${totalSlides}`;
+      slideTitle.textContent = slide.title;
+      slideSubtitle.textContent = slide.subtitle;
+      takeawayText.textContent = slide.takeaway;
+
+      // Render Talking Points
+      talkingPointsList.innerHTML = '';
+      slide.points.forEach((point, pIdx) => {
+        const card = document.createElement('div');
+        card.className = 'point-card';
+        card.innerHTML = `
+          <div class="point-title">
+            <span style="color: var(--gcp-blue);">✦</span>
+            <span>${point.title}</span>
+          </div>
+          <div class="point-desc">${point.desc}</div>
+        `;
+        talkingPointsList.appendChild(card);
+      });
+
+      // Render Service Chips
+      servicesCloud.innerHTML = '';
+      slide.services.forEach(svc => {
+        const chip = document.createElement('span');
+        chip.className = 'service-chip';
+        chip.textContent = svc;
+        servicesCloud.appendChild(chip);
+      });
+
+      // Update Navigation Controls & Progress Bar
+      slideJumpSelect.value = index;
+      slideCounterDisplay.textContent = `${index + 1} / ${totalSlides}`;
+      const progressPct = ((index + 1) / totalSlides) * 100;
+      progressBarFill.style.width = `${progressPct}%`;
+
+      // Update Dots
+      const dots = slideDotsContainer.querySelectorAll('.dot-btn');
+      dots.forEach((d, dIdx) => {
+        d.className = `dot-btn ${dIdx === index ? 'active' : ''}`;
+      });
+
+      // Update Button Disabled States
+      prevBtn.disabled = index === 0;
+      imgPrevBtn.disabled = index === 0;
+      nextBtn.disabled = index === totalSlides - 1;
+      imgNextBtn.disabled = index === totalSlides - 1;
+
+      // Scroll content panel to top smoothly
+      contentPanel.scrollTop = 0;
+    }
+
+    // Navigation Handlers
+    function goToNextSlide() {
+      if (currentSlideIndex < totalSlides - 1) {
+        renderSlide(currentSlideIndex + 1);
+      }
+    }
+
+    function goToPrevSlide() {
+      if (currentSlideIndex > 0) {
+        renderSlide(currentSlideIndex - 1);
+      }
+    }
+
+    // Lightbox Handlers
+    function openLightbox() {
+      lightboxImg.src = SLIDES_DATA[currentSlideIndex].image;
+      lightboxImg.alt = SLIDES_DATA[currentSlideIndex].title;
+      lightboxModal.classList.add('open');
+    }
+
+    function closeLightbox() {
+      lightboxModal.classList.remove('open');
+    }
+
+    // Theme Toggle Handler
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      themeToggleBtn.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+    }
+
+    // Event Listeners
+    prevBtn.addEventListener('click', goToPrevSlide);
+    nextBtn.addEventListener('click', goToNextSlide);
+    imgPrevBtn.addEventListener('click', goToPrevSlide);
+    imgNextBtn.addEventListener('click', goToNextSlide);
+
+    slideJumpSelect.addEventListener('change', (e) => {
+      renderSlide(parseInt(e.target.value, 10));
+    });
+
+    imageContainerCard.addEventListener('click', openLightbox);
+    lightboxCloseBtn.addEventListener('click', closeLightbox);
+    lightboxModal.addEventListener('click', (e) => {
+      if (e.target === lightboxModal) closeLightbox();
+    });
+
+    themeToggleBtn.addEventListener('click', toggleTheme);
+
+    wideModeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('wide-mode');
+    });
+
+    swapLayoutBtn.addEventListener('click', () => {
+      document.body.classList.toggle('swapped-layout');
+    });
+
+    fullscreenToggleBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // Keyboard Shortcuts (←, →, Space, Z, W, S, T, F, Esc)
+    window.addEventListener('keydown', (e) => {
+      // If typing in a select or input, ignore
+      if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case ' ':
+          e.preventDefault();
+          goToNextSlide();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          goToPrevSlide();
+          break;
+        case 'z':
+        case 'Z':
+          if (lightboxModal.classList.contains('open')) {
+            closeLightbox();
+          } else {
+            openLightbox();
+          }
+          break;
+        case 'w':
+        case 'W':
+          document.body.classList.toggle('wide-mode');
+          break;
+        case 's':
+        case 'S':
+          document.body.classList.toggle('swapped-layout');
+          break;
+        case 't':
+        case 'T':
+          toggleTheme();
+          break;
+        case 'f':
+        case 'F':
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
+          }
+          break;
+        case 'Escape':
+          closeLightbox();
+          break;
+      }
+    });
+
+    // Initialize App
+    initializeUI();
+    renderSlide(0);
+  </script>
+</body>
+</html>
