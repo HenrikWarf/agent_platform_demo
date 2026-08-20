@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Shield, Cpu, Layers, FileText, CheckCircle2, Share2, Mail, MessageSquare, Target, TrendingUp, HelpCircle, Trash2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Send, Sparkles, Cpu, FileText, CheckCircle2, Share2, Mail, TrendingUp, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AgentGraphVisualizer from './AgentGraphVisualizer';

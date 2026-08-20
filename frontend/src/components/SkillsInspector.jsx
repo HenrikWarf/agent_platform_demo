@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, CheckCircle, Code, Layers, FileText, Zap, X } from 'lucide-react';
 
 export default function SkillsInspector() {
@@ -24,7 +24,7 @@ export default function SkillsInspector() {
     fetch(`/api/skills/${skillId}`)
       .then(res => res.json())
       .then(data => setSkillContent(data.content || 'No content found'))
-      .catch(err => setSkillContent('Error loading skill content'));
+      .catch(() => setSkillContent('Error loading skill content'));
   };
 
   return (

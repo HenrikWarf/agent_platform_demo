@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Database, RefreshCw, Layers, DollarSign, Users, AlertTriangle, Table, ArrowUpDown } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Database, RefreshCw, Layers, Users, Table } from 'lucide-react';
 
 export default function BigQueryDataViewer() {
   const [tables, setTables] = useState([
@@ -11,7 +11,7 @@ export default function BigQueryDataViewer() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchSample = (tableName = selectedTable) => {
+  const fetchSample = useCallback((tableName) => {
     setLoading(true);
     fetch(`/api/bigquery/sample?table_name=${tableName}`)
       .then(res => res.json())
@@ -23,18 +23,34 @@ export default function BigQueryDataViewer() {
         console.error(err);
         setLoading(false);
       });
-  };
+  }, []);
 
   useEffect(() => {
+    let ignore = false;
     fetch('/api/bigquery/tables')
       .then(res => res.json())
       .then(resData => {
-        if (resData.tables) setTables(resData.tables);
+        if (!ignore && resData.tables) setTables(resData.tables);
       })
       .catch(err => console.error(err));
 
-    fetchSample(selectedTable);
-  }, []);
+    fetch(`/api/bigquery/sample?table_name=${selectedTable}`)
+      .then(res => res.json())
+      .then(resData => {
+        if (!ignore) {
+          setData(resData);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [selectedTable]);
 
   const handleTableChange = (e) => {
     const newTable = e.target.value;

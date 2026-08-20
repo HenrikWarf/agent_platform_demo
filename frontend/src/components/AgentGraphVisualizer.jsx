@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Cpu, ShieldCheck, Database, FileText, Sparkles, ArrowRight, Zap, X, Wrench, BookOpen, MessageSquare, Copy, Check, Terminal } from 'lucide-react';
 

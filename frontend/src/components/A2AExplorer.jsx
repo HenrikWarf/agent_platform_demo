@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Globe, Send, RefreshCw, CheckCircle, AlertCircle, Copy, ChevronDown, ChevronRight, Zap, Radio, Code2, FileJson, X } from 'lucide-react';
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Activity, Play, Square, BarChart2, CheckCircle2, XCircle, ShieldCheck, ShieldAlert, ChevronDown, ChevronRight, FileText, AlertCircle, RefreshCw, Zap, Clock, TrendingUp, Hash } from 'lucide-react';
 
 export default function SimulatorControls() {
@@ -15,6 +15,11 @@ export default function SimulatorControls() {
     { time: new Date().toLocaleTimeString(), msg: 'Vertex AI Agent Engine connected (Model: gemini-3.6-flash).', type: 'info' },
     { time: new Date().toLocaleTimeString(), msg: 'Model Armor enforcement active via Agent Gateway.', type: 'info' }
   ]);
+
+  const addLog = useCallback((msg, type = 'info') => {
+    const time = new Date().toLocaleTimeString();
+    setLogs(prev => [{ time, msg, type }, ...prev].slice(0, 50));
+  }, []);
 
   // Poll simulator status when active
   useEffect(() => {
@@ -43,7 +48,7 @@ export default function SimulatorControls() {
     } else {
       if (pollRef.current) clearInterval(pollRef.current);
     }
-  }, [active]);
+  }, [active, addLog]);
 
   const toggleSimulator = () => {
     const nextState = !active;
@@ -52,40 +57,38 @@ export default function SimulatorControls() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ active: nextState })
     })
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {
         setActive(data.simulator_active);
-        if (data.simulator_active) {
-          addLog('🚀 Synthetic Traffic Simulator STARTED — sending prompts to Agent Runtime every 5s', 'status');
-          setSimMetrics(null);
-        } else {
-          addLog('⏹️ Synthetic Traffic Simulator STOPPED', 'status');
-        }
+        addLog(
+          `Synthetic traffic generator ${data.simulator_active ? 'STARTED (sending marketing prompts to Agent Runtime)' : 'STOPPED'}`,
+          data.simulator_active ? 'success' : 'warn'
+        );
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error(err);
+        addLog('Failed to toggle simulator state.', 'error');
+      });
   };
 
   const runEvaluation = async () => {
     setEvalLoading(true);
     setEvalError(null);
-    setEvalResult(null);
-    addLog('Executing local evaluation suite against Agent Runtime...', 'info');
-    addLog('Sending golden prompts from eval/dataset/golden_marketing_prompts.json', 'info');
+    addLog('Starting Golden Marketing Benchmark Evaluation...', 'info');
 
     try {
       const res = await fetch('/api/eval/run', { method: 'POST' });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail || `HTTP ${res.status}`);
+        const errData = await res.json();
+        throw new Error(errData.detail || 'Evaluation request failed');
       }
       const data = await res.json();
       setEvalResult(data);
 
-      if (data.error) {
-        addLog(`Evaluation Error: ${data.error}`, 'error');
-      } else {
-        addLog(`Local Evaluation Complete: Score ${data.benchmark_score_pct}% (${data.passed_cases}/${data.total_cases} passed).`, 'success');
-        (data.details || []).forEach(d => {
+      addLog(`Evaluation completed: ${data.benchmark_score_pct}% (${data.passed_cases}/${data.total_cases} passed)`, data.benchmark_score_pct >= 80 ? 'success' : 'warn');
+
+      if (data.details) {
+        data.details.forEach(d => {
           const icon = d.status === 'PASS' ? '✅' : '❌';
           addLog(`  ${icon} [${d.eval_id}] ${d.status} — Safety: ${d.safety_eval?.passed ? 'correct' : 'MISMATCH'}`, d.status === 'PASS' ? 'success' : 'error');
         });
@@ -96,11 +99,6 @@ export default function SimulatorControls() {
     } finally {
       setEvalLoading(false);
     }
-  };
-
-  const addLog = (msg, type = 'info') => {
-    const time = new Date().toLocaleTimeString();
-    setLogs(prev => [{ time, msg, type }, ...prev].slice(0, 50));
   };
 
   const cardStyle = {
@@ -120,7 +118,7 @@ export default function SimulatorControls() {
     marginBottom: '0.3rem',
   };
 
-  const kpiStyle = (color) => ({
+  const kpiStyle = () => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

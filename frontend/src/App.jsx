@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, BookOpen, Database, Activity, Cpu, Sun, Moon, Globe } from 'lucide-react';
 import ChatInterface from './components/ChatInterface';
 import SkillsInspector from './components/SkillsInspector';
@@ -6,19 +6,19 @@ import BigQueryDataViewer from './components/BigQueryDataViewer';
 import A2AExplorer from './components/A2AExplorer';
 import SimulatorControls from './components/SimulatorControls';
 
+const WELCOME_MSG = {
+  role: 'assistant',
+  content: 'Welcome to the **Crazy Fashion Marketing Platform**! I\'m your AI marketing assistant powered by **Google Cloud Agent Engine**. Ask me to analyze customer segments, design campaign strategies for our Nordic fashion collections, or generate on-brand creative copy. I coordinate specialized agents protected by **Model Armor**.',
+  a2a_trace: [],
+  model_armor: { passed: true }
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('chat');
   const [theme, setTheme] = useState('light');
 
-  // Lift chat messages to App so they persist across tab switches
-  const welcomeMsg = {
-    role: 'assistant',
-    content: 'Welcome to the **Crazy Fashion Marketing Platform**! I\'m your AI marketing assistant powered by **Google Cloud Agent Engine**. Ask me to analyze customer segments, design campaign strategies for our Nordic fashion collections, or generate on-brand creative copy. I coordinate specialized agents protected by **Model Armor**.',
-    a2a_trace: [],
-    model_armor: { passed: true }
-  };
-  const [messages, setMessages] = useState([welcomeMsg]);
-  const clearMessages = useCallback(() => setMessages([welcomeMsg]), []);
+  const [messages, setMessages] = useState([WELCOME_MSG]);
+  const clearMessages = useCallback(() => setMessages([WELCOME_MSG]), []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

@@ -1,16 +1,20 @@
 import js from '@eslint/js';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   js.configs.recommended,
   {
     files: ['src/**/*.{js,jsx}'],
+    plugins: {
+      'react-hooks': reactHooks,
+    },
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
       parserOptions: {
         ecmaFeatures: {
-          jsx: true
-        }
+          jsx: true,
+        },
       },
       globals: {
         window: 'readonly',
@@ -21,12 +25,13 @@ export default [
         clearTimeout: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
-        process: 'readonly'
-      }
+        process: 'readonly',
+      },
     },
     rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'no-console': 'off'
-    }
-  }
+      ...reactHooks.configs.recommended.rules,
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-console': 'off',
+    },
+  },
 ];
