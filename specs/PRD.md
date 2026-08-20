@@ -35,22 +35,26 @@ The platform dynamically classifies user prompts into three execution paths:
 | `FULL_CAMPAIGN` | Campaign or copywriting prompts | Orchestrator → Analytics → Strategy → Content | End-to-end: metrics + strategy + creative copy |
 
 ### 3.2 Natural Language to BigQuery SQL (NL2SQL)
-- **Schema-Aware**: AnalyticsAgent uses Gemini (`gemini-3.6-flash`) with knowledge of 3 BigQuery tables
-- **Live Execution**: SQL runs directly against BigQuery — no dummy fallbacks
-- **SQL Accordion**: Executed SQL renders in collapsible `<details><summary>` containers
+- **Schema-Aware**: AnalyticsAgent uses Gemini (`gemini-3.6-flash`) with schema knowledge of 5 Crazy Fashion BigQuery tables (`customer_rfm_summary`, `customer_demographics_360`, `customer_transactions`, `product_catalog`, `customer_events`).
+- **Live Execution**: SQL runs directly against BigQuery in EUR (€) — no mock or dummy fallbacks.
+- **SQL Accordion**: Executed SQL renders cleanly in collapsible `<details><summary>` containers (`🔍 View Executed BigQuery SQL Query`).
 
 ### 3.3 Model Armor Security & Governed Gateway
 - **Prompt Shield**: Real-time validation via Model Armor (`marketing-prompt-shield` template)
 - **Agent Gateway**: `marketing-agent-gateway` with `CLIENT_TO_AGENT` governed access path
 
 ### 3.4 Skill Store
-- Production skills: `bigquery_customer_analytics`, `omnichannel_strategy`, `brand_voice`
+- Production marketing skills: `bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`
 - CLI dev skills (`google-agents-cli-*`) automatically filtered from the web UI
 
-### 3.5 UI/UX
-- **Default**: Light Mode (`data-theme="light"`) with Dark Mode toggle
-- **Selective Rendering**: Strategy & Content cards render only when data present
-- **Agent Graph**: Interactive A2A routing visualization
+### 3.5 UI/UX & Interactive Capabilities
+- **Theme Engine**: Light Mode default (`data-theme="light"`) with Dark Mode toggle switch.
+- **Dynamic AI Follow-Up Generator**: Server-side contextual suggestions engine (`/api/suggestions/generate`) powered by Gemini 3.6 Flash on Vertex AI.
+- **Interactive Objective Steering Accordion**: Categorized sample objectives (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel, Red-Team Security) with shuffle and "✨ Generate AI Follow-ups" button.
+- **Full-Screen Chat Focus View**: Top control bar toggle (`Maximize2` / `Minimize2` and `Escape` key) expanding the chat view into a distraction-free full viewport overlay.
+- **Clean Contextual Dispatch**: Direct prompt transmission without artificial cohort prefix/suffix strings.
+- **Selective Rendering**: Strategy & Content deliverable cards render strictly when payload is present.
+- **Agent Graph**: Interactive A2A routing topology visualizer.
 
 ---
 
@@ -81,9 +85,9 @@ The platform dynamically classifies user prompts into three execution paths:
 | Category | Requirement | Target |
 |----------|------------|--------|
 | **Performance** | End-to-end response latency | `< 3.5s` (ANALYTICS_ONLY), `< 7.0s` (FULL_CAMPAIGN) |
-| **Data Integrity** | Zero mock data | All queries execute against live BigQuery |
+| **Data Integrity** | Zero mock data | All queries execute against live BigQuery (5 tables, 300 customers) |
 | **Security** | Model Armor prompt shield | 100% injection detection on benchmark suite |
 | **Observability** | OpenTelemetry + Log Analytics | Cloud Trace spans, structured logging, GenAI telemetry |
-| **Code Quality** | Pre-commit linter | Python `py_compile` + React ESLint on every commit |
+| **Code Quality** | Pre-commit linter | Python Ruff linter + syntax compilation + React ESLint on every commit |
 | **Scaffolding** | `agents-cli` managed | All infrastructure files auto-generated and upgradeable |
 | **Accessibility** | WCAG 2.1 AA | Color contrast, Inter/JetBrains Mono typography |

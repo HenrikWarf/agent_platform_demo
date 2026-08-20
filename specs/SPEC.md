@@ -7,12 +7,11 @@
 
 ### 1.1 Multi-Agent Chat Endpoint
 - **URL**: `POST /api/chat`
-- **Description**: Main execution entrypoint on the Cloud Run backend. Proxies requests to the deployed Agent Runtime via `AgentRuntimeClient`.
+- **Description**: Main execution entrypoint on the Cloud Run backend. Proxies requests cleanly to the deployed Agent Runtime via `AgentRuntimeClient` using `:streamQuery` governed by Agent Gateway & Model Armor.
 - **Request**:
 ```json
 {
-  "prompt": "What is the average age of customers in the Champions segment?",
-  "target_segment": "Champions"
+  "prompt": "Compare average customer recency and lifetime monetary EUR for 'VIP Fashionistas' vs 'Dormant At-Risk'."
 }
 ```
 - **Response** (`ANALYTICS_ONLY` intent):
@@ -24,12 +23,11 @@
   "summary": "📊 BigQuery Data Query Result...",
   "analytics": {
     "status": "SUCCESS",
-    "skill_executed": "bigquery_customer_analytics",
-    "summary": "• Average age for Champions is 42.5 years...",
+    "skill_executed": "bigquery-customer-analytics",
+    "summary": "• VIP Fashionistas average recency: 12.4 days, total spend: €4,250...",
     "cohort_details": {
-      "total_customers_analyzed": 52,
-      "target_segment": "Champions",
-      "sql_executed": "SELECT AVG(demo.age) ..."
+      "total_customers_analyzed": 300,
+      "sql_executed": "SELECT rfm_segment, AVG(recency_days), SUM(total_monetary_eur) FROM `agent-demo-09.marketing_analytics.customer_rfm_summary` GROUP BY rfm_segment"
     }
   },
   "strategy": {},
@@ -38,13 +36,41 @@
     {
       "sender_id": "orchestrator_agent",
       "receiver_id": "analytics_agent",
-      "skill_used": "bigquery_customer_analytics"
+      "skill_used": "bigquery-customer-analytics"
     }
   ]
 }
 ```
 
-### 1.2 Agent Runtime Endpoints (Container Routes)
+### 1.2 Dynamic AI Follow-Up Suggestions Endpoint
+- **URL**: `POST /api/suggestions/generate`
+- **Description**: Inspects recent conversation history and uses Gemini 3.6 Flash on Vertex AI (`location=global`) to generate 6 hyper-relevant, structured follow-up questions mapped to target agents.
+- **Request**:
+```json
+{
+  "messages": [
+    { "role": "user", "content": "Analyze churn risk for VIP customers." },
+    { "role": "assistant", "content": "Found 45 VIP customers with average churn risk 0.12..." }
+  ]
+}
+```
+- **Response**:
+```json
+{
+  "questions": [
+    {
+      "title": "VIP Platinum Fashion Week Preview",
+      "prompt": "Create an exclusive private preview campaign for 'VIP Fashionistas' with double Crazy Club points.",
+      "agent": "Multi-Agent Orchestrator",
+      "badge": "VIP Flow",
+      "color": "#3b82f6",
+      "category": "campaign"
+    }
+  ]
+}
+```
+
+### 1.3 Agent Runtime Endpoints (Container Routes)
 These routes are served by `app/fast_api_app.py` inside the Agent Runtime container:
 
 | Route | Method | Consumer |
@@ -57,7 +83,7 @@ These routes are served by `app/fast_api_app.py` inside the Agent Runtime contai
 | `/a2a/{app_name}/.well-known/agent-card.json` | GET | A2A agent card discovery |
 | `/feedback` | POST | Structured feedback logging |
 
-### 1.3 System Health & Version Endpoints
+### 1.4 System Health & Version Endpoints
 - **URL**: `GET /api/health` & `GET /health`
 ```json
 {
@@ -70,52 +96,88 @@ These routes are served by `app/fast_api_app.py` inside the Agent Runtime contai
 ```
 - **URL**: `GET /api/version` — Returns deployment parameters, Agent Runtime resource ID, and Model Armor metadata.
 
-### 1.4 Skill Store Endpoints
-- **URL**: `GET /api/skills` — Returns marketing skills (filters out `google-agents-cli-*` dev skills).
+### 1.5 Skill Store Endpoints
+- **URL**: `GET /api/skills` — Returns marketing skills (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`) and filters out `google-agents-cli-*` dev skills.
 - **URL**: `GET /api/skills/{skill_id}` — Returns raw `SKILL.md` content.
 
-### 1.5 BigQuery Data Inspector
+### 1.6 BigQuery Data Inspector
 - **URL**: `GET /api/bigquery/sample`
 - **Parameters**: `table_name` (default: `customer_rfm_summary`), `limit` (default: `10`)
 
-### 1.6 Traffic Simulator
+### 1.7 Traffic Simulator
 - **URL**: `GET /api/simulator/status`
 - **URL**: `POST /api/simulator/toggle` — Body: `{"active": true}`
 
 ---
 
-## 2. BigQuery Data Architecture
+## 2. BigQuery Data Architecture (Crazy Fashion — Nordic Retail)
+- **Dataset**: `agent-demo-09.marketing_analytics`
+- **Currency**: EUR (€)
+- **Customer Segments**: `VIP Fashionistas`, `Loyal Regulars`, `Seasonal Shoppers`, `New Explorers`, `Dormant At-Risk`
 
-### 2.1 Table: `customer_rfm_summary` (200 rows)
+### 2.1 Table: `customer_rfm_summary` (300 records)
 | Column | Type | Description |
 |--------|------|-------------|
-| `customer_id` | STRING | Unique ID (`CUST_001`) |
-| `rfm_segment` | STRING | Segment (At-Risk Premium, Champions, Loyal Customers, Recent Buyers, Lost Customers) |
-| `recency_days` | INT64 | Days since last transaction |
-| `frequency_orders` | INT64 | Total completed orders |
-| `total_monetary` | NUMERIC | Lifetime monetary value ($) |
+| `customer_id` | STRING | Unique ID (`CUST_0001` - `CUST_0300`) |
+| `rfm_segment` | STRING | RFM Customer Segment |
+| `recency_days` | INT64 | Days since last order (1 - 365) |
+| `frequency_orders` | INT64 | Total lifetime order count (1 - 42) |
+| `total_monetary_eur` | NUMERIC | Lifetime spend in EUR (€45 - €8,400) |
 
-### 2.2 Table: `customer_demographics_360` (200 rows)
+### 2.2 Table: `customer_demographics_360` (300 records)
 | Column | Type | Description |
 |--------|------|-------------|
-| `customer_id` | STRING | Unique ID |
-| `full_name` | STRING | Customer name |
-| `email` | STRING | Email address |
-| `age` | INT64 | Age in years |
-| `location_city` | STRING | Primary metro city |
-| `location_country` | STRING | Primary country |
-| `income_bracket` | STRING | Income bracket ($100k-$150k) |
-| `preferred_communication_channel` | STRING | Email, LinkedIn, SMS |
-| `churn_risk_score` | NUMERIC | Churn probability (0.00–1.00) |
-| `lifetime_value_tier` | STRING | Tier 1 VIP, Tier 2 Enterprise, Tier 3 Standard |
+| `customer_id` | STRING | Unique customer foreign key |
+| `full_name` | STRING | Customer Nordic name (e.g. Astrid Lindgren) |
+| `email` | STRING | Customer email address |
+| `age` | INT64 | Customer age (18 - 72) |
+| `gender` | STRING | Female, Male, Non-Binary |
+| `location_city` | STRING | Stockholm, Oslo, Copenhagen, Helsinki, Gothenburg |
+| `location_country` | STRING | Sweden, Norway, Denmark, Finland |
+| `income_bracket` | STRING | EUR income tier (€30k-€50k, €50k-€80k, €80k-€120k, €120k+) |
+| `preferred_communication_channel` | STRING | Email, Instagram, SMS, App Push |
+| `preferred_category` | STRING | Womenswear, Menswear, Accessories, Knitwear |
+| `loyalty_tier` | STRING | Platinum Member, Gold Member, Silver Member, Bronze Member |
+| `crazy_club_points` | INT64 | Crazy Club loyalty reward points |
+| `churn_risk_score` | NUMERIC | Churn probability (0.00 - 1.00) |
 
-### 2.3 Table: `customer_transactions` (400 rows)
+### 2.3 Table: `customer_transactions` (900 records)
 | Column | Type | Description |
 |--------|------|-------------|
-| `transaction_id` | STRING | Unique transaction ID |
-| `customer_id` | STRING | Foreign key |
-| `amount` | NUMERIC | Transaction amount ($) |
-| `transaction_date` | TIMESTAMP | Purchase timestamp |
+| `transaction_id` | STRING | Unique transaction ID (`TXN_0001` - `TXN_0900`) |
+| `customer_id` | STRING | Customer ID foreign key |
+| `product_id` | STRING | Product ID (`PROD_01` - `PROD_50`) |
+| `product_name` | STRING | Product catalog name |
+| `category` | STRING | Womenswear, Menswear, Accessories, Shoes |
+| `amount_eur` | NUMERIC | Transaction line item amount in EUR |
+| `quantity` | INT64 | Units purchased |
+| `channel` | STRING | Online, In-Store, App |
+| `store_city` | STRING | Store location / fulfillment center |
+| `transaction_date` | TIMESTAMP | Timestamp of transaction |
+
+### 2.4 Table: `product_catalog` (50 records)
+| Column | Type | Description |
+|--------|------|-------------|
+| `product_id` | STRING | Catalog SKU ID |
+| `product_name` | STRING | Nordic fashion item name |
+| `category` | STRING | Womenswear, Menswear, Kids & Baby, Accessories |
+| `subcategory` | STRING | Knitwear, Denim, Outerwear, Dresses, Footwear |
+| `price_eur` | NUMERIC | Retail price in EUR |
+| `description` | STRING | Scandinavian design product description |
+| `sustainability_certified` | BOOLEAN | Eco-friendly / recycled fabrics certification |
+| `collection` | STRING | Autumn Nordic Minimalist, Summer Capsule, Winter Warmth |
+
+### 2.5 Table: `customer_events` (1500 records)
+| Column | Type | Description |
+|--------|------|-------------|
+| `event_id` | STRING | Unique behavioral telemetry ID |
+| `customer_id` | STRING | Customer ID foreign key |
+| `event_type` | STRING | purchase, website_visit, app_open, newsletter_signup, cart_abandon, wishlist_add |
+| `event_date` | TIMESTAMP | Behavioral event timestamp |
+| `product_id` | STRING | Associated product SKU |
+| `channel` | STRING | Online, App, In-Store |
+| `device` | STRING | iOS, Android, Desktop, Tablet |
+| `session_duration_seconds` | INT64 | User session length |
 
 ---
 
@@ -181,5 +243,6 @@ create_params:
 - **Roles**: `cloudtrace.agent`, `logging.logWriter`, `monitoring.metricWriter`, `monitoring.admin`, `aiplatform.admin`
 
 ### 5.3 Pre-Commit Linter (`scripts/pre_commit_lint.sh`)
-- Python `py_compile` across `agents/`, `backend/`, `deploy/`, `eval/`, `app/`
+- Python Ruff Linter (`ruff check .`) for style and syntax consistency
+- Python syntax & module compilation across `agents/`, `backend/`, `deploy/`, `eval/`, `app/`
 - React ESLint via `cd frontend && npm run lint`

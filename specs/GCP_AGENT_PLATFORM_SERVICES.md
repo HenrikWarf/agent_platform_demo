@@ -1030,7 +1030,7 @@ In the Google Cloud ecosystem, an **Agent Skill** is a standalone, executable, m
 Every skill is packaged as a structured directory adhering to a strict three-level contract:
 
 ```
-skills/marketing_analytics/
+skills/bigquery-customer-analytics/
 ├── SKILL.md                 <-- Core skill definition (L1 Frontmatter + L2 Instructions)
 ├── references/              <-- L3: Extended markdown guidance and domain documentation
 │   └── rfm_methodology.md

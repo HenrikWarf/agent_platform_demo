@@ -53,7 +53,15 @@ This document provides an end-to-end, detailed technical walkthrough of every la
 * **Role in App**: Hosts the compiled static React/Vite single-page application inside an Nginx container.
 
 ### 2.2 Application Implementation
-The frontend is built with **React 18**, **Vite**, and **Lucide Icons**. It uses CSS custom properties for instant light/dark mode theme toggling without page reloads. The application has 6 tabs: **Chat**, **Agent Graph**, **Skills Inspector**, **BigQuery Data**, **A2A Explorer**, and **Traffic Simulator & OTel**.
+The frontend is built with **React 18**, **Vite**, and **Lucide Icons**. It uses CSS custom properties for instant light/dark mode theme toggling without page reloads. The application includes 6 tabs: **Chat**, **Agent Graph**, **Skills Inspector**, **BigQuery Data**, **A2A Explorer**, and **Traffic Simulator & OTel**.
+
+#### Core Interactive Chat Capabilities
+- **Dynamic AI Follow-Up Generator**: Calls `/api/suggestions/generate` (powered by Gemini 3.6 Flash on Vertex AI) to inspect recent conversation turns and propose 6 hyper-relevant, structured follow-up questions mapped to target agents (`Analytics Agent`, `Strategy Pipeline`, `Content Pipeline`, `Multi-Agent Orchestrator`).
+- **Interactive Objective Steering Accordion**: Categorized questions (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel, Red-Team Security) with shuffle and "✨ Generate AI Follow-ups" button. Clicking any question populates the prompt box smoothly.
+- **Full-Screen Chat Focus View**: A top control bar toggle (`Maximize2` / `Minimize2` and `Escape` key shortcut) expands the chat into a distraction-free full viewport overlay covering all menus and side panels.
+- **Direct Context Dispatch**: User prompts are sent directly without artificial cohort prefix/suffix strings, ensuring clean context for Gemini.
+- **Collapsible SQL Accordion**: BigQuery SQL queries render inside collapsible `🔍 View Executed BigQuery SQL Query` accordions.
+- **Selective Deliverable Cards**: Campaign Strategy frameworks and Ready-to-deploy Creative Assets render rich UI components strictly when payload data is present.
 
 #### Code Snippet: State & Theme Switching ([`frontend/src/App.jsx`](file:///Users/henrikw/Projects/agent_platform_demo/frontend/src/App.jsx))
 
@@ -118,12 +126,12 @@ export default function App() {
 
 ### 3.1 GCP Component: FastAPI + OpenTelemetry Cloud Trace Exporter
 * **Feature & Function**: Provides lightweight, asynchronous REST API endpoints while exporting OpenTelemetry span traces directly to **Google Cloud Trace**.
-* **Role in App**: Receives user prompts from the frontend, proxies requests to Agent Runtime via the governed `:streamQuery` endpoint (where Agent Gateway enforces Model Armor), and surfaces BigQuery customer data tables.
+* **Role in App**: Receives user prompts from the frontend, proxies requests to Agent Runtime via the governed `:streamQuery` endpoint (where Agent Gateway enforces Model Armor), executes Dynamic AI Follow-up generation via Gemini 3.6 Flash on Vertex AI, and surfaces BigQuery customer data tables.
 
 ### 3.2 Application Implementation
-The backend entry point is [`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py). It initializes OpenTelemetry tracing and defines `/api/chat`, `/health`, and `/api/version` endpoints.
+The backend entry point is [`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py). It initializes OpenTelemetry tracing and defines `/api/chat`, `/api/suggestions/generate`, `/health`, and `/api/version` endpoints.
 
-#### Code Snippet: Server Initialization & Trace Setup ([`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py))
+#### Code Snippet: Server Initialization & Chat Handler ([`backend/app.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/app.py))
 
 ```python
 from fastapi import FastAPI, HTTPException
@@ -133,6 +141,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
 from backend.config import Config
 from backend.agent_runtime_client import AgentRuntimeClient
+from backend.suggestions_generator import generate_dynamic_followups
 
 # Initialize OpenTelemetry exporter for Google Cloud Trace
 tracer_provider = TracerProvider()
@@ -140,7 +149,7 @@ cloud_exporter = CloudTraceSpanExporter(project_id=Config.GCP_PROJECT_ID)
 tracer_provider.add_span_processor(BatchSpanProcessor(cloud_exporter))
 trace.set_tracer_provider(tracer_provider)
 
-app = FastAPI(title="Google Cloud Agent Platform API", version="1.0.0")
+app = FastAPI(title="Google Cloud Agent Platform API", version="1.2.0")
 runtime_client = AgentRuntimeClient()
 
 @app.post("/api/chat")
@@ -148,10 +157,7 @@ def process_chat(req: ChatRequest):
     """Proxies prompt to Agent Runtime via governed :streamQuery endpoint.
     Model Armor security screening is enforced at the Agent Gateway
     infrastructure level — no application-level pre-flight needed."""
-    result = runtime_client.query(
-        prompt=req.prompt,
-        target_segment=req.target_segment
-    )
+    result = runtime_client.query(prompt=req.prompt)
     result["agent_gateway"] = {
         "resource": Config.AGENT_GATEWAY_URL,
         "governed_access_path": "CLIENT_TO_AGENT",
@@ -159,6 +165,12 @@ def process_chat(req: ChatRequest):
         "model_armor_floor_id": Config.MODEL_ARMOR_FLOOR_ID,
     }
     return result
+
+@app.post("/api/suggestions/generate")
+def generate_suggestions(req: SuggestionsRequest):
+    """Generates 6 contextual follow-up marketing questions via Gemini 3.6 Flash."""
+    questions = generate_dynamic_followups(messages=req.messages)
+    return {"questions": questions}
 ```
 
 ---
@@ -230,39 +242,41 @@ The multi-agent system is defined in [`app/agent.py`](file:///Users/henrikw/Proj
 
 ```python
 import os
-from google.adk.agents import Agent
+import pathlib
+from google.adk.agents import Agent, SequentialAgent
 from google.adk.apps import App
-from . import tools
+from google.adk.skills import load_skill_from_dir
+from google.adk.tools.skill_toolset import SkillToolset
+from app.company_context import COMPANY_CONTEXT
+from app.schemas import StrategySchema, ContentSchema
 
-# 1. Analytics Agent (BigQuery SQL Engine)
+# Load skills
+skills_dir = pathlib.Path(__file__).parent.parent / "skills"
+analytics_skill = load_skill_from_dir(skills_dir / "bigquery-customer-analytics")
+strategy_skill = load_skill_from_dir(skills_dir / "campaign-framework")
+content_skill = load_skill_from_dir(skills_dir / "brand-voice-craft")
+
+# 1. Analytics Agent (BigQuery NL2SQL)
 analytics_agent = Agent(
     name="analytics_agent",
     model="gemini-3.6-flash",
-    description="Executes BigQuery customer data analysis and RFM segmentation.",
-    instruction="""You are the Customer Insights & Analytics Agent.
-Write BigQuery Standard SQL queries to answer customer data questions.
-Call query_customer_data EXACTLY ONCE with your SQL query.
-Table: `agent-demo-09.marketing_analytics.customer_rfm_summary`
-""",
-    tools=[tools.query_customer_data],
+    description="Executes BigQuery customer data analysis and RFM segmentation for Crazy Fashion.",
+    instruction=ANALYTICS_INSTRUCTION,
+    tools=[mcp_toolset, SkillToolset(skills=[analytics_skill])],
 )
 
-# 2. Strategy Agent (Omnichannel Framework)
-strategy_agent = Agent(
-    name="strategy_agent",
-    model="gemini-3.6-flash",
-    description="Designs omnichannel marketing strategies and channel mix.",
-    instruction="Always use the generate_campaign_strategy tool.",
-    tools=[tools.generate_campaign_strategy],
+# 2. Strategy Pipeline (SequentialAgent: reasoning -> Pydantic structured output)
+strategy_pipeline = SequentialAgent(
+    name="strategy_pipeline",
+    description="Builds 3-pillar omnichannel marketing frameworks, channel mix weights, and EUR revenue recovery.",
+    sub_agents=[strategy_reasoning_agent, strategy_json_agent],
 )
 
-# 3. Content Agent (Brand Voice Copywriter)
-content_agent = Agent(
-    name="content_agent",
-    model="gemini-3.6-flash",
-    description="Produces email templates, social media posts, and SMS copy.",
-    instruction="Always use the generate_marketing_content tool.",
-    tools=[tools.generate_marketing_content],
+# 3. Content Pipeline (SequentialAgent: reasoning -> Pydantic structured output)
+content_pipeline = SequentialAgent(
+    name="content_pipeline",
+    description="Produces email templates, social media posts, and SMS copy aligned with Nordic brand voice.",
+    sub_agents=[content_reasoning_agent, content_json_agent],
 )
 
 # 4. Root Orchestrator Agent
@@ -270,8 +284,8 @@ root_agent = Agent(
     name="marketing_orchestrator",
     model="gemini-3.6-flash",
     description="Marketing Campaign Supervisor — routes objectives to sub-agents.",
-    instruction="Route data queries -> analytics_agent; strategy -> analytics -> strategy_agent; campaign -> all agents.",
-    sub_agents=[analytics_agent, strategy_agent, content_agent],
+    instruction="Route data queries -> analytics_agent; strategy -> analytics -> strategy_pipeline; campaign -> all agents.",
+    sub_agents=[analytics_agent, strategy_pipeline, content_pipeline],
 )
 
 app = App(root_agent=root_agent, name="app")
@@ -283,7 +297,7 @@ app = App(root_agent=root_agent, name="app")
 import requests, json
 
 class AgentRuntimeClient:
-    def query(self, prompt: str, target_segment: str) -> dict:
+    def query(self, prompt: str) -> dict:
         user_id = "user-123"
         session_id = self._create_session(user_id)
         
@@ -293,7 +307,7 @@ class AgentRuntimeClient:
         payload = {
             "class_method": "stream_query",
             "input": {
-                "message": f"{prompt}\n\nTarget customer segment: {target_segment}",
+                "message": prompt,
                 "user_id": user_id,
                 "session_id": session_id,
             }
@@ -307,7 +321,7 @@ class AgentRuntimeClient:
                 event_data = json.loads(line[5:].strip())
                 events.append(event_data)
                 
-        return self._format_response(events, prompt, target_segment)
+        return self._format_response(events, prompt)
 ```
 
 ### 5.3 Agent-to-Agent (A2A) Protocol Support
@@ -468,8 +482,8 @@ def query_customer_data(sql_query: str, tool_context: ToolContext) -> dict:
 ## 📊 7. Data Layer (Google BigQuery)
 
 ### 7.1 GCP Component: Google BigQuery
-* **Feature & Function**: Enterprise cloud data warehouse supporting SQL queries over petabytes of data.
-* **Role in App**: Stores customer RFM segments, 360 demographic profiles, and real-time transaction streams (`agent-demo-09:marketing_analytics`).
+* **Feature & Function**: Enterprise cloud data warehouse supporting SQL queries over petabytes of data with sub-second execution.
+* **Role in App**: Stores customer RFM segments, 360 demographic profiles, granular product catalog, transactional history, and real-time behavioral customer events for Nordic retailer **Crazy Fashion** (`agent-demo-09:marketing_analytics`).
 
 #### Code Snippet: BigQuery Data Seeder ([`deploy/seed_bigquery_data.py`](file:///Users/henrikw/Projects/agent_platform_demo/deploy/seed_bigquery_data.py))
 
@@ -480,8 +494,8 @@ def seed_rfm_table(client: bigquery.Client, dataset_ref: bigquery.DatasetReferen
     table_ref = dataset_ref.table("customer_rfm_summary")
     
     rows = [
-        {"customer_id": "CUST-001", "rfm_segment": "At-Risk Premium", "recency_days": 85, "frequency_orders": 12, "total_monetary": 4250.00},
-        {"customer_id": "CUST-002", "rfm_segment": "Champions", "recency_days": 5, "frequency_orders": 34, "total_monetary": 12800.50},
+        {"customer_id": "CUST_0001", "rfm_segment": "VIP Fashionistas", "recency_days": 4, "frequency_orders": 38, "total_monetary_eur": 4820.50},
+        {"customer_id": "CUST_0002", "rfm_segment": "Dormant At-Risk", "recency_days": 210, "frequency_orders": 3, "total_monetary_eur": 310.00},
     ]
     
     job_config = bigquery.LoadJobConfig(

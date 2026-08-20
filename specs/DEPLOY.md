@@ -80,7 +80,7 @@ agents-cli playground
 agents-cli run "How many customers are in the Champions segment?"
 ```
 
-### 2.5 Seed BigQuery Dataset (200 Aligned Rows)
+### 2.5 Seed BigQuery Dataset (5 Tables across Crazy Fashion Nordic Retail)
 ```bash
 PYTHONPATH=. ./venv/bin/python deploy/seed_bigquery_data.py
 ```
