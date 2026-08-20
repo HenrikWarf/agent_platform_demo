@@ -67,16 +67,35 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM EXIT
 
-# 5. Start FastAPI Backend Server
-echo "⚡ Starting FastAPI Backend Server on http://localhost:${PORT}..."
+# 5. Port Pre-Flight Check & Cleanup
+BACKEND_PORT="${PORT:-8080}"
+FRONTEND_PORT="3000"
+
+echo "🧹 Checking for stale processes on ports ${BACKEND_PORT} and ${FRONTEND_PORT}..."
+STALE_BACKEND=$(lsof -ti :${BACKEND_PORT} 2>/dev/null || true)
+if [ -n "$STALE_BACKEND" ]; then
+  echo "⚠️  Found stale process on backend port ${BACKEND_PORT} (PID: $STALE_BACKEND). Freeing port..."
+  kill -9 $STALE_BACKEND 2>/dev/null || true
+  sleep 1
+fi
+
+STALE_FRONTEND=$(lsof -ti :${FRONTEND_PORT} 2>/dev/null || true)
+if [ -n "$STALE_FRONTEND" ]; then
+  echo "⚠️  Found stale process on frontend port ${FRONTEND_PORT} (PID: $STALE_FRONTEND). Freeing port..."
+  kill -9 $STALE_FRONTEND 2>/dev/null || true
+  sleep 1
+fi
+
+# 6. Start FastAPI Backend Server
+echo "⚡ Starting FastAPI Backend Server on http://localhost:${BACKEND_PORT}..."
 python backend/app.py &
 BACKEND_PID=$!
 
 # Wait briefly to let backend bind port
 sleep 2
 
-# 6. Start Vite Frontend Server
-echo "🌐 Starting React Dark-Mode Frontend on http://localhost:3000..."
+# 7. Start Vite Frontend Server
+echo "🌐 Starting React Frontend on http://localhost:${FRONTEND_PORT}..."
 (cd frontend && npm run dev) &
 FRONTEND_PID=$!
 
