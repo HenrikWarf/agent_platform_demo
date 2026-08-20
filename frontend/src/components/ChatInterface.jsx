@@ -381,7 +381,7 @@ function getDynamicRecommendations(messages, shuffleSeed) {
   return combined;
 }
 
-export default function ChatInterface({ messages, setMessages, clearMessages }) {
+export default function ChatInterface({ messages, setMessages, clearMessages, sessionId, setSessionId, userId }) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentTrace, setCurrentTrace] = useState([]);
@@ -488,14 +488,15 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
     setPrompt('');
     setLoading(true);
 
+    const isExistingSession = Boolean(sessionId);
     const initialStep = {
       id: 'step_init',
       timestamp: new Date().toLocaleTimeString(),
       stage: 'orchestrating',
       agent: 'marketing_orchestrator',
       agent_name: 'Orchestrator Agent (A2A Supervisor)',
-      title: 'A2A Multi-Agent Supervisor Initialized',
-      detail: 'Analyzing user objective intent and evaluating optimal routing path...',
+      title: isExistingSession ? 'A2A Multi-Agent Supervisor (Active Session)' : 'A2A Multi-Agent Supervisor Initialized',
+      detail: isExistingSession ? 'Continuing active session. Evaluating follow-up context and routing path...' : 'Analyzing user objective intent and evaluating optimal routing path...',
       status: 'running',
       icon: 'cpu'
     };
@@ -505,7 +506,7 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
       const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: sendPrompt })
+        body: JSON.stringify({ prompt: sendPrompt, session_id: sessionId, user_id: userId })
       });
 
       if (!response.ok || !response.body) {
@@ -545,6 +546,9 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
               });
             } else if (event.type === 'final') {
               finalPayload = event.data;
+              if (event.session_id && setSessionId) {
+                setSessionId(event.session_id);
+              }
               if (event.steps && event.steps.length > 0) {
                 accumulatedSteps = event.steps;
               }
@@ -557,6 +561,9 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
 
       if (finalPayload) {
         setLoading(false);
+        if (finalPayload.session_id && setSessionId) {
+          setSessionId(finalPayload.session_id);
+        }
         setCurrentTrace(finalPayload.a2a_trace || []);
         setCurrentArmor(finalPayload.model_armor || { passed: true });
 
@@ -578,7 +585,7 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
       fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: sendPrompt })
+        body: JSON.stringify({ prompt: sendPrompt, session_id: sessionId, user_id: userId })
       })
         .then(async res => {
           const contentType = res.headers.get('content-type') || '';
@@ -590,6 +597,9 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
         })
         .then(data => {
           setLoading(false);
+          if (data.session_id && setSessionId) {
+            setSessionId(data.session_id);
+          }
           setCurrentTrace(data.a2a_trace || []);
           setCurrentArmor(data.model_armor || { passed: true });
 
@@ -629,6 +639,27 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <Sparkles size={18} color="var(--color-primary)" />
           <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-main)' }}>Multi-Agent Marketing Assistant</span>
+          {sessionId && (
+            <span
+              title={`Active Agent Runtime Session ID: ${sessionId}\nPersists across follow-up queries until cleared or reloaded.`}
+              style={{
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                fontFamily: 'var(--font-mono)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                color: '#059669',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                padding: '0.1rem 0.45rem',
+                borderRadius: '6px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              Session: {sessionId.length > 14 ? `${sessionId.slice(0, 8)}...${sessionId.slice(-4)}` : sessionId}
+            </span>
+          )}
           {isExpanded && (
             <span style={{
               fontSize: '0.65rem',

@@ -18,7 +18,13 @@ export default function App() {
   const [theme, setTheme] = useState('light');
 
   const [messages, setMessages] = useState([WELCOME_MSG]);
-  const clearMessages = useCallback(() => setMessages([WELCOME_MSG]), []);
+  const [sessionId, setSessionId] = useState(null);
+  const [userId] = useState(() => `user-${Math.random().toString(36).substring(2, 9)}`);
+
+  const clearMessages = useCallback(() => {
+    setMessages([WELCOME_MSG]);
+    setSessionId(null);
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -107,7 +113,14 @@ export default function App() {
       {/* Main Content Area */}
       <main className="main-content">
         <div style={{ display: activeTab === 'chat' ? 'contents' : 'none' }}>
-          <ChatInterface messages={messages} setMessages={setMessages} clearMessages={clearMessages} />
+          <ChatInterface
+            messages={messages}
+            setMessages={setMessages}
+            clearMessages={clearMessages}
+            sessionId={sessionId}
+            setSessionId={setSessionId}
+            userId={userId}
+          />
         </div>
         {activeTab === 'skills' && <SkillsInspector />}
         {activeTab === 'bigquery' && <BigQueryDataViewer />}

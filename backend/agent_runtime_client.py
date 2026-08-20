@@ -43,6 +43,7 @@ class AgentRuntimeClient:
     def __init__(self):
         self._credentials = None
         self._governed_url = None  # :streamQuery/:query governed endpoint
+        self._active_sessions: set[tuple[str, str]] = set()  # (user_id, session_id)
         self.runtime_id = Config.AGENT_RUNTIME_ID
         if not self.runtime_id:
             self.runtime_id = self._read_deployment_metadata()
@@ -101,44 +102,107 @@ class AgentRuntimeClient:
             "Content-Type": "application/json",
         }
 
-    def _create_session(self, user_id: str) -> str:
+    def _create_session(self, user_id: str, session_id: str | None = None) -> str:
         """Create a new ADK session via the /api passthrough.
 
         Session management doesn't need Agent Gateway governance —
         only actual prompts need Model Armor screening.
         """
         url = f"{self._base_url}/apps/app/users/{user_id}/sessions"
-        resp = requests.post(url, headers=self._get_auth_headers(), json={}, timeout=30)
+        payload = {"id": session_id} if session_id else {}
+        resp = requests.post(url, headers=self._get_auth_headers(), json=payload, timeout=30)
+        if resp.status_code in (200, 201):
+            created_id = resp.json().get("id", "") or session_id or ""
+            logger.info(f"Created session {created_id} for user {user_id}")
+            return created_id
+        if resp.status_code == 409 and session_id:
+            logger.info(f"Session {session_id} already exists for user {user_id}")
+            return session_id
         resp.raise_for_status()
-        session_id = resp.json().get("id", "")
-        logger.info(f"Created session {session_id} for user {user_id}")
-        return session_id
+        created_id = resp.json().get("id", "")
+        logger.info(f"Created session {created_id} for user {user_id}")
+        return created_id
+
+    def get_or_create_session(
+        self, user_id: str | None = None, session_id: str | None = None
+    ) -> tuple[str, str, bool]:
+        """Ensure an active ADK session exists on the Agent Runtime.
+
+        Returns (user_id, session_id, is_new_session).
+        If session_id is provided and verified in memory or on the ADK server,
+        it is reused (is_new_session = False).
+        If session_id is not provided or unverified, a session is created/registered (is_new_session = True).
+        """
+        user_id = user_id or f"user-{uuid.uuid4().hex[:8]}"
+
+        if session_id and (user_id, session_id) in self._active_sessions:
+            return (user_id, session_id, False)
+
+        if not self._base_url:
+            sid = session_id or f"session-{uuid.uuid4().hex[:8]}"
+            self._active_sessions.add((user_id, sid))
+            return (user_id, sid, not bool(session_id))
+
+        if session_id:
+            try:
+                sid = self._create_session(user_id, session_id=session_id)
+                self._active_sessions.add((user_id, sid))
+                return (user_id, sid, True)
+            except Exception as e:
+                logger.warning(f"Failed to register custom session {session_id}: {e}. Falling back.")
+
+        try:
+            created_sid = self._create_session(user_id)
+            self._active_sessions.add((user_id, created_sid))
+            return (user_id, created_sid, True)
+        except Exception as e:
+            logger.error(f"Failed to create session on Agent Runtime: {e}")
+            fallback_sid = session_id or f"session-{uuid.uuid4().hex[:8]}"
+            self._active_sessions.add((user_id, fallback_sid))
+            return (user_id, fallback_sid, True)
 
     def query_stream(
-        self, prompt: str, target_segment: str = "All Cohorts (Full Dataset)"
+        self,
+        prompt: str,
+        target_segment: str = "All Cohorts (Full Dataset)",
+        session_id: str | None = None,
+        user_id: str | None = None,
     ) -> collections.abc.Generator[dict[str, Any], None, None]:
         """Send a prompt to Agent Runtime via :streamQuery and yield real-time background execution steps.
 
         Yields SSE message dictionaries:
         - {"type": "step", "step": {...}} as agents transition, skills are loaded, and tools are called.
-        - {"type": "final", "data": {...}, "steps": [...]} containing the complete formatted deliverable cards.
+        - {"type": "final", "data": {...}, "session_id": ..., "user_id": ..., "steps": [...]} containing the complete formatted deliverable cards.
         """
         def now_str():
             return datetime.datetime.now().strftime("%H:%M:%S")
 
         recorded_steps: list[dict[str, Any]] = []
 
-        # Step 1: Orchestrator A2A Supervisor Initialization
+        # Resolve persistent session
+        user_id, session_id, is_new_session = self.get_or_create_session(
+            user_id=user_id, session_id=session_id
+        )
+
+        # Step 1: Orchestrator A2A Supervisor Step
+        if is_new_session:
+            step_title = "A2A Multi-Agent Supervisor Initialized"
+            step_detail = f"Session {session_id[:16]}... started. Analyzing user objective intent and evaluating optimal routing path..."
+        else:
+            step_title = "A2A Multi-Agent Supervisor (Active Session)"
+            step_detail = f"Continuing session {session_id[:16]}... Evaluating follow-up context and routing path..."
+
         step_orch = {
             "id": f"step_orch_{uuid.uuid4().hex[:6]}",
             "timestamp": now_str(),
             "stage": "orchestrating",
             "agent": "marketing_orchestrator",
             "agent_name": "Orchestrator Agent (A2A Supervisor)",
-            "title": "A2A Multi-Agent Supervisor Initialized",
-            "detail": "Analyzing user objective intent and evaluating optimal routing path...",
+            "title": step_title,
+            "detail": step_detail,
             "status": "completed",
             "icon": "cpu",
+            "session_id": session_id,
         }
         recorded_steps.append(step_orch)
         yield {"type": "step", "step": step_orch}
@@ -163,12 +227,16 @@ class AgentRuntimeClient:
                 "data": {
                     "status": "ERROR",
                     "summary": err_msg,
+                    "session_id": session_id,
+                    "user_id": user_id,
                     "analytics": {},
                     "strategy": {},
                     "content": {},
                     "a2a_trace": [],
                     "steps": recorded_steps,
                 },
+                "session_id": session_id,
+                "user_id": user_id,
                 "steps": recorded_steps,
             }
             return
@@ -178,9 +246,6 @@ class AgentRuntimeClient:
         seen_tools = set()
 
         try:
-            user_id = f"backend-{uuid.uuid4().hex[:8]}"
-            session_id = self._create_session(user_id)
-
             stream_url = f"{self._governed_url}:streamQuery"
             resp = requests.post(
                 stream_url,
@@ -401,9 +466,17 @@ class AgentRuntimeClient:
             recorded_steps.append(step_gov)
             yield {"type": "step", "step": step_gov}
 
-            final_data = self._format_response(events, prompt, target_segment)
+            final_data = self._format_response(
+                events, prompt, target_segment, session_id=session_id, user_id=user_id
+            )
             final_data["steps"] = recorded_steps
-            yield {"type": "final", "data": final_data, "steps": recorded_steps}
+            yield {
+                "type": "final",
+                "data": final_data,
+                "session_id": session_id,
+                "user_id": user_id,
+                "steps": recorded_steps,
+            }
 
         except Exception as e:
             logger.error(f"Streaming query failed: {e}")
@@ -417,6 +490,7 @@ class AgentRuntimeClient:
                 "detail": str(e),
                 "status": "error",
                 "icon": "shield",
+                "session_id": session_id,
             }
             recorded_steps.append(step_err)
             yield {"type": "step", "step": step_err}
@@ -425,24 +499,41 @@ class AgentRuntimeClient:
                 "data": {
                     "status": "ERROR",
                     "summary": f"Agent Runtime execution failed: {str(e)}",
+                    "session_id": session_id,
+                    "user_id": user_id,
                     "analytics": {},
                     "strategy": {},
                     "content": {},
                     "a2a_trace": [],
                     "steps": recorded_steps,
                 },
+                "session_id": session_id,
+                "user_id": user_id,
                 "steps": recorded_steps,
             }
 
-    def query(self, prompt: str, target_segment: str = "All Cohorts (Full Dataset)") -> dict[str, Any]:
+    def query(
+        self,
+        prompt: str,
+        target_segment: str = "All Cohorts (Full Dataset)",
+        session_id: str | None = None,
+        user_id: str | None = None,
+    ) -> dict[str, Any]:
         """Send a prompt to Agent Runtime via :streamQuery and return structured results."""
         final_res = None
-        for event in self.query_stream(prompt=prompt, target_segment=target_segment):
+        for event in self.query_stream(
+            prompt=prompt,
+            target_segment=target_segment,
+            session_id=session_id,
+            user_id=user_id,
+        ):
             if event.get("type") == "final":
                 final_res = event.get("data")
         return final_res or {
             "status": "ERROR",
             "summary": "No response returned from Agent Runtime.",
+            "session_id": session_id or "",
+            "user_id": user_id or "",
             "analytics": {},
             "strategy": {},
             "content": {},
@@ -451,7 +542,12 @@ class AgentRuntimeClient:
         }
 
     def _format_response(
-        self, events: list, prompt: str, target_segment: str
+        self,
+        events: list,
+        prompt: str,
+        target_segment: str,
+        session_id: str = "",
+        user_id: str = "",
     ) -> dict[str, Any]:
         """Format ADK SSE events into the frontend response structure.
 
@@ -568,6 +664,8 @@ class AgentRuntimeClient:
         return {
             "status": "SUCCESS",
             "summary": summary,
+            "session_id": session_id,
+            "user_id": user_id,
             "analytics": analytics,
             "recommendation": recommendation,
             "strategy": strategy,

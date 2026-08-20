@@ -80,6 +80,8 @@ skill_registry = SkillRegistry()
 class ChatRequest(BaseModel):
     prompt: str
     target_segment: str | None = None
+    session_id: str | None = None
+    user_id: str | None = None
 
 class GenerateSuggestionsRequest(BaseModel):
     messages: list[dict[str, Any]] = []
@@ -326,11 +328,13 @@ def process_chat(req: ChatRequest):
     Model Armor security screening is enforced at the Agent Gateway infrastructure level
     via the :streamQuery governed endpoint — no application-level pre-flight needed.
     """
-    logger.info(f"Received chat request: '{req.prompt}'")
+    logger.info(f"Received chat request: '{req.prompt}' (session_id={req.session_id})")
 
     result = runtime_client.query(
         prompt=req.prompt,
-        target_segment=req.target_segment or "All Cohorts (Full Dataset)"
+        target_segment=req.target_segment or "All Cohorts (Full Dataset)",
+        session_id=req.session_id,
+        user_id=req.user_id,
     )
     result["agent_gateway"] = {
         "resource": Config.AGENT_GATEWAY_URL,
@@ -343,12 +347,14 @@ def process_chat(req: ChatRequest):
 @app.post("/api/chat/stream")
 def process_chat_stream(req: ChatRequest):
     """Streams real-time agent background execution steps, tool calls, and final response via SSE."""
-    logger.info(f"Received streaming chat request: '{req.prompt}'")
+    logger.info(f"Received streaming chat request: '{req.prompt}' (session_id={req.session_id})")
 
     def event_generator():
         for chunk in runtime_client.query_stream(
             prompt=req.prompt,
-            target_segment=req.target_segment or "All Cohorts (Full Dataset)"
+            target_segment=req.target_segment or "All Cohorts (Full Dataset)",
+            session_id=req.session_id,
+            user_id=req.user_id,
         ):
             yield f"data: {json.dumps(chunk)}\n\n"
 
