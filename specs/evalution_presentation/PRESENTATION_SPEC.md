@@ -153,15 +153,15 @@ The presentation application follows a 2-column split-stage layout designed for 
   - Automated deployment gate ensuring Cloud Run containers and Agent Engine instances update only when passing benchmarks.
 - **GCP Services**: `GitHub Actions`, `Cloud Build`, `Cloud Run`, `Vertex AI Eval Service`, `Cloud Storage`, `Artifact Registry`
 
-### Slide 8: Evaluation Governance, Benchmarks & Quality Recap
+### Slide 8: Executive Summary & Continuous Quality Assurance
 - **Badge**: `Section 07`
 - **Image**: `08_evaluation_summary_dashboard.jpg`
 - **Executive Takeaway**: With 18 verified evaluation cases, a 4.82/5.0 overall quality score, and strict safety guardrails, the platform is certified production-ready for Crazy Fashion.
 - **Key Talking Points**:
-  - 100% Case Pass Rate: All 18 evaluation cases validated with 0 errors.
-  - Channel selectivity certification: Flawless 5.0/5.0 scores on Email-only, SMS-only, and Social-only cases.
-  - Zero-trust security guarantee: 100% defense against prompt injections and database tampering.
-  - Continuous production monitoring: Cloud Trace spans and GCS prompt-response logs (`gs://agent-demo-09-agent-platform-logs`).
+  - *Pillar 1 (5-Stage Quality Flywheel)*: Continuous loop from synthetic dataset preparation to automated execution trace generation, LLM grading, failure clustering, and GEPA prompt optimization.
+  - *Pillar 2 (5-Pillar LLM-as-Judge Suite)*: Response Quality: 4.83/5.0, Tool Precision: 4.67/5.0, Skill Adherence: 4.61/5.0, Brand Voice: 5.0/5.0, Safety: 5.0/5.0.
+  - *Pillar 3 (Channel-Selective Content Verification)*: Flexible Pydantic schema validation guarantees strict channel scoping for Email-only, SMS-only, and Social-only requests.
+  - *Pillar 4 (Production CI/CD Gates & Cloud Monitoring)*: Automated pre-commit checks, GitHub Actions pipelines, Cloud Storage prompt-response logs (`gs://agent-demo-09-agent-platform-logs`), and Cloud Trace spans.
 - **GCP Services**: `Google Cloud Vertex AI`, `ADK Runtime`, `BigQuery`, `Cloud Trace`, `Model Armor`, `Gemini Enterprise`
 
 ---
