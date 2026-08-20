@@ -196,7 +196,7 @@ CSS custom properties for instant light/dark theme switching:
 ### 5.2 Response & Interactive UI Components
 - **Collapsible SQL Accordion**: BigQuery SQL queries rendered in clean, flush-left collapsible `<details><summary>` accordions (`🔍 View Executed BigQuery SQL Query`).
 - **Dynamic AI Follow-Up Suggestions**: Server-side suggestions engine using Gemini 3.6 Flash on Vertex AI (`POST /api/suggestions/generate`) to inspect conversation turns and generate 6 context-rich follow-up prompts with target agent mappings.
-- **Interactive Objective Steering Accordion**: Objective categories (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel, Security & Red-Team), shuffle button, and "✨ Generate AI Follow-ups" trigger button.
+- **Interactive Objective Steering Accordion**: Objective categories (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel), shuffle button, and "✨ Generate AI Follow-ups" trigger button.
 - **Full-Screen Chat Focus View**: Seamless distraction-free expansion (`Maximize2` / `Minimize2` toggle with `Escape` key shortcut) that covers navigation headers and side panels in a full viewport overlay.
 - **Direct Context Transmission**: Clean user prompt dispatch without artificial cohort prefix/suffix strings.
 - **Selective Deliverable Cards**: Strategy & Content cards render only when real payload data is returned by downstream sub-agents.

@@ -57,7 +57,7 @@ The frontend is built with **React 18**, **Vite**, and **Lucide Icons**. It uses
 
 #### Core Interactive Chat Capabilities
 - **Dynamic AI Follow-Up Generator**: Calls `/api/suggestions/generate` (powered by Gemini 3.6 Flash on Vertex AI) to inspect recent conversation turns and propose 6 hyper-relevant, structured follow-up questions mapped to target agents (`Analytics Agent`, `Strategy Pipeline`, `Content Pipeline`, `Multi-Agent Orchestrator`).
-- **Interactive Objective Steering Accordion**: Categorized questions (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel, Red-Team Security) with shuffle and "✨ Generate AI Follow-ups" button. Clicking any question populates the prompt box smoothly.
+- **Interactive Objective Steering Accordion**: Categorized questions (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel) with shuffle and "✨ Generate AI Follow-ups" button. Clicking any question populates the prompt box smoothly.
 - **Full-Screen Chat Focus View**: A top control bar toggle (`Maximize2` / `Minimize2` and `Escape` key shortcut) expands the chat into a distraction-free full viewport overlay covering all menus and side panels.
 - **Direct Context Dispatch**: User prompts are sent directly without artificial cohort prefix/suffix strings, ensuring clean context for Gemini.
 - **Collapsible SQL Accordion**: BigQuery SQL queries render inside collapsible `🔍 View Executed BigQuery SQL Query` accordions.
