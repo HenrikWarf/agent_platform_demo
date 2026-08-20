@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
-  Send, Sparkles, FileText, Mail,
+  Send, Sparkles, Cpu, FileText, CheckCircle2, Share2, Mail,
   TrendingUp, Trash2, Database, Layers, ShieldAlert, Shuffle, ArrowRight,
   Maximize2, Minimize2
 } from 'lucide-react';
@@ -611,133 +611,149 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
               lineHeight: '1.6',
               boxShadow: msg.role === 'user' ? '0 4px 15px rgba(66,133,244,0.3)' : 'none'
             }}>
-              {/* Header inside bubble */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '0.6rem',
-                borderBottom: '1px solid',
-                borderColor: msg.role === 'user' ? 'rgba(255,255,255,0.2)' : 'var(--border-color)',
-                paddingBottom: '0.4rem',
-                fontSize: '0.75rem',
-                color: msg.role === 'user' ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  {msg.role === 'user' ? (
-                    <span style={{ fontWeight: 600, color: '#ffffff' }}>Marketing Team</span>
-                  ) : (
-                    <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>Crazy Fashion AI Agent</span>
-                  )}
-                </div>
-                {msg.segment && (
-                  <span style={{
-                    fontSize: '0.68rem',
-                    padding: '0.1rem 0.4rem',
-                    borderRadius: '4px',
-                    background: msg.role === 'user' ? 'rgba(255,255,255,0.2)' : 'var(--chip-bg)',
-                    color: msg.role === 'user' ? '#ffffff' : 'var(--text-main)'
-                  }}>
-                    Cohort: {msg.segment}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontWeight: 700, color: msg.role === 'user' ? '#ffffff' : 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {msg.role === 'user' ? 'You' : <><Cpu size={14} /> Orchestrator Agent (A2A Supervisor)</>}
+                </span>
+                {msg.model_armor && !msg.model_armor.passed && (
+                  <span style={{ color: 'var(--color-danger)', fontWeight: 700, background: 'rgba(234,67,53,0.15)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                    ⛔ MODEL ARMOR BLOCKED
                   </span>
                 )}
               </div>
 
-              {/* Message Content */}
-              <MarkdownRenderer content={msg.content} isUser={msg.role === 'user'} />
+              <div className="markdown-body" style={{ color: msg.role === 'user' ? '#ffffff' : 'var(--text-main)' }}>
+                <MarkdownRenderer content={msg.content} isUser={msg.role === 'user'} />
+              </div>
 
-              {/* BigQuery Executed SQL Query Accordion */}
-              {msg.data && msg.data.sql_executed && (
-                <details style={{ marginTop: '0.8rem', background: 'var(--code-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
-                  <summary style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.8rem', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>🔍 View Executed BigQuery SQL Query</span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>▶</span>
-                  </summary>
-                  <pre style={{
-                    margin: 0,
-                    padding: '0.8rem 1rem',
-                    fontSize: '0.78rem',
-                    fontFamily: 'var(--font-mono)',
-                    color: 'var(--text-main)',
-                    overflowX: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all',
-                    textAlign: 'left',
-                    background: 'var(--code-bg)',
-                    lineHeight: '1.4'
-                  }}>
-                    <code>{dedentCode(msg.data.sql_executed)}</code>
-                  </pre>
-                </details>
-              )}
+              {/* Strategy Output Card */}
+              {msg.data?.strategy && Object.keys(msg.data.strategy).length > 0 && (
+                <div style={docBoxStyle('var(--color-purple)')}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(161,66,244,0.25)', paddingBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-purple)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <FileText size={14} /> Campaign Strategy Framework (Gemini 3.6 Flash)
+                    </span>
+                    <span style={{ fontSize: '0.72rem', background: 'rgba(161,66,244,0.15)', color: 'var(--color-purple)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 600 }}>
+                      {msg.data.strategy.target_cohort}
+                    </span>
+                  </div>
 
-              {/* Specialized Sub-Agent Structured Deliverables */}
-              {msg.data && (
-                <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                  {/* Strategy Output Card */}
-                  {msg.data.strategy && typeof msg.data.strategy === 'object' && Object.keys(msg.data.strategy).length > 0 && (
-                    <div style={docBoxStyle('rgba(147, 51, 234, 0.4)')}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-purple)', fontWeight: 600, fontSize: '0.82rem' }}>
-                        <FileText size={15} />
-                        <span>Generated Campaign Strategy: {msg.data.strategy.campaign_title || 'Multi-Touch Retention'}</span>
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                        {msg.data.strategy.strategic_pillars && (
-                          <div style={{ marginTop: '0.4rem' }}>
-                            <strong>Strategic Pillars:</strong>
-                            <ul style={{ paddingLeft: '1.2rem', marginTop: '0.2rem' }}>
-                              {msg.data.strategy.strategic_pillars.map((p, idx) => (
-                                <li key={idx}><strong>{p.name}:</strong> {p.description}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {msg.data.strategy.channel_mix && (
-                          <div style={{ marginTop: '0.4rem', display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-                            {Object.entries(msg.data.strategy.channel_mix).map(([ch, pct]) => (
-                              <span key={ch} style={{ background: 'var(--chip-bg)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                                {ch}: <strong>{pct}%</strong>
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-main)', margin: '0.4rem 0 0.2rem 0' }}>
+                    {msg.data.strategy.campaign_title}
+                  </strong>
+
+                  {msg.data.strategy.projected_revenue_recovery && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--color-success)', background: 'rgba(52,168,83,0.12)', padding: '0.4rem 0.7rem', borderRadius: '6px', width: 'fit-content' }}>
+                      <TrendingUp size={14} />
+                      <strong>Projected Recovery:</strong> {msg.data.strategy.projected_revenue_recovery}
+                    </div>
+                  )}
+
+                  {/* Campaign Pillars */}
+                  {Array.isArray(msg.data.strategy.campaign_pillars) && msg.data.strategy.campaign_pillars.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>Campaign Pillars:</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                        {msg.data.strategy.campaign_pillars.map((pil, pIdx) => {
+                          const channelsList = Array.isArray(pil.channels)
+                            ? pil.channels
+                            : typeof pil.channels === 'string'
+                              ? pil.channels.split(',').map(c => c.trim())
+                              : [];
+                          return (
+                            <div key={pIdx} style={{ background: 'var(--code-bg)', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>{pil.pillar}</div>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.2rem 0' }}>{pil.description}</div>
+                              {channelsList.length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.3rem' }}>
+                                  {channelsList.map((ch, cIdx) => (
+                                    <span key={cIdx} style={{ fontSize: '0.65rem', background: 'rgba(66,133,244,0.15)', color: 'var(--color-primary)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+                                      {ch}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
 
-                  {/* Content Assets Output Card */}
-                  {msg.data.content && typeof msg.data.content === 'object' && Object.keys(msg.data.content).length > 0 && (
-                    <div style={docBoxStyle('rgba(217, 119, 6, 0.4)')}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-warning)', fontWeight: 600, fontSize: '0.82rem' }}>
-                        <Mail size={15} />
-                        <span>Ready-to-Deploy Marketing Copy Assets</span>
+                  {/* A/B Hypotheses */}
+                  {Array.isArray(msg.data.strategy.ab_testing_hypotheses) && msg.data.strategy.ab_testing_hypotheses.length > 0 && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>A/B Testing Hypotheses:</span>
+                      <ul style={{ margin: '0.2rem 0 0 1rem', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                        {msg.data.strategy.ab_testing_hypotheses.map((hyp, hIdx) => (
+                          <li key={hIdx} style={{ marginBottom: '0.2rem' }}>{hyp}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Content Creative Card */}
+              {msg.data?.content?.generated_assets && Object.keys(msg.data.content.generated_assets).length > 0 && (
+                <div style={docBoxStyle('var(--color-success)')}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(52,168,83,0.25)', paddingBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <CheckCircle2 size={14} /> Creative Content Assets (Brand Voice Craft)
+                    </span>
+                    <span style={{ fontSize: '0.72rem', background: 'rgba(52,168,83,0.15)', color: 'var(--color-success)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 600 }}>
+                      {msg.data.content.campaign_title || 'Omnichannel Assets'}
+                    </span>
+                  </div>
+
+                  {/* Email Template Asset */}
+                  {msg.data.content.generated_assets.email_template && (
+                    <div style={{ background: 'var(--code-bg)', padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(52,168,83,0.25)', marginTop: '0.6rem' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.3rem' }}>
+                        <Mail size={13} /> Email Template Asset
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {msg.data.content.email_template && (
-                          <div style={{ background: 'var(--code-bg)', padding: '0.6rem', borderRadius: '6px' }}>
-                            <div><strong>Subject:</strong> {msg.data.content.email_template.subject}</div>
-                            {msg.data.content.email_template.preview_text && (
-                              <div><strong>Preview:</strong> {msg.data.content.email_template.preview_text}</div>
-                            )}
-                            <p style={{ marginTop: '0.4rem', whiteSpace: 'pre-line' }}>{msg.data.content.email_template.body}</p>
-                            {msg.data.content.email_template.cta_button && (
-                              <div style={{ marginTop: '0.4rem', color: 'var(--color-primary)', fontWeight: 600 }}>
-                                CTA: [{msg.data.content.email_template.cta_button}]
-                              </div>
-                            )}
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.2rem' }}>
+                        Subject: {msg.data.content.generated_assets.email_template.subject}
+                      </div>
+                      {msg.data.content.generated_assets.email_template.preview_text && (
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic', marginBottom: '0.4rem' }}>
+                          Preview: {msg.data.content.generated_assets.email_template.preview_text}
+                        </div>
+                      )}
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', background: 'var(--chip-bg)', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        {msg.data.content.generated_assets.email_template.body}
+                      </div>
+                      {msg.data.content.generated_assets.email_template.cta_button && (
+                        <button style={{
+                          marginTop: '0.6rem',
+                          background: 'linear-gradient(135deg, var(--color-success), var(--color-primary))',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '0.4rem 0.9rem',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}>
+                          👉 {msg.data.content.generated_assets.email_template.cta_button}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Social Media Posts */}
+                  {Array.isArray(msg.data.content.generated_assets.social_posts) && msg.data.content.generated_assets.social_posts.length > 0 && (
+                    <div style={{ marginTop: '0.6rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.3rem' }}>
+                        <Share2 size={13} color="var(--color-primary)" /> Social Media Copy (LinkedIn & X)
+                      </span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                        {msg.data.content.generated_assets.social_posts.map((sp, sIdx) => (
+                          <div key={sIdx} style={{ background: 'var(--code-bg)', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-primary)' }}>{sp.platform}</span>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-main)', marginTop: '0.2rem' }}>{sp.copy}</div>
                           </div>
-                        )}
-                        {msg.data.content.social_posts && (
-                          <div style={{ display: 'grid', gridTemplateColumns: isExpanded ? 'repeat(auto-fit, minmax(320px, 1fr))' : '1fr', gap: '0.5rem' }}>
-                            {msg.data.content.social_posts.map((sp, idx) => (
-                              <div key={idx} style={{ background: 'var(--code-bg)', padding: '0.6rem', borderRadius: '6px' }}>
-                                <div style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{sp.platform}</div>
-                                <p style={{ marginTop: '0.2rem' }}>{sp.caption}</p>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>{sp.hashtags?.join(' ')}</div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        ))}
                       </div>
                     </div>
                   )}
@@ -1040,12 +1056,11 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
             background: 'var(--input-bg)',
             border: '1px solid var(--input-border)',
             borderRadius: '12px',
-            padding: '0.85rem 1.2rem',
+            padding: '0.8rem 1.1rem',
             color: 'var(--text-main)',
-            fontSize: '0.9rem',
+            fontSize: '0.88rem',
             outline: 'none',
-            transition: 'border-color 0.2s ease',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
+            transition: 'border-color 0.2s ease'
           }}
           onFocus={e => e.target.style.borderColor = 'var(--color-primary)'}
           onBlur={e => e.target.style.borderColor = 'var(--input-border)'}
@@ -1057,8 +1072,8 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
             background: 'linear-gradient(135deg, var(--color-primary), var(--color-purple))',
             border: 'none',
             borderRadius: '12px',
+            padding: '0.8rem 1.4rem',
             color: '#ffffff',
-            padding: '0 1.4rem',
             cursor: loading || !prompt.trim() ? 'not-allowed' : 'pointer',
             opacity: loading || !prompt.trim() ? 0.6 : 1,
             display: 'flex',
