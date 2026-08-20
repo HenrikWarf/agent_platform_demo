@@ -46,6 +46,15 @@ class SocialPost(BaseModel):
 
 
 class ContentSchema(BaseModel):
-    email_template: EmailTemplate = Field(description="Email marketing template")
-    social_posts: list[SocialPost] = Field(description="Exactly 2 social media posts")
-    sms_copy: str = Field(description="SMS message, max 160 characters")
+    email_template: EmailTemplate | None = Field(
+        default=None,
+        description="Email marketing template, provided when email copy is requested or for full campaigns"
+    )
+    social_posts: list[SocialPost] | None = Field(
+        default=None,
+        description="Social media posts (e.g. Instagram/LinkedIn), provided when social copy is requested or for full campaigns"
+    )
+    sms_copy: str | None = Field(
+        default=None,
+        description="SMS message (max 160 characters), provided when SMS copy is requested or for full campaigns"
+    )

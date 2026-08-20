@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Send, Sparkles, Cpu, FileText, CheckCircle2, Share2, Mail,
   TrendingUp, Trash2, Database, Layers, Shuffle, ArrowRight,
-  Maximize2, Minimize2, Zap, ChevronDown, ChevronUp, Terminal, Shield
+  Maximize2, Minimize2, Zap, ChevronDown, ChevronUp, Terminal, Shield, MessageSquare
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -760,6 +760,23 @@ export default function ChatInterface({ messages, setMessages, clearMessages }) 
                             <div style={{ fontSize: '0.74rem', color: 'var(--text-main)', marginTop: '0.2rem' }}>{sp.copy}</div>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SMS / Mobile Push Copy Asset */}
+                  {msg.data.content.generated_assets.sms_copy && (
+                    <div style={{ background: 'var(--code-bg)', padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(52,168,83,0.25)', marginTop: '0.6rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <MessageSquare size={13} /> SMS / Mobile Push Asset
+                        </div>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                          {msg.data.content.generated_assets.sms_copy.length} / 160 chars
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-main)', background: 'var(--chip-bg)', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'var(--font-mono)' }}>
+                        📱 {msg.data.content.generated_assets.sms_copy}
                       </div>
                     </div>
                   )}

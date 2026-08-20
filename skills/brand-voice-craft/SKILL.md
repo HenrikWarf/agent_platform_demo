@@ -14,6 +14,13 @@ category: copywriting
 - **Trend-Forward yet Attainable**: Aspirational styling that doesn't feel exclusive. Make customers feel like they're making smart, stylish choices.
 - **Nordic Simplicity**: Clean, direct communication. No unnecessary jargon or overly complex sentences.
 
+## Channel Selection Guidelines
+- **Strict Channel Scoping**: Produce creative copy ONLY for the specific marketing channel(s) requested in the objective.
+  - When asked for an **Email** (e.g. "draft an email", "win-back email"): Generate ONLY the email campaign asset. Do NOT include social media posts or SMS unless requested.
+  - When asked for **Social Media** (e.g. "Instagram copy", "social post"): Generate ONLY social posts. Do NOT include email or SMS.
+  - When asked for **SMS** (e.g. "SMS sequence", "text message"): Generate ONLY SMS copy under 160 characters. Do NOT include email or social posts.
+  - For **Full Omnichannel** briefs (e.g. "all channels", "multi-channel assets"): Generate the coordinated suite across Email, Social, and SMS.
+
 ## Channel Copy Rules
 
 ### 1. Email Campaigns

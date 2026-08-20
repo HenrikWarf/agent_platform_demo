@@ -200,23 +200,27 @@ strategy_pipeline = SequentialAgent(
 content_reasoner = Agent(
     name="content_agent",
     model="gemini-3.6-flash",
-    description="Produces marketing creative assets aligned with Crazy Fashion brand voice.",
+    description="Produces marketing creative assets aligned with Crazy Fashion brand voice across requested channels (Email, Social, SMS).",
     instruction="""You are the Content & Creative Copywriting Agent for Crazy Fashion.
 
-Your role is to generate high-converting marketing creative assets based on the
-campaign strategy available in the conversation context.
+Your role is to generate high-converting marketing creative assets aligned with Crazy Fashion brand voice based on the user's specific request and conversation context.
 
-Use any strategy details shared by previous agents to inform your content.
-All content must reflect Crazy Fashion's brand voice: confident, inclusive,
-sustainability-aware, and trend-forward.
+## Channel Selection Rules (Follow Strictly):
+Inspect the user prompt and conversation history to determine EXACTLY which marketing channel(s) are requested:
+1. **Email Only**: If the user specifically asks to draft, write, or create an email (e.g. "draft an email", "win-back email", "write an email newsletter"):
+   - Generate ONLY the Email Template (subject line max 10 words, preview text 1 sentence, body 3-4 sentences, CTA button max 5 words).
+   - Do NOT generate social media posts or SMS copy unless explicitly requested.
+2. **Social Media Only**: If the user asks for social media copy, Instagram posts, LinkedIn posts, or captions:
+   - Generate ONLY social media posts (platform name and punchy copy).
+   - Do NOT generate email template or SMS copy unless explicitly requested.
+3. **SMS Only**: If the user asks for SMS copy, text message, or mobile alerts:
+   - Generate ONLY the SMS copy (one message under 160 characters with promo code/link).
+   - Do NOT generate email template or social posts unless explicitly requested.
+4. **Multi-Channel / Full Campaign**: If the user explicitly asks for "all channels", "multi-channel assets", "email, social and SMS", a "full campaign", or does not specify a single channel:
+   - Generate all relevant requested assets: email template, 2 social media posts, and SMS copy.
 
-You must generate ALL of the following:
-1. Email template: subject line (max 10 words), preview text (1 sentence),
-   body (3-4 sentences with clear value proposition), CTA button text (max 5 words)
-2. Exactly 2 social media posts: each with platform name and copy (max 2 sentences)
-3. SMS copy: one message, max 160 characters
-
-Ensure all copy is on-brand for Crazy Fashion, uses EUR (€) for pricing, and includes clear CTAs.
+All content must reflect Crazy Fashion's brand voice: confident, inclusive, sustainability-aware, and trend-forward.
+Ensure all copy uses EUR (€) for pricing and includes clear CTAs.
 Do NOT use any tools. Generate the content using your own creativity.
 Refer to the brand-voice-craft skill for brand guidelines and copywriting rules.""",
     tools=[content_skillset],
@@ -227,9 +231,13 @@ content_formatter = Agent(
     name="content_formatter",
     model="gemini-3.6-flash",
     description="Formats content reasoning into structured JSON.",
-    instruction="""Convert the marketing content from the conversation into the required JSON structure.
-Extract all fields precisely: email_template (subject, preview_text, body, cta_button),
-social_posts (2 items with platform and copy), sms_copy.""",
+    instruction="""Convert the marketing content from the conversation into the required JSON structure adhering to ContentSchema.
+Extract and populate ONLY the channels that were generated in the conversation:
+- `email_template` (subject, preview_text, body, cta_button): populate ONLY if email copy was generated; otherwise set to null.
+- `social_posts` (list of platform and copy): populate ONLY if social media posts were generated; otherwise set to null.
+- `sms_copy` (string): populate ONLY if SMS copy was generated; otherwise set to null.
+
+Do NOT hallucinate or generate unrequested channels if they were not created in the reasoning step.""",
     output_schema=ContentSchema,
     output_key="content_result",
 )

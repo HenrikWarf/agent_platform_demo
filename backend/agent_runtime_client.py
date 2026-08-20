@@ -344,7 +344,7 @@ class AgentRuntimeClient:
                         "agent": "content_pipeline",
                         "agent_name": "Content Pipeline (Structured Output)",
                         "title": "Validating Creative Deliverables Schema",
-                        "detail": "Formatting structured Pydantic ContentSchema (email template, 2 Instagram posts, SMS)",
+                        "detail": "Formatting structured Pydantic ContentSchema for requested channels",
                         "status": "completed",
                         "icon": "file-text",
                     }
@@ -450,7 +450,7 @@ class AgentRuntimeClient:
                         continue
                 elif author in ("content_formatter", "content_agent") and not content:
                     parsed = self._try_parse_json(text)
-                    if parsed and ("email_template" in parsed or "social_posts" in parsed):
+                    if parsed and ("email_template" in parsed or "social_posts" in parsed or "sms_copy" in parsed):
                         content = {"generated_assets": parsed}
                         continue
 
@@ -486,7 +486,7 @@ class AgentRuntimeClient:
                     if parsed:
                         if not strategy and ("campaign_title" in parsed or "campaign_pillars" in parsed):
                             strategy = parsed
-                        elif not content and ("email_template" in parsed or "social_posts" in parsed):
+                        elif not content and ("email_template" in parsed or "social_posts" in parsed or "sms_copy" in parsed):
                             content = {"generated_assets": parsed}
 
         # Build A2A trace as sender→receiver pairs
