@@ -23,7 +23,7 @@ class SuggestionItem(BaseModel):
     badge: str = Field(description="Short badge tag: 'SQL Drill-Down', 'Pillar 1 Copy', 'A/B Testing', 'VIP Flow', etc.")
     color: str = Field(description="Color code: 'var(--color-success)', 'var(--color-purple)', 'var(--color-warning)', or '#3b82f6'")
     category: str = Field(description="Category key: 'analytics', 'strategy', 'content', or 'campaign'")
-    segment: str = Field(description="Target customer cohort name")
+    segment: str = Field(default="", description="Optional customer segment mentioned in the question")
 
 
 class DynamicSuggestionsResult(BaseModel):
@@ -93,7 +93,6 @@ def generate_dynamic_followups(
     )
 
     prompt = (
-        f"Active Target Cohort: {current_segment}\n\n"
         f"Recent Conversation History:\n{context_str}\n\n"
         "Generate 6 diverse, hyper-relevant follow-up questions for the marketer."
     )

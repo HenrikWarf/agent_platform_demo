@@ -141,8 +141,8 @@ class AgentRuntimeClient:
             # Create session via /api passthrough (not governed by gateway)
             session_id = self._create_session(user_id)
 
-            # Combine prompt with segment context
-            full_message = f"{prompt}\n\nTarget customer segment: {target_segment}"
+            # Send prompt directly to ADK agent without injected segment prefix/suffix
+            full_message = prompt
 
             # Call :streamQuery — governed by Agent Gateway + Model Armor
             stream_url = f"{self._governed_url}:streamQuery"

@@ -77,7 +77,7 @@ skill_registry = SkillRegistry()
 
 class ChatRequest(BaseModel):
     prompt: str
-    target_segment: str | None = "All Cohorts (Full Dataset)"
+    target_segment: str | None = None
 
 class GenerateSuggestionsRequest(BaseModel):
     messages: list[dict[str, Any]] = []
@@ -324,7 +324,7 @@ def process_chat(req: ChatRequest):
     Model Armor security screening is enforced at the Agent Gateway infrastructure level
     via the :streamQuery governed endpoint — no application-level pre-flight needed.
     """
-    logger.info(f"Received chat request: '{req.prompt}' for segment '{req.target_segment}'")
+    logger.info(f"Received chat request: '{req.prompt}'")
 
     result = runtime_client.query(
         prompt=req.prompt,
