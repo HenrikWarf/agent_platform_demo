@@ -2,14 +2,11 @@
 
 This document outlines the end-to-end system architecture and GCP deployment topology for the **GCP Multi-Agent Marketing Platform**.
 
+### Complete Multi-Agent System & Data Architecture Diagram
+![GCP Multi-Agent Marketing Platform Complete Architecture Diagram](file:///Users/henrikw/Projects/agent_platform_demo/specs/architecture/gcp_agent_platform_architecture_complete.jpg)
+
 ### Simplified Linear Flow Blueprint Diagram
 ![GCP Multi-Agent Marketing Platform Simplified Architecture Diagram](file:///Users/henrikw/Projects/agent_platform_demo/specs/architecture/gcp_agent_platform_architecture_simplified.jpg)
-
-### Dark Theme Blueprint Diagram
-![GCP Multi-Agent Marketing Platform Architecture Diagram (Dark Mode)](file:///Users/henrikw/Projects/agent_platform_demo/specs/architecture/gcp_agent_platform_architecture.jpg)
-
-### Light Theme Blueprint Diagram (Detailed Backend & Gateway Focus)
-![GCP Multi-Agent Marketing Platform Architecture Diagram (Light Mode)](file:///Users/henrikw/Projects/agent_platform_demo/specs/architecture/gcp_agent_platform_architecture_white.jpg)
 
 ### GCP Agent Gateway Core Capabilities
 ![GCP Agent Gateway Core Capabilities Infographic](file:///Users/henrikw/Projects/agent_platform_demo/specs/architecture/gcp_agent_gateway_capabilities.jpg)
