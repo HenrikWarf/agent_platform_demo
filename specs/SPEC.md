@@ -7,36 +7,48 @@
 
 ### 1.1 Multi-Agent Chat Endpoint
 - **URL**: `POST /api/chat`
-- **Description**: Main execution entrypoint on the Cloud Run backend. Proxies requests cleanly to the deployed Agent Runtime via `AgentRuntimeClient` using `:streamQuery` governed by Agent Gateway & Model Armor.
-- **Request**:
+- **Description**: Main execution entrypoint on the Cloud Run backend. Proxies requests cleanly to the deployed Agent Runtime via `AgentRuntimeClient` using `:streamQuery` governed by Agent Gateway & Model Armor. Supports stateful multi-turn sessions.
+- **Request Schema**:
 ```json
 {
-  "prompt": "Compare average customer recency and lifetime monetary EUR for 'VIP Fashionistas' vs 'Dormant At-Risk'."
+  "prompt": "Recommend 5 products for the Loyal Regulars segment.",
+  "target_segment": "Loyal Regulars",
+  "session_id": "session-1740045890-a1b2c",
+  "user_id": "user-8f92ab1c"
 }
 ```
-- **Response** (`ANALYTICS_ONLY` intent):
+- **Response** (`RECOMMENDATIONS_ONLY` intent example):
 ```json
 {
   "status": "SUCCESS",
   "model_armor_passed": true,
-  "intent": "ANALYTICS_ONLY",
-  "summary": "📊 BigQuery Data Query Result...",
-  "analytics": {
-    "status": "SUCCESS",
-    "skill_executed": "bigquery-customer-analytics",
-    "summary": "• VIP Fashionistas average recency: 12.4 days, total spend: €4,250...",
-    "cohort_details": {
-      "total_customers_analyzed": 300,
-      "sql_executed": "SELECT rfm_segment, AVG(recency_days), SUM(total_monetary_eur) FROM `agent-demo-09.marketing_analytics.customer_rfm_summary` GROUP BY rfm_segment"
-    }
+  "intent": "RECOMMENDATIONS_ONLY",
+  "session_id": "session-1740045890-a1b2c",
+  "user_id": "user-8f92ab1c",
+  "summary": "Curated 5 data-driven Nordic fashion recommendations tailored to Loyal Regulars...",
+  "analytics": {},
+  "recommendation": {
+    "segment_name": "Loyal Regulars",
+    "merchandising_strategy": "Highlight sustainable everyday essentials and reward loyalty with Crazy Club point boosters.",
+    "projected_impact": "Expected 14% increase in basket size and €42 average order uplift.",
+    "recommended_products": [
+      {
+        "product_id": "PROD_04",
+        "product_name": "Recycled Wool Knit Sweater",
+        "category": "Womenswear",
+        "price_eur": 89.0,
+        "sustainability_certified": true,
+        "reasoning": "High historical repeat purchase affinity in Knitwear with high sustainability preference."
+      }
+    ]
   },
   "strategy": {},
   "content": {},
   "a2a_trace": [
     {
-      "sender_id": "orchestrator_agent",
-      "receiver_id": "analytics_agent",
-      "skill_used": "bigquery-customer-analytics"
+      "sender_id": "marketing_orchestrator",
+      "receiver_id": "recommendation_pipeline",
+      "skill_used": "product-recommender"
     }
   ],
   "steps": [
@@ -46,10 +58,11 @@
       "stage": "orchestrating",
       "agent": "marketing_orchestrator",
       "agent_name": "Orchestrator Agent (A2A Supervisor)",
-      "title": "A2A Multi-Agent Supervisor Initialized",
-      "detail": "Analyzing user objective intent and evaluating optimal routing path...",
+      "title": "A2A Multi-Agent Supervisor (Active Session)",
+      "detail": "Continuing session session-1740045890... Evaluating follow-up context and routing path...",
       "status": "completed",
-      "icon": "cpu"
+      "icon": "cpu",
+      "session_id": "session-1740045890-a1b2c"
     }
   ]
 }
@@ -58,6 +71,10 @@
 ### 1.2 Live Background Execution Streaming Endpoint
 - **URL**: `POST /api/chat/stream`
 - **Media Type**: `text/event-stream` (Server-Sent Events)
+- **Description**: Streams live multi-agent execution steps, sub-agent transitions, skill invocations, and BigQuery tool calls in real time from Vertex AI Agent Runtime, concluding with the final structured deliverable cards payload and session ID.
+- **Event Types**:
+  - `data: {"type": "step", "step": { "id": "...", "timestamp": "...", "stage": "reasoning", "agent": "recommendation_pipeline", "agent_name": "Product Recommendation Pipeline", "title": "Curating 5-Product Assortment", "detail": "Applying skill 'product-recommender' against product_catalog...", "skill": "product-recommender", "status": "running", "icon": "shopping-bag" }}`
+  - `data: {"type": "final", "data": { ... full deliverable response ... }, "session_id": "...", "user_id": "...", "steps": [ ... full execution trace ... ]}`
 - **Description**: Streams live multi-agent execution steps, sub-agent transitions, skill invocations, and BigQuery tool calls as they occur in real time on Vertex AI Agent Runtime, culminating in the final deliverable cards payload.
 - **Event Types**:
   - `data: {"type": "step", "step": { "id": "...", "timestamp": "...", "stage": "delegation", "agent": "analytics_agent", "title": "Routing to Analytics Agent", "detail": "Activating skill 'bigquery-customer-analytics'...", "skill": "bigquery-customer-analytics", "status": "running", "icon": "database" }}`
@@ -118,8 +135,8 @@ These routes are served by `app/fast_api_app.py` inside the Agent Runtime contai
 - **URL**: `GET /api/version` — Returns deployment parameters, Agent Runtime resource ID, and Model Armor metadata.
 
 ### 1.5 Skill Store Endpoints
-- **URL**: `GET /api/skills` — Returns marketing skills (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`) and filters out `google-agents-cli-*` dev skills.
-- **URL**: `GET /api/skills/{skill_id}` — Returns raw `SKILL.md` content.
+- **URL**: `GET /api/skills` — Returns production marketing skills (`bigquery-customer-analytics`, `product-recommender`, `campaign-framework`, `brand-voice-craft`) and automatically filters out `google-agents-cli-*` developer CLI skills.
+- **URL**: `GET /api/skills/{skill_id}` — Returns raw `SKILL.md` content and schema instructions.
 
 ### 1.6 BigQuery Data Inspector
 - **URL**: `GET /api/bigquery/sample`
@@ -179,7 +196,7 @@ These routes are served by `app/fast_api_app.py` inside the Agent Runtime contai
 ### 2.4 Table: `product_catalog` (50 records)
 | Column | Type | Description |
 |--------|------|-------------|
-| `product_id` | STRING | Catalog SKU ID |
+| `product_id` | STRING | Catalog SKU ID (`PROD_01` - `PROD_50`) |
 | `product_name` | STRING | Nordic fashion item name |
 | `category` | STRING | Womenswear, Menswear, Kids & Baby, Accessories |
 | `subcategory` | STRING | Knitwear, Denim, Outerwear, Dresses, Footwear |
@@ -202,34 +219,57 @@ These routes are served by `app/fast_api_app.py` inside the Agent Runtime contai
 
 ---
 
-## 3. Evaluation & Benchmarking
+## 3. Evaluation & Quality Flywheel Benchmarking
 
-### 3.1 ADK Eval Framework (`agents-cli eval`)
-The project uses the scaffolded evaluation framework:
+### 3.1 Golden Marketing Evaluation Benchmark (`eval/dataset/golden_marketing_prompts.json`)
+The platform includes an automated 20-case golden benchmark suite spanning 5 core marketing capabilities:
+- **BigQuery Customer Analytics (`eval_01` - `eval_06`)**: Direct NL2SQL generation, aggregation, RFM segment comparisons, and multi-table joins.
+- **Product Recommendation (`eval_07`, `eval_19`, `eval_20`)**: 5-product assortment curation, price validation in EUR, sustainability matching, and segment attribute alignment.
+- **Campaign Strategy (`eval_08` - `eval_11`)**: 3-pillar strategic frameworks, 100% channel mix weightings, and ROI projections.
+- **Channel-Selective Creative Content (`eval_12` - `eval_15`)**: Scoped copywriting (Email-only, Social-only, SMS-only under 160 chars, Full omnichannel).
+- **Security & Model Armor Adversarial (`eval_16` - `eval_18`)**: Prompt injection, system prompt exfiltration, and jailbreak defense.
 
+### 3.2 Evaluation Execution
 ```bash
-# Generate eval traces from dataset
-agents-cli eval generate
+# Run automated golden benchmark evaluation
+PYTHONPATH=. ./venv/bin/python eval/run_eval.py
 
-# Grade agent responses
+# Run ADK agent evaluation framework
+agents-cli eval generate
 agents-cli eval grade
 ```
 
-- **Dataset**: `tests/eval/datasets/basic-dataset.json`
-- **Config**: `tests/eval/eval_config.yaml`
-- **Custom Scorer**: `tests/eval/response_quality.py`
+---
 
-### 3.2 Legacy Eval Suite (`eval/run_eval.py`)
-- **Runner**: `PYTHONPATH=. ./venv/bin/python eval/run_eval.py`
-- **Dataset**: `eval/dataset/golden_marketing_prompts.json`
-- **Scoring**: Intent validation, A2A routing, NL2SQL generation, Model Armor blocking
-- **Target**: `100.0% (3/3 Passed)`
+## 4. Visual Agent Identity & Themed Step Tracing
+
+Each agent and platform role is visually distinct across both live streaming execution cards and completed message accordions:
+
+| Agent / Component | Identifier | Hex Color | Left Border | Background Tint | Badge Style |
+|---|---|---|---|---|---|
+| **Marketing Orchestrator** | `marketing_orchestrator` | `#4f46e5` | `4px solid #4f46e5` | `rgba(79, 70, 229, 0.06)` | Royal Indigo Badge |
+| **Customer Insights & Analytics** | `analytics_agent` | `#0284c7` | `4px solid #0284c7` | `rgba(2, 132, 199, 0.06)` | Sky Cyan Badge |
+| **Product Recommendation Pipeline** | `recommendation_pipeline` | `#059669` | `4px solid #10b981` | `rgba(16, 185, 129, 0.06)` | Emerald Mint Badge |
+| **Omnichannel Strategy Pipeline** | `strategy_pipeline` | `#7c3aed` | `4px solid #7c3aed` | `rgba(124, 58, 237, 0.06)` | Electric Violet Badge |
+| **Brand Voice Content Pipeline** | `content_pipeline` | `#d97706` | `4px solid #d97706` | `rgba(217, 119, 6, 0.06)` | Warm Amber Badge |
+| **Agent Gateway & Model Armor** | `agent_gateway` | `#e11d48` | `4px solid #e11d48` | `rgba(225, 29, 72, 0.06)` | Rose Coral Badge |
 
 ---
 
-## 4. Deployment Metadata
+## 5. Stateful Session Management & Lifecycle
 
-### 4.1 `deployment_metadata.json`
+- **Client Session Persistence**: Maintained via React state in `App.jsx` and `ChatInterface.jsx`. `sessionId` and `userId` are passed in every request payload.
+- **Backend Session Caching**: `AgentRuntimeClient.get_or_create_session(user_id, session_id)` registers and verifies sessions on Vertex AI Agent Runtime, allowing the LLM to retain multi-turn context and previous message history.
+- **Dynamic Step 1 Header**:
+  - Turn 1 / New Session: `A2A Multi-Agent Supervisor Initialized`
+  - Subsequent Turns: `A2A Multi-Agent Supervisor (Active Session)`
+- **Session Reset**: Triggered explicitly when the user clicks **Clear Chat** or reloads the application page.
+
+---
+
+## 6. Deployment Metadata
+
+### 6.1 `deployment_metadata.json`
 Written by `agents-cli deploy`:
 ```json
 {
@@ -240,7 +280,7 @@ Written by `agents-cli deploy`:
 }
 ```
 
-### 4.2 `agents-cli-manifest.yaml`
+### 6.2 `agents-cli-manifest.yaml`
 Project metadata for the CLI:
 ```yaml
 name: agent-platform-demo
@@ -253,17 +293,17 @@ create_params:
 
 ---
 
-## 5. Observability Specifications
+## 7. Observability Specifications
 
-### 5.1 Cloud Logging Log Analytics
+### 7.1 Cloud Logging Log Analytics
 - **Bucket**: `projects/agent-demo-09/locations/global/buckets/_Default`
 - **Analytics**: Enabled via `gcloud logging buckets update _Default --enable-analytics`
 
-### 5.2 Telemetry IAM
+### 7.2 Telemetry IAM
 - **Service Accounts**: `agent-platform-sa`, Compute Engine SA, Vertex AI Service Agent
 - **Roles**: `cloudtrace.agent`, `logging.logWriter`, `monitoring.metricWriter`, `monitoring.admin`, `aiplatform.admin`
 
-### 5.3 Pre-Commit Linter (`scripts/pre_commit_lint.sh`)
+### 7.3 Pre-Commit Linter (`scripts/pre_commit_lint.sh`)
 - Python Ruff Linter (`ruff check .`) for style and syntax consistency
 - Python syntax & module compilation across `agents/`, `backend/`, `deploy/`, `eval/`, `app/`
 - React ESLint via `cd frontend && npm run lint`

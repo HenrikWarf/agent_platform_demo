@@ -213,7 +213,33 @@ query_customer_data tool. Write BigQuery Standard SQL queries targeting table `a
     tools=[tools.query_customer_data, analytics_skillset, mcp_data_toolset],
 )
 
-# ─── 4. Strategy Pipeline (SequentialAgent: reasoning → formatting) ──────────────
+# ─── 4. Product Recommendation Pipeline (SequentialAgent: reasoning → formatting) ──
+recommendation_reasoner = Agent(
+    name="recommendation_reasoner",
+    model="gemini-3.6-flash",
+    description="Analyzes segment attributes and curates 5 tailored product recommendations from catalog.",
+    instruction="""You are the Product Recommendation Agent.
+Analyze customer segment data and recommend 5 tailored items from the product catalog with EUR prices and merchandising rationale.""",
+    tools=[recommendation_skillset],
+    output_key="recommendation_reasoning",
+)
+
+recommendation_formatter = Agent(
+    name="recommendation_formatter",
+    model="gemini-3.6-flash",
+    description="Formats product recommendations into structured JSON.",
+    instruction="Convert the product recommendations from the conversation into the required JSON structure.",
+    output_schema=ProductRecommendationSchema,
+    output_key="recommendation_result",
+)
+
+recommendation_pipeline = SequentialAgent(
+    name="recommendation_pipeline",
+    description="Curates exactly 5 personalized product recommendations from product_catalog based on segment attributes.",
+    sub_agents=[recommendation_reasoner, recommendation_formatter],
+)
+
+# ─── 5. Strategy Pipeline (SequentialAgent: reasoning → formatting) ──────────────
 strategy_reasoner = Agent(
     name="strategy_agent",
     model="gemini-3.6-flash",
@@ -239,13 +265,13 @@ strategy_pipeline = SequentialAgent(
     sub_agents=[strategy_reasoner, strategy_formatter],
 )
 
-# ─── 5. Content Pipeline (SequentialAgent: reasoning → formatting) ──────────────
+# ─── 6. Content Pipeline (SequentialAgent: reasoning → formatting) ──────────────
 content_reasoner = Agent(
     name="content_agent",
     model="gemini-3.6-flash",
     description="Produces marketing creative assets aligned with brand voice.",
     instruction="""You are the Content & Creative Copywriting Agent.
-Generate email templates, social media posts, and SMS copy based on campaign strategy.""",
+Generate channel-selective email templates, social media posts, and SMS copy based on campaign strategy.""",
     tools=[content_skillset],
     output_key="content_reasoning",
 )
@@ -265,18 +291,19 @@ content_pipeline = SequentialAgent(
     sub_agents=[content_reasoner, content_formatter],
 )
 
-# ─── 6. Root Orchestrator Agent ────────────────────────────────────────────────
+# ─── 7. Root Orchestrator Agent ────────────────────────────────────────────────
 root_agent = Agent(
     name="marketing_orchestrator",
     model="gemini-3.6-flash",
-    description="Marketing Campaign Supervisor — routes objectives to Analytics, Strategy, and Content agents.",
+    description="Marketing Campaign Supervisor — routes objectives to Analytics, Recommender, Strategy, and Content agents.",
     instruction="""You are the Marketing Campaign Orchestrator. Route requests to sub-agents efficiently.
 - Data questions -> analytics_agent
+- Product recommendation requests -> analytics_agent -> recommendation_pipeline
 - Strategy requests -> analytics_agent -> strategy_pipeline
 - Content requests -> content_pipeline
 - Full campaign -> analytics_agent -> strategy_pipeline -> content_pipeline
 """,
-    sub_agents=[analytics_agent, strategy_pipeline, content_pipeline],
+    sub_agents=[analytics_agent, recommendation_pipeline, strategy_pipeline, content_pipeline],
 )
 
 # ─── ADK App Definition ────────────────────────────────────────────────────────

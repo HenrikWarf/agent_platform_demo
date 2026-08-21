@@ -75,15 +75,59 @@ This section archives the exact initial code, prompt templates, agent structures
                               │    (Direct Answers + LLM Delegation)      │
                               └─────────────────────┬─────────────────────┘
                                                     │
-             ┌──────────────────────────────────────┼──────────────────────────────────────┐
-             │ (Data Intent)                        │ (Strategy Intent)                    │ (Content Intent)
-             ▼                                      ▼                                      ▼
-┌───────────────────────────┐         ┌───────────────────────────┐          ┌───────────────────────────┐
-│ Analytics Agent           │         │ Strategy Pipeline         │          │ Content Pipeline          │
-│ analytics_agent           │         │ SequentialAgent           │          │ SequentialAgent           │
-│ Tools: Managed BigQuery   │         │ (Reasoning -> Formatter)  │          │ (Reasoning -> Formatter)  │
-│ Skill: customer_analytics │         └─────────────┬─────────────┘          └─────────────┬─────────────┘
-└───────────────────────────┘                       │                                      │
+              ┌──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┐
+              │ (Data Intent)        │ (Rec Intent)         │ (Strategy Intent)    │ (Content Intent)     │
+              ▼                      ▼                      ▼                      ▼                      ▼
+┌───────────────────────────┐┌───────────────────────────┐┌───────────────────────────┐┌───────────────────────────┐
+│ Analytics Agent           ││ Recommendation Pipe       ││ Strategy Pipeline         ││ Content Pipeline          │
+│ analytics_agent           ││ SequentialAgent           ││ SequentialAgent           ││ SequentialAgent           │
+│ Tools: Managed BigQuery   ││ (Reasoning -> Formatter)  ││ (Reasoning -> Formatter)  ││ (Reasoning -> Formatter)  │
+│ Skill: customer_analytics ││ Skill: product-recommender││ Skill: campaign-framework ││ Skill: brand-voice-craft  │
+└───────────────────────────┘└─────────────┬─────────────┘└─────────────┬─────────────┘└─────────────┬─────────────┘
+                                           │                            │                            │
+                            ┌──────────────┴──────────────┐ ┌───────────┴───────────┐ ┌──────────────┴──────────────┐
+                            ▼                             ▼ ▼                       ▼ ▼                             ▼
+                      ┌───────────────┐ ┌───────────────┐┌─────────┐ ┌─────────────┐┌───────────────┐ ┌───────────────┐
+                      │rec_reasoner   │ │rec_formatter  ││strat_   │ │strat_       ││content_reasoner│ │content_        │
+                      │(Reasoning)    │ │(JSON Schema)  ││reasoner │ │formatter    ││(Reasoning)     │ │formatter       │
+                      │Skill: product_│ │ProductRec     ││(LLM)    │ │(Strategy    ││Skill: brand_   │ │(ContentSchema) │
+                      │recommender    │ │Schema         ││         │ │Schema)      ││voice_craft     │ │                │
+                      └───────────────┘ └───────────────┘└─────────┘ └─────────────┘└───────────────┘ └───────────────┘
+```
+
+### 2.2 Active Tools & Skill Bindings
+
+| Agent | Bound Tools | Bound Skills | Skill Directory |
+|---|---|---|---|
+| `marketing_orchestrator` | Transfer Tools (Sub-Agents) | None | N/A |
+| `analytics_agent` | `mcp_toolset` (Managed BigQuery MCP Server via Agent Registry) | `bigquery-customer-analytics` | `skills/bigquery-customer-analytics/` |
+| `recommendation_reasoner` | None (Context Reasoning against Catalog) | `product-recommender` | `skills/product-recommender/` |
+| `recommendation_formatter` | None (Pydantic Output Schema) | None | N/A |
+| `strategy_reasoner` | None (Pure LLM Reasoning) | `campaign-framework` | `skills/campaign-framework/` |
+| `strategy_formatter` | None (Pydantic Output Schema) | None | N/A |
+| `content_reasoner` | None (Pure LLM Creativity) | `brand-voice-craft` | `skills/brand-voice-craft/` |
+| `content_formatter` | None (Pydantic Output Schema) | None | N/A |
+
+### 2.3 Structured Output Schemas
+
+#### Product Recommendation Output Schema (`ProductRecommendationSchema`)
+```python
+class RecommendedProduct(BaseModel):
+    product_id: str = Field(description="SKU ID from catalog, e.g. 'PROD_04'")
+    product_name: str = Field(description="Exact catalog product name")
+    category: str = Field(description="Category name")
+    price_eur: float = Field(description="Retail price in EUR")
+    sustainability_certified: bool = Field(description="Sustainability certification")
+    reasoning: str = Field(description="Cohort-aligned merchandising rationale")
+
+class ProductRecommendationSchema(BaseModel):
+    segment_name: str = Field(description="Target customer segment")
+    merchandising_strategy: str = Field(description="Merchandising narrative")
+    projected_impact: str = Field(description="Projected revenue / basket impact")
+    recommended_products: List[RecommendedProduct] = Field(description="Exactly 5 tailored recommendations")
+```
+
+#### Strategy Output Schema (`StrategySchema`)                 │                                      │
                                     ┌───────────────┴───────────────┐      ┌───────────────┴───────────────┐
                                     ▼                               ▼      ▼                               ▼
                               ┌───────────────┐ ┌───────────────┐    ┌───────────────┐ ┌───────────────┐

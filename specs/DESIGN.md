@@ -22,23 +22,24 @@ The application follows a microservice multi-agent topology powered by the **Goo
                                      |
                                      v
 +-------------------------------------------------------------------------+
-|                    AGENT RUNTIME (Container)                   |
+|                    AGENT RUNTIME (Container)                            |
 |          app/fast_api_app.py → ADK FastAPI + Reasoning Engine           |
 |       :streamQuery / :query ← Gemini Enterprise / Console Playground    |
 +------------------------------------+------------------------------------+
 |                                    |
 |       Agent Gateway & Model Armor  |  (Prompt Shield Inspection)
 |                                    |
-+-----+------------------------------+------------------------------+-----+
-      |                              |                              |
-      | (LLM delegation)             | (LLM delegation)             | (LLM)
-      v                              v                              v
-+------------------+         +------------------+         +------------------+
-| Analytics Agent  |         | Strategy Pipeline|         | Content Pipeline |
-| (BigQuery SQL)   |         | (SequentialAgent)|         | (SequentialAgent)|
-+--------+---------+         +------------------+         +------------------+
-         |
-         v
++----+--------------------+----------+----------+--------------------+----+
+     | (LLM delegation)   | (LLM delegation)    | (LLM delegation)   | (LLM delegation)
+     v                    v                     v                    v
++------------------+ +------------------+ +------------------+ +------------------+
+| Analytics Agent  | | Recommender Pipe | | Strategy Pipeline| | Content Pipeline |
+| (BigQuery SQL)   | | (SequentialAgent)| | (SequentialAgent)| | (SequentialAgent)|
++--------+---------+ +--------+---------+ +------------------+ +------------------+
+         |                    |
+         +----------+---------+
+                    |
+                    v
 +-------------------------------------------------------------------------+
 |                             GOOGLE BIGQUERY                             |
 |               (agent-demo-09:marketing_analytics.tables)                |
@@ -148,18 +149,20 @@ gcloud projects add-iam-policy-binding agent-demo-09 \
 ## 4. Multi-Agent Design & A2A Protocol
 
 ### 4.1 Orchestrator & Intent Classifier
-The **Root Orchestrator** (`app/agent.py: marketing_orchestrator`) classifies user intent via LLM delegation:
+The **Root Orchestrator** (`app/agent.py: marketing_orchestrator`) classifies user intent via LLM delegation across four specialized routing paths:
 
 | Intent | Execution Flow | Output |
 |--------|---------------|--------|
 | `ANALYTICS_ONLY` | Orchestrator → AnalyticsAgent | Data summary + SQL accordion |
-| `STRATEGY_ONLY` | Orchestrator → AnalyticsAgent → StrategyAgent | + Strategy framework |
-| `FULL_CAMPAIGN` | Orchestrator → AnalyticsAgent → StrategyAgent → ContentAgent | + Creative copy |
+| `RECOMMENDATIONS_ONLY` | Orchestrator → AnalyticsAgent → RecommendationPipeline | + 5 curated products with EUR pricing & reasoning |
+| `STRATEGY_ONLY` | Orchestrator → AnalyticsAgent → StrategyPipeline | + Strategic pillars, 100% channel mix, ROI |
+| `FULL_CAMPAIGN` | Orchestrator → AnalyticsAgent → StrategyPipeline → ContentPipeline | + Channel-scoped creative copy |
 
 ### 4.2 Subagent Architecture
-- **Analytics Agent** (`app/agent.py: analytics_agent`): Single-tool agent with `query_customer_data`. Generates BigQuery SQL from instructions (full table schema) and executes in one tool call. Skill: `bigquery-customer-analytics`.
-- **Strategy Pipeline** (`app/agent.py: strategy_pipeline`): SequentialAgent — `strategy_reasoning_agent` → `strategy_json_agent` (Pydantic structured output). Skill: `campaign-framework`.
-- **Content Pipeline** (`app/agent.py: content_pipeline`): SequentialAgent — `content_reasoning_agent` → `content_json_agent` (Pydantic structured output). Skill: `brand-voice-craft`.
+- **Analytics Agent** (`app/agent.py: analytics_agent`): Single-tool agent with `query_customer_data`. Generates BigQuery SQL from instructions (full table schema across 5 tables) and executes in one tool call. Skill: `bigquery-customer-analytics`.
+- **Product Recommendation Pipeline** (`app/agent.py: recommendation_pipeline`): SequentialAgent — `recommendation_reasoner` → `recommendation_formatter` (Pydantic structured output using `ProductRecommendationSchema`). Curates 5 data-aligned items from `product_catalog` with EUR pricing and sustainability certification. Skill: `product-recommender`.
+- **Strategy Pipeline** (`app/agent.py: strategy_pipeline`): SequentialAgent — `strategy_reasoning_agent` → `strategy_json_agent` (Pydantic structured output using `StrategySchema`). Skill: `campaign-framework`.
+- **Content Pipeline** (`app/agent.py: content_pipeline`): SequentialAgent — `content_reasoning_agent` → `content_json_agent` (Pydantic structured output using `ContentSchema`). Formats deliverables selectively to requested channels (Email, Instagram, SMS). Skill: `brand-voice-craft`.
 
 ### 4.3 ADK Root Agent (`app/agent.py`)
 The `app/agent.py` defines the `root_agent` using `google.adk.agents.Agent`. This is the ADK entry point that Agent Runtime discovers and serves. It delegates to the orchestrator agent's tools.
@@ -193,22 +196,35 @@ CSS custom properties for instant light/dark theme switching:
 }
 ```
 
-### 5.2 Response & Interactive UI Components
-- **Live Background Execution & Skill Trace**: Real-time SSE streaming visualizer showing active sub-agents (`marketing_orchestrator`, `analytics_agent`, `strategy_pipeline`, `content_pipeline`), skill bindings (`bigquery-customer-analytics`, `campaign-framework`, `brand-voice-craft`), BigQuery SQL tool invocations, and Model Armor security checks.
+### 5.2 Visual Agent Identity & Themed Step Tracing
+Each executing agent and security boundary features distinct, vibrant colors, active glow accents, and 4px left-border indicators:
+- **Marketing Orchestrator** (`#4f46e5`): Royal Indigo accent stripe, badge, and supervisor icons.
+- **Analytics Agent** (`#0284c7`): Sky Cyan accent stripe and database telemetry badge.
+- **Product Recommendation Pipeline** (`#059669`): Emerald Mint accent stripe and product catalog badge.
+- **Omnichannel Strategy Pipeline** (`#7c3aed`): Electric Violet accent stripe and framework metrics badge.
+- **Brand Voice Content Pipeline** (`#d97706`): Warm Amber accent stripe and creative copy badge.
+- **Agent Gateway & Model Armor** (`#e11d48`): Rose Coral accent stripe and security shield badge.
+
+### 5.3 Stateful Session Management
+- **Multi-Turn Context Preservation**: React frontend and backend client maintain `sessionId` across turns, preventing cold restarts and retaining prior conversational context.
+- **Session Status Pill**: Active session badge (`🟢 Session: 46608506...`) rendered in the chat header.
+- **Explicit Lifecycle Reset**: Sessions persist until the user clicks **Clear Chat** or reloads the browser.
+
+### 5.4 Response & Interactive UI Components
+- **Live Background Execution & Skill Trace**: Real-time SSE streaming visualizer showing active sub-agents, skill bindings, BigQuery SQL tool invocations, and Model Armor security checks.
 - **Collapsible SQL Accordion**: BigQuery SQL queries rendered in clean, flush-left collapsible `<details><summary>` accordions (`🔍 View Executed BigQuery SQL Query`).
 - **Dynamic AI Follow-Up Suggestions**: Server-side suggestions engine using Gemini 3.6 Flash on Vertex AI (`POST /api/suggestions/generate`) to inspect conversation turns and generate 6 context-rich follow-up prompts with target agent mappings.
-- **Interactive Objective Steering Accordion**: Objective categories (BigQuery Data, Campaign Strategy, Creative Copy, Full Omnichannel), shuffle button, and "✨ Generate AI Follow-ups" trigger button.
+- **Interactive Objective Steering Accordion**: Objective categories (Dynamic Follow-ups, BigQuery Data, Product Recommendations, Campaign Strategy, Creative Copy, Full Omnichannel), shuffle button, and "✨ Generate AI Follow-ups" trigger button.
 - **Full-Screen Chat Focus View**: Seamless distraction-free expansion (`Maximize2` / `Minimize2` toggle with `Escape` key shortcut) that covers navigation headers and side panels in a full viewport overlay.
-- **Direct Context Transmission**: Clean user prompt dispatch without artificial cohort prefix/suffix strings.
-- **Selective Deliverable Cards**: Strategy & Content cards render only when real payload data is returned by downstream sub-agents.
+- **Selective Deliverable Cards**: Recommendation, Strategy, and Content cards render only when real payload data is returned by downstream sub-agents.
 - **Agent Graph Visualizer**: Interactive A2A routing topology display.
 
-### 5.3 Component Architecture
+### 5.5 Component Architecture
 | Component | Responsibility |
 |-----------|---------------|
-| `ChatInterface.jsx` | Main chat with SSE live background execution trace, markdown rendering, SQL accordion, Dynamic AI Follow-ups, full-screen focus view |
+| `ChatInterface.jsx` | Main chat with SSE live background execution trace, markdown rendering, SQL accordion, Dynamic AI Follow-ups, full-screen focus view, session management |
 | `A2AExplorer.jsx` | A2A protocol explorer with full-screen agent card modal |
-| `AgentGraphVisualizer.jsx` | Agent interaction flow graph |
+| `AgentGraphVisualizer.jsx` | Agent interaction flow graph with agent-specific color identities |
 | `SimulatorControls.jsx` | Real traffic simulator with per-agent KPI breakdown |
 | `BigQueryDataViewer.jsx` | Live BigQuery table sampling & inspection across all 5 tables |
 | `SkillsInspector.jsx` | Skill registry browser (filters CLI dev skills) |

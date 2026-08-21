@@ -29,19 +29,21 @@ This document provides an end-to-end, detailed technical walkthrough of every la
                                     | marketing_orchestrator|
                                     +-----------+-----------+
                                                 |
-                      +-------------------------+-------------------------+
-                      | (LLM delegation)        | (LLM delegation)       | (LLM delegation)
-                      v                         v                         v
-          +-----------------------+ +-----------------------+ +-----------------------+
-          |    Analytics Agent    | |  Strategy Pipeline    | |  Content Pipeline     |
-          | (BigQuery SQL tool)   | | (SequentialAgent)     | | (SequentialAgent)     |
-          +-----------+-----------+ +-----------------------+ +-----------------------+
-                      |
-                      v
-          +-----------------------+
-          |    Google BigQuery    |
-          |  (agent-demo-09)      |
-          +-----------------------+
+                      +-------------------------+-------------------------+-------------------------+
+                      | (LLM delegation)        | (LLM delegation)       | (LLM delegation)        | (LLM delegation)
+                      v                         v                         v                         v
+          +-----------------------+ +-----------------------+ +-----------------------+ +-----------------------+
+          |    Analytics Agent    | |   Recommender Pipe    | |  Strategy Pipeline    | |  Content Pipeline     |
+          | (BigQuery SQL tool)   | | (SequentialAgent)     | | (SequentialAgent)     | | (SequentialAgent)     |
+          +-----------+-----------+ +-----------+-----------+ +-----------------------+ +-----------------------+
+                      |                         |
+                      +------------+------------+
+                                   |
+                                   v
+                      +-----------------------+
+                      |    Google BigQuery    |
+                      |  (agent-demo-09)      |
+                      +-----------------------+
 ```
 
 ---
@@ -266,45 +268,62 @@ analytics_agent = Agent(
     tools=[mcp_toolset, SkillToolset(skills=[analytics_skill])],
 )
 
-# 2. Strategy Pipeline (SequentialAgent: reasoning -> Pydantic structured output)
+# 2. Product Recommendation Pipeline (SequentialAgent: reasoning -> Pydantic structured output)
+recommendation_pipeline = SequentialAgent(
+    name="recommendation_pipeline",
+    description="Curates exactly 5 personalized product recommendations from product_catalog based on segment attributes.",
+    sub_agents=[recommendation_reasoner, recommendation_formatter],
+)
+
+# 3. Strategy Pipeline (SequentialAgent: reasoning -> Pydantic structured output)
 strategy_pipeline = SequentialAgent(
     name="strategy_pipeline",
     description="Builds 3-pillar omnichannel marketing frameworks, channel mix weights, and EUR revenue recovery.",
     sub_agents=[strategy_reasoning_agent, strategy_json_agent],
 )
 
-# 3. Content Pipeline (SequentialAgent: reasoning -> Pydantic structured output)
+# 4. Content Pipeline (SequentialAgent: reasoning -> Pydantic structured output)
 content_pipeline = SequentialAgent(
     name="content_pipeline",
-    description="Produces email templates, social media posts, and SMS copy aligned with Nordic brand voice.",
+    description="Produces channel-selective email templates, social media posts, and SMS copy aligned with Nordic brand voice.",
     sub_agents=[content_reasoning_agent, content_json_agent],
 )
 
-# 4. Root Orchestrator Agent
+# 5. Root Orchestrator Agent
 root_agent = Agent(
     name="marketing_orchestrator",
     model="gemini-3.6-flash",
     description="Marketing Campaign Supervisor — routes objectives to sub-agents.",
-    instruction="Route data queries -> analytics_agent; strategy -> analytics -> strategy_pipeline; campaign -> all agents.",
-    sub_agents=[analytics_agent, strategy_pipeline, content_pipeline],
+    instruction="Route data queries -> analytics_agent; recommendations -> recommendation_pipeline; strategy -> strategy_pipeline; campaign -> all agents.",
+    sub_agents=[analytics_agent, recommendation_pipeline, strategy_pipeline, content_pipeline],
 )
 
 app = App(root_agent=root_agent, name="app")
 ```
 
-#### Code Snippet: Agent Runtime Client SSE Stream Processing ([`backend/agent_runtime_client.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/agent_runtime_client.py))
+#### Code Snippet: Agent Runtime Client Stateful Stream Processing ([`backend/agent_runtime_client.py`](file:///Users/henrikw/Projects/agent_platform_demo/backend/agent_runtime_client.py))
 
 ```python
 import requests, json
 
 class AgentRuntimeClient:
-    def query(self, prompt: str) -> dict:
-        user_id = "user-123"
-        session_id = self._create_session(user_id)
+    def __init__(self):
+        self._active_sessions = set()
+
+    def get_or_create_session(self, user_id: str, session_id: str = None) -> tuple[str, bool]:
+        """Reuses existing session or initializes a new one in Agent Runtime."""
+        if session_id and session_id in self._active_sessions:
+            return session_id, False
+        new_session = self._create_session(user_id)
+        self._active_sessions.add(new_session)
+        return new_session, True
+
+    def query_stream(self, prompt: str, session_id: str = None, user_id: str = None):
+        user_id = user_id or f"user-{uuid.uuid4().hex[:8]}"
+        session_id, is_new = self.get_or_create_session(user_id, session_id)
         
         # Governed endpoint URL
         stream_url = f"{self._governed_url}:streamQuery"
-        
         payload = {
             "class_method": "stream_query",
             "input": {
@@ -315,14 +334,9 @@ class AgentRuntimeClient:
         }
         
         resp = requests.post(stream_url, headers=self._get_auth_headers(), json=payload, stream=True)
-        
-        events = []
         for line in resp.iter_lines(decode_unicode=True):
             if line and line.startswith("data:"):
-                event_data = json.loads(line[5:].strip())
-                events.append(event_data)
-                
-        return self._format_response(events, prompt)
+                yield json.loads(line[5:].strip())
 ```
 
 ### 5.3 Agent-to-Agent (A2A) Protocol Support
