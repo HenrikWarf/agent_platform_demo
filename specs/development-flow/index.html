@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Enterprise Multi-Agent Development Lifecycle & Engineering Standards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font-display: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-body: 'Google Sans Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Google Cloud Theme Colors */
+      --gcp-blue: #1a73e8;
+      --gcp-blue-hover: #1557b0;
+      --gcp-blue-light: #e8f0fe;
+      --gcp-green: #1e8e3e;
+      --gcp-yellow: #f9ab00;
+      --gcp-red: #d93025;
+      
+      /* Light Mode Palette */
+      --bg-primary: #f8f9fa;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #ffffff;
+      --bg-surface-subtle: #f1f3f4;
+      --border-subtle: #dadce0;
+      --border-strong: #bdc1c6;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --text-tertiary: #80868b;
+      --card-highlight: #e8f0fe;
+      --card-highlight-border: #aecbfa;
+      --card-highlight-text: #174ea6;
+      --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      --shadow-md: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+      --shadow-lg: 0 2px 6px 2px rgba(60,64,67,0.15), 0 8px 24px 4px rgba(60,64,67,0.15);
+      --badge-bg: #e8f0fe;
+      --badge-text: #1a73e8;
+      --chip-bg: #f1f3f4;
+      --chip-text: #3c4043;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #121316;
+      --bg-surface: #1e1f23;
+      --bg-surface-elevated: #282a2f;
+      --bg-surface-subtle: #2d3135;
+      --border-subtle: #3c4043;
+      --border-strong: #5f6368;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --text-tertiary: #80868b;
+      --card-highlight: #172b4d;
+      --card-highlight-border: #1a73e8;
+      --card-highlight-text: #8ab4f8;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+      --badge-bg: #172b4d;
+      --badge-text: #8ab4f8;
+      --chip-bg: #2d3135;
+      --chip-text: #e8eaed;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* ─── Top Header Bar ────────────────────────────────────────── */
+    header {
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      height: 58px;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 20;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, #1a73e8, #4285f4);
+      color: white;
+      font-weight: 700;
+      font-size: 0.9rem;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-title-text {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    .brand-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background-color: var(--badge-bg);
+      color: var(--badge-text);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slide-jump-select {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--bg-surface-subtle);
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .slide-jump-select:hover {
+      border-color: var(--border-strong);
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      background: var(--bg-surface-subtle);
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+
+    .icon-btn:hover {
+      background-color: var(--bg-surface-subtle);
+      border-color: var(--border-strong);
+    }
+
+    /* ─── Main Stage Layout ─────────────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Left: Visual Slide Image Canvas Panel */
+    .image-panel {
+      flex: 1.35;
+      background-color: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      border-right: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    .image-container-card {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg-surface);
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      position: relative;
+      cursor: zoom-in;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .image-container-card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .slide-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      border-radius: 10px;
+      transition: opacity 0.25s ease;
+    }
+
+    .image-overlay-tools {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .image-container-card:hover .image-overlay-tools {
+      opacity: 1;
+    }
+
+    .tool-badge {
+      background: rgba(0,0,0,0.75);
+      color: white;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Image Navigation Arrows */
+    .img-nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-md);
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      opacity: 0.85;
+      transition: all 0.2s;
+      font-size: 1.1rem;
+    }
+
+    .img-nav-arrow:hover:not(:disabled) {
+      opacity: 1;
+      background-color: var(--gcp-blue);
+      color: white;
+      border-color: var(--gcp-blue);
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .img-nav-arrow:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .img-nav-prev { left: 36px; }
+    .img-nav-next { right: 36px; }
+
+    /* Right: Synchronized Technical Speaker Notes & Deep Dive Content */
+    .content-panel {
+      flex: 1.05;
+      background-color: var(--bg-surface);
+      overflow-y: auto;
+      padding: 32px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .slide-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-pill {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background-color: var(--badge-bg);
+      color: var(--badge-text);
+    }
+
+    .slide-number-badge {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+
+    .slide-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .slide-subtitle {
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: var(--text-secondary);
+      margin-top: -8px;
+    }
+
+    /* Executive Takeaway Banner Card */
+    .takeaway-card {
+      background-color: var(--card-highlight);
+      border: 1px solid var(--card-highlight-border);
+      border-left: 4px solid var(--gcp-blue);
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .takeaway-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--card-highlight-text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .takeaway-text {
+      font-size: 0.92rem;
+      line-height: 1.5;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Speaker Notes & Deep Dive Points */
+    .talking-points-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .talking-points-heading {
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 6px;
+    }
+
+    .point-card {
+      background-color: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color 0.2s ease;
+    }
+
+    .point-card:hover {
+      border-color: var(--border-strong);
+    }
+
+    .point-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .point-desc {
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    .point-desc ul {
+      margin-top: 6px;
+      padding-left: 20px;
+    }
+
+    .point-desc li {
+      margin-bottom: 4px;
+    }
+
+    .code-pill {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      background-color: var(--chip-bg);
+      color: var(--chip-text);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* GCP Services Tag Cloud */
+    .services-tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 2px;
+    }
+
+    .service-chip {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 9px;
+      border-radius: 8px;
+      background: var(--chip-bg);
+      color: var(--chip-text);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ─── Bottom Navigation & Control Bar ──────────────────────── */
+    footer {
+      background-color: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      height: 60px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 20;
+    }
+
+    .nav-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-nav {
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+      background-color: var(--bg-surface-subtle);
+      border-color: var(--border-strong);
+    }
+
+    .btn-nav.primary {
+      background-color: var(--gcp-blue);
+      color: white;
+      border-color: var(--gcp-blue);
+    }
+
+    .btn-nav.primary:hover:not(:disabled) {
+      background-color: var(--gcp-blue-hover);
+      box-shadow: 0 2px 6px rgba(26, 115, 232, 0.4);
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Slide Thumbnails / Dots */
+    .slide-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot-btn {
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      background-color: var(--border-strong);
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dot-btn:hover {
+      background-color: var(--gcp-blue);
+      transform: scale(1.2);
+    }
+
+    .dot-btn.active {
+      width: 22px;
+      background-color: var(--gcp-blue);
+      border-radius: 6px;
+    }
+
+    .keyboard-guide {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+
+    .key-cap {
+      font-family: var(--font-mono);
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--chip-bg);
+      border: 1px solid var(--border-subtle);
+      color: var(--chip-text);
+      font-size: 0.7rem;
+    }
+
+    /* Fullscreen Lightbox Modal */
+    .lightbox-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.92);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+      backdrop-filter: blur(8px);
+    }
+
+    .lightbox-modal.active {
+      display: flex;
+    }
+
+    .lightbox-img {
+      max-width: 95vw;
+      max-height: 92vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      animation: modalZoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .lightbox-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .lightbox-close-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    @keyframes modalZoomIn {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 3px;
+      background-color: var(--border-subtle);
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gcp-blue), #4285f4);
+      width: 12.5%;
+      transition: width 0.3s ease;
+    }
+
+    /* Wide Presenter Mode Layout */
+    body.wide-mode .image-panel {
+      flex: 1.85;
+    }
+    body.wide-mode .content-panel {
+      flex: 0.85;
+    }
+
+    /* Layout Swapped Mode */
+    body.swapped-layout main {
+      flex-direction: row-reverse;
+    }
+    body.swapped-layout .image-panel {
+      border-right: none;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    @media (max-width: 960px) {
+      main {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+      }
+      .image-panel {
+        min-height: 380px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .content-panel {
+        overflow-y: visible;
+        padding: 24px 20px;
+      }
+      .keyboard-guide {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <header>
+    <div class="brand-section">
+      <a href="#" class="brand-logo">
+        <span class="logo-badge">✦</span>
+        <span class="brand-title-text">GCP Multi-Agent Platform</span>
+      </a>
+      <span class="brand-tag">Development Flow Deck</span>
+    </div>
+
+    <div class="header-controls">
+      <select id="slideJumpSelect" class="slide-jump-select" aria-label="Jump to Slide">
+        <!-- Injected via JavaScript -->
+      </select>
+      <span class="slide-counter" id="slideCounterDisplay">1 / 8</span>
+      <button class="icon-btn" id="wideModeBtn" title="Toggle Wide Presenter Mode (W)">↔</button>
+      <button class="icon-btn" id="swapLayoutBtn" title="Toggle Layout Swap (S)">⇄</button>
+      <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme (T)">☀️</button>
+      <button class="icon-btn" id="fullscreenToggleBtn" title="Toggle Fullscreen (F)">⛶</button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBarFill"></div>
+  </div>
+
+  <!-- Main Stage Split View (Left: Slide Image Canvas, Right: Synchronized Technical Details) -->
+  <main id="mainStage">
+    <!-- Left Column: High-Resolution Slide Image Panel -->
+    <section class="image-panel">
+      <button class="img-nav-arrow img-nav-prev" id="imgPrevBtn" title="Previous Slide (←)">‹</button>
+      <button class="img-nav-arrow img-nav-next" id="imgNextBtn" title="Next Slide (→)">›</button>
+
+      <div class="image-container-card" id="imageContainerCard" title="Click to view full-resolution lightbox zoom">
+        <div class="image-overlay-tools">
+          <span class="tool-badge">🔍 Click to Zoom (Z)</span>
+        </div>
+        <img src="01_title_starter_slide.jpg" alt="Development Flow Slide" class="slide-img" id="slideImage" />
+      </div>
+    </section>
+
+    <!-- Right Column: Rich Synchronized Technical Content & Speaker Talking Points -->
+    <section class="content-panel" id="contentPanel">
+      <div class="slide-badge-row">
+        <span class="section-pill" id="sectionPill">Cover</span>
+        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 8</span>
+      </div>
+
+      <h1 class="slide-title" id="slideTitle">Loading Slide...</h1>
+      <p class="slide-subtitle" id="slideSubtitle">Loading subtitle...</p>
+
+      <!-- Key Takeaway Banner -->
+      <div class="takeaway-card">
+        <div class="takeaway-label">
+          <span>💡</span> Executive Takeaway
+        </div>
+        <p class="takeaway-text" id="takeawayText">Loading executive summary...</p>
+      </div>
+
+      <!-- Deep Dive Talking Points -->
+      <div class="talking-points-container">
+        <div class="talking-points-heading">
+          <span>🎙️</span> Technical Breakdown & Speaker Talking Points
+        </div>
+        <div id="talkingPointsList" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+      <!-- GCP Services & Protocols Tags -->
+      <div class="talking-points-container" style="margin-top: 4px;">
+        <div class="talking-points-heading">
+          <span>☁️</span> GCP Services & Integrated Standards
+        </div>
+        <div class="services-tag-cloud" id="servicesCloud">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <footer>
+    <div class="nav-btn-group">
+      <button class="btn-nav" id="prevBtn" disabled>
+        <span>←</span> Previous
+      </button>
+      <button class="btn-nav primary" id="nextBtn">
+        Next <span>→</span>
+      </button>
+    </div>
+
+    <!-- Slide Indicator Dots -->
+    <div class="slide-dots" id="slideDotsContainer">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Keyboard Navigation Hints -->
+    <div class="keyboard-guide">
+      <span>Navigate:</span>
+      <kbd class="key-cap">←</kbd>
+      <kbd class="key-cap">→</kbd>
+      <kbd class="key-cap">Space</kbd>
+      <span>| Zoom:</span>
+      <kbd class="key-cap">Z</kbd>
+      <span>| Wide:</span>
+      <kbd class="key-cap">W</kbd>
+      <span>| Swap:</span>
+      <kbd class="key-cap">S</kbd>
+    </div>
+  </footer>
+
+  <!-- Fullscreen Lightbox Modal -->
+  <div class="lightbox-modal" id="lightboxModal">
+    <button class="lightbox-close-btn" id="lightboxCloseBtn" title="Close Lightbox (Esc)">✕</button>
+    <img src="" alt="Fullscreen Diagram" class="lightbox-img" id="lightboxImg" />
+  </div>
+
+  <script>
+    // ─── 8-Slide Development Flow Presentation Data Model ─────────────────────────
+    const SLIDES_DATA = [
+      {
+        id: 1,
+        sectionNum: "Cover",
+        sectionBadge: "Title Slide",
+        title: "Enterprise Multi-Agent Development Lifecycle & Engineering Standards",
+        subtitle: "Spec-Driven Engineering, Local Quality Tooling, Agent Evaluation Flywheels, Git Hygiene, and Automated CI/CD Pipelines",
+        image: "01_title_starter_slide.jpg",
+        takeaway: "Developing production multi-agent systems requires shifting from ad-hoc prompt writing to a rigorous, spec-driven engineering lifecycle combining sub-second local linting, golden dataset eval flywheels, trunk-based git hygiene, and automated CI/CD deployment.",
+        points: [
+          {
+            title: "Why Multi-Agent Engineering Demands a New Lifecycle",
+            desc: "Unlike traditional deterministic codebases or simple chatbots, multi-agent AI systems incorporate non-deterministic LLM reasoning, dynamic tool execution, inter-agent delegation protocols, and runtime safety policies. Ad-hoc prompt hacking leads to prompt drift, broken downstream schemas, and untestable multi-agent loops."
+          },
+          {
+            title: "The 5 Core Engineering Pillars",
+            desc: "<ul><li><strong>1. Spec-Driven Foundation (SDD):</strong> PRD, Technical Specs, Pydantic Structured Output Contracts, and Golden Eval Datasets before code.</li><li><strong>2. Fast Local Dev & Ergonomics:</strong> Hermetic virtual envs, dual-harness execution, and instant hot-reloading with agents-cli playground.</li><li><strong>3. Zero-Tolerance Quality & Linting:</strong> Sub-second Python Ruff linter, React ESLint, and automated git pre-commit interception.</li><li><strong>4. Continuous Eval Flywheel:</strong> 5-level testing pyramid, trajectory verification, LLM-as-a-judge rubrics, and regression analysis.</li><li><strong>5. Git Discipline & Automated CI/CD:</strong> Trunk-based branching, conventional commits, AI state logs (GEMINI.md), and zero-downtime GCP deployment.</li></ul>"
+          },
+          {
+            title: "Business & Engineering ROI",
+            desc: "Enforces 100% schema-compliant structured outputs, eliminates production deployment regressions, preserves audit trails in OpenTelemetry, and accelerates developer onboarding."
+          }
+        ],
+        services: ["Google ADK", "Vertex AI Agent Runtime", "Google Cloud Run", "Model Armor", "Agent Gateway", "Ruff Linter", "GitHub Actions", "OpenTelemetry"]
+      },
+      {
+        id: 2,
+        sectionNum: "Phase 1",
+        sectionBadge: "Spec-Driven",
+        title: "Spec-Driven Development (SDD) & Contract-First Design",
+        subtitle: "Establishing PRD, Technical Specs, Pydantic Structured Outputs, and Golden Datasets Before Code",
+        image: "02_spec_driven_foundation.jpg",
+        takeaway: "Writing specifications and structured data contracts before agent prompts prevents hallucinated outputs, eliminates schema drift, and enables automated testing across the multi-agent hierarchy.",
+        points: [
+          {
+            title: "The 5-Tier Specification Hierarchy",
+            desc: "<ul><li><span class='code-pill'>PRD.md</span> — Business goals, user personas, response SLAs, and intent classifications.</li><li><span class='code-pill'>SPEC.md</span> — REST/SSE API endpoints, database schemas, and structured payload contracts.</li><li><span class='code-pill'>DESIGN.md</span> — Agent interaction topology, supervisor routing, and UI design systems.</li><li><span class='code-pill'>SKILL.md</span> — Modular capability instructions, reference schemas, and SQL templates.</li><li><span class='code-pill'>golden_eval.json</span> — Benchmark evaluation ground-truth dataset with target rubrics.</li></ul>"
+          },
+          {
+            title: "Pydantic Code Contracts as First-Class Schemas",
+            desc: "Never allow agents to output raw unconstrained markdown when downstream consumers depend on the data. Define strict Pydantic models with field descriptions, exact counts (e.g. <code>min_items=5, max_items=5</code>), and type validation before drafting agent instructions."
+          },
+          {
+            title: "Drafting Golden Eval Test Cases First",
+            desc: "Establish ground-truth evaluation cases covering happy paths (RFM analytics, product recommendations, campaign frameworks) and adversarial injection attempts prior to prompt iteration."
+          }
+        ],
+        services: ["Pydantic v2", "OpenAPI / Swagger", "Google ADK App", "Agent Registry Skills", "Model Context Protocol"]
+      },
+      {
+        id: 3,
+        sectionNum: "Phase 2",
+        sectionBadge: "Local Dev",
+        title: "Dual-Harness Local Development & Developer Ergonomics",
+        subtitle: "Fast Local Iteration with agents-cli Playground vs Production Cloud-Parity Testing",
+        image: "03_local_dev_harness.jpg",
+        takeaway: "A dual-harness strategy empowers developers to iterate on agent logic locally with sub-second hot reloads while testing cloud parity against live Reasoning Engines, Agent Gateway, and Model Armor.",
+        points: [
+          {
+            title: "Harness 1: Fast Local Developer Ergonomics",
+            desc: "Utilizes in-memory session stores, local ADK runners, mock BigQuery SQL fixtures, and <span class='code-pill'>agents-cli playground</span> for instant sub-second hot reloading. Enables rapid prompt tuning without cloud deployment latency."
+          },
+          {
+            title: "Harness 2: Cloud-Parity Integration Testing",
+            desc: "Runs end-to-end integration tests hitting the deployed Vertex AI Reasoning Engine, Agent Gateway (:streamQuery), and Model Armor prompt guardrails to verify production behavior before PR submission."
+          },
+          {
+            title: "Hermetic Environment Management",
+            desc: "Isolates Python 3.11+ dependencies using modern package management (<span class='code-pill'>uv</span> or virtualenv), guaranteeing identical execution across developer laptops, CI runners, and production Docker containers."
+          }
+        ],
+        services: ["agents-cli", "FastAPI", "ADK Dev Runner", "Vertex AI Agent Runtime", "Agent Gateway", "Model Armor"]
+      },
+      {
+        id: 4,
+        sectionNum: "Phase 3",
+        sectionBadge: "Code Quality",
+        title: "Zero-Tolerance Code Quality, Fast Linting & Git Pre-Commit Gates",
+        subtitle: "High-Speed Static Analysis with Ruff, Python Module Compilation, React ESLint, and Pre-Commit Hooks",
+        image: "04_code_quality_linting.jpg",
+        takeaway: "Automated pre-commit git hooks intercept commits locally, enforcing 100% clean Ruff linting, Python import compilation, and React ESLint checks to prevent broken code from entering the shared repository.",
+        points: [
+          {
+            title: "Sub-Second Python AST Checking with Ruff",
+            desc: "Replaces legacy Flake8, Black, isort, and bandit with a unified Rust-based engine running in milliseconds. Automatically checks pycodestyle, syntax errors, unused arguments, and formats code consistently."
+          },
+          {
+            title: "Automated Python Module & Syntax Compilation",
+            desc: "Runs <span class='code-pill'>python3 -m py_compile</span> across all backend and agent directories to catch syntax errors, broken imports, and circular dependencies before test execution."
+          },
+          {
+            title: "Automated Pre-Commit Git Hook Interception",
+            desc: "The <span class='code-pill'>scripts/pre_commit_lint.sh</span> hook intercepts every <code>git commit</code>. If any lint error, compilation failure, or React ESLint warning is detected, the commit is blocked with actionable fix instructions."
+          }
+        ],
+        services: ["Ruff (Rust Linter & Formatter)", "React ESLint", "Python py_compile", "Git Pre-Commit Hooks", "pyproject.toml"]
+      },
+      {
+        id: 5,
+        sectionNum: "Phase 4",
+        sectionBadge: "Eval Flywheel",
+        title: "5-Level Agent Testing Pyramid & LLM-as-a-Judge Evaluation Flywheel",
+        subtitle: "Unit Tests, Tool Mocking, Trajectory Tracing, Golden Benchmarks, and Domain Quality Rubrics",
+        image: "05_agent_testing_eval_flywheel.jpg",
+        takeaway: "Effective multi-agent testing combines fast deterministic code unit tests with multi-metric LLM judges, measuring response quality, tool execution, skill compliance, and safety on a 1.0 to 5.0 scale.",
+        points: [
+          {
+            title: "The 5-Level Agent Testing Pyramid",
+            desc: "<ul><li><strong>L1: Deterministic Unit Tests:</strong> Regex, helper functions, and configuration loaders (pytest).</li><li><strong>L2: Tool Mocking & Schemas:</strong> ToolContext state mutation and Pydantic validation against mock data.</li><li><strong>L3: Multi-Agent Trajectories:</strong> Sequential handoffs, state propagation, and routing path coverage.</li><li><strong>L4: Golden Benchmark Datasets:</strong> 20-case golden benchmark suite via <span class='code-pill'>agents-cli eval</span>.</li><li><strong>L5: LLM-as-a-Judge Rubrics:</strong> Multi-metric scoring on 1.0 - 5.0 scale with automated threshold gates.</li></ul>"
+          },
+          {
+            title: "Multi-Metric Evaluation Domain Rubrics",
+            desc: "Evaluates Response Quality (≥ 4.0/5.0), Tool & Routing Quality (≥ 4.0/5.0), Skill Compliance (≥ 4.5/5.0), Brand Voice Alignment (≥ 4.5/5.0), and Safety & Injection Defense (Strict 5.0/5.0)."
+          },
+          {
+            title: "Closed-Loop Flywheel & Regression Prevention",
+            desc: "The cycle (Prepare → Generate → Grade → Analyze → Optimize) uses <span class='code-pill'>agents-cli eval compare</span> to ensure prompt optimizations do not degrade existing benchmark performance."
+          }
+        ],
+        services: ["agents-cli eval", "pytest", "Vertex AI Evaluation", "LLM-as-a-Judge (Gemini Pro/Flash)", "Golden Benchmark Suite"]
+      },
+      {
+        id: 6,
+        sectionNum: "Phase 5",
+        sectionBadge: "Git Discipline",
+        title: "Trunk-Based Git Hygiene & AI Context Synchronization",
+        subtitle: "Short-Lived Branches, Conventional Semantic Commits, and Maintaining Project State in GEMINI.md",
+        image: "06_git_hygiene_state_sync.jpg",
+        takeaway: "Maintaining strict trunk-based git discipline combined with centralized AI state logs (GEMINI.md) keeps developers, CI/CD pipelines, and AI coding assistants perfectly synchronized.",
+        points: [
+          {
+            title: "Trunk-Based Branching Discipline",
+            desc: "Developers work on short-lived feature branches (<span class='code-pill'>feat/*</span>, <span class='code-pill'>fix/*</span>, <span class='code-pill'>docs/*</span>) merged into main within 24-48 hours. Eliminates complex merge conflicts and keeps deployment pipelines moving rapidly."
+          },
+          {
+            title: "Conventional Semantic Commits",
+            desc: "Enforces atomic, semantic commit messages (e.g. <code>feat(recommender): add 5-item product recommendation sequential pipeline</code>) that automate semantic versioning and changelog generation."
+          },
+          {
+            title: "AI Context Synchronization & State Logging",
+            desc: "Maintains a centralized <span class='code-pill'>GEMINI.md</span> state log detailing active GCP resource IDs, BigQuery schemas, recent session change logs, and known limitations to ensure AI coding assistants retain perfect project context."
+          }
+        ],
+        services: ["Git / GitHub", "Conventional Commits", "GEMINI.md State Log", "Trunk-Based Development", "Antigravity AI Assistant"]
+      },
+      {
+        id: 7,
+        sectionNum: "Phase 6",
+        sectionBadge: "CI/CD Gates",
+        title: "Automated CI/CD Quality Gates & Zero-Downtime GCP Deployment",
+        subtitle: "GitHub Actions Pipeline with Blocking Eval Gates, Cloud Build, Agent Runtime, and Gemini Enterprise Publishing",
+        image: "07_automated_cicd_pipeline.jpg",
+        takeaway: "Pull requests are gated by automated static analysis and golden evaluation benchmarks, while merges to main trigger zero-downtime container builds and deployments to Agent Runtime, Cloud Run, and Gemini Enterprise.",
+        points: [
+          {
+            title: "PR Quality Gate 1: Static Linting & Unit Tests",
+            desc: "GitHub Actions runs Ruff linter, React ESLint, and deterministic pytest unit tests on every pull request, blocking PRs immediately if linting or unit tests fail."
+          },
+          {
+            title: "PR Quality Gate 2: Golden Eval Benchmark Gate",
+            desc: "Executes the 20-case golden marketing benchmark suite against candidate code in CI. Automatically blocks PR merging if the evaluation score drops below baseline or if safety compliance is < 100%."
+          },
+          {
+            title: "Continuous Deployment to GCP on Push to Main",
+            desc: "Merges trigger Cloud Build container packaging, <span class='code-pill'>agents-cli deploy</span> to Vertex AI Agent Runtime (Reasoning Engine), zero-downtime Cloud Run service updates, and automated Gemini Enterprise publishing."
+          }
+        ],
+        services: ["GitHub Actions", "Google Cloud Build", "Artifact Registry", "Vertex AI Reasoning Engine", "Cloud Run", "Gemini Enterprise"]
+      },
+      {
+        id: 8,
+        sectionNum: "Summary",
+        sectionBadge: "Day-2 Ops",
+        title: "Enterprise Multi-Agent Engineering Best Practices Summary",
+        subtitle: "Key Takeaways, 3-Tier Observability, and Closed-Loop Continuous Improvement",
+        image: "08_dev_summary_recap.jpg",
+        takeaway: "Combining spec-driven design, high-speed local quality tooling, continuous evaluation flywheels, automated CI/CD, and 3-tier production telemetry delivers resilient, enterprise-grade multi-agent platforms.",
+        points: [
+          {
+            title: "The 4 Core Pillars of Agent Engineering",
+            desc: "<ul><li><strong>1. Spec-Driven & Contract-First:</strong> Pydantic output schemas & golden eval datasets established upfront.</li><li><strong>2. High-Speed Local Quality:</strong> Ruff linter & automated git pre-commit hooks.</li><li><strong>3. Continuous Eval Flywheel:</strong> LLM-as-a-judge rubrics, trajectory verification & regression safety.</li><li><strong>4. Automated CI/CD & Day-2 Ops:</strong> GitHub Actions gates, zero-downtime deployment & OpenTelemetry.</li></ul>"
+          },
+          {
+            title: "3-Tier Production Observability Stack",
+            desc: "Captures full distributed trace hierarchies in Cloud Trace, uploads complete prompt/response NDJSON payloads to GCS completions buckets, and links Cloud Logging buckets to BigQuery for SQL analytics."
+          },
+          {
+            title: "Closed-Loop Production Flywheel",
+            desc: "Monitors production edge-case failures, anonymizes them into new golden evaluation test cases, refines agent prompts, and verifies improvements via <span class='code-pill'>agents-cli eval compare</span>."
+          }
+        ],
+        services: ["Google ADK", "Vertex AI Agent Engine", "Cloud Trace", "Cloud Logging", "Google BigQuery", "Model Armor", "Gemini Enterprise"]
+      }
+    ];
+
+    // ─── Application State & DOM Controller ─────────────────────────────────────
+    let currentSlideIndex = 0;
+    let isDarkMode = false;
+    let isWideMode = false;
+    let isSwappedLayout = false;
+
+    // DOM Elements
+    const slideImage = document.getElementById('slideImage');
+    const imageContainerCard = document.getElementById('imageContainerCard');
+    const sectionPill = document.getElementById('sectionPill');
+    const slideNumberBadge = document.getElementById('slideNumberBadge');
+    const slideTitle = document.getElementById('slideTitle');
+    const slideSubtitle = document.getElementById('slideSubtitle');
+    const takeawayText = document.getElementById('takeawayText');
+    const talkingPointsList = document.getElementById('talkingPointsList');
+    const servicesCloud = document.getElementById('servicesCloud');
+    const slideDotsContainer = document.getElementById('slideDotsContainer');
+    const slideJumpSelect = document.getElementById('slideJumpSelect');
+    const slideCounterDisplay = document.getElementById('slideCounterDisplay');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const imgPrevBtn = document.getElementById('imgPrevBtn');
+    const imgNextBtn = document.getElementById('imgNextBtn');
+    const lightboxModal = document.getElementById('lightboxModal');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const wideModeBtn = document.getElementById('wideModeBtn');
+    const swapLayoutBtn = document.getElementById('swapLayoutBtn');
+    const fullscreenToggleBtn = document.getElementById('fullscreenToggleBtn');
+
+    // ─── Initialize Slide Select & Dots ─────────────────────────────────────────
+    function initControls() {
+      slideJumpSelect.innerHTML = '';
+      slideDotsContainer.innerHTML = '';
+
+      SLIDES_DATA.forEach((slide, idx) => {
+        // Option
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `Slide ${idx + 1}: ${slide.title.length > 38 ? slide.title.substring(0, 35) + '...' : slide.title}`;
+        slideJumpSelect.appendChild(opt);
+
+        // Dot
+        const dot = document.createElement('button');
+        dot.className = `dot-btn ${idx === 0 ? 'active' : ''}`;
+        dot.setAttribute('aria-label', `Go to Slide ${idx + 1}`);
+        dot.addEventListener('click', () => goToSlide(idx));
+        slideDotsContainer.appendChild(dot);
+      });
+    }
+
+    // ─── Render Active Slide ───────────────────────────────────────────────────
+    function renderSlide(index) {
+      if (index < 0 || index >= SLIDES_DATA.length) return;
+      currentSlideIndex = index;
+      const slide = SLIDES_DATA[index];
+
+      // Update Image with smooth fade
+      slideImage.style.opacity = '0.3';
+      setTimeout(() => {
+        slideImage.src = slide.image;
+        slideImage.alt = slide.title;
+        slideImage.style.opacity = '1';
+      }, 120);
+
+      // Update Text Meta
+      sectionPill.textContent = `${slide.sectionNum} · ${slide.sectionBadge}`;
+      slideNumberBadge.textContent = `Slide ${slide.id} of ${SLIDES_DATA.length}`;
+      slideTitle.textContent = slide.title;
+      slideSubtitle.textContent = slide.subtitle;
+      takeawayText.textContent = slide.takeaway;
+
+      // Render Deep Dive Talking Points
+      talkingPointsList.innerHTML = '';
+      slide.points.forEach((point, pIdx) => {
+        const pCard = document.createElement('div');
+        pCard.className = 'point-card';
+        pCard.innerHTML = `
+          <div class="point-title">
+            <span style="color: var(--gcp-blue);">▸</span> ${point.title}
+          </div>
+          <div class="point-desc">${point.desc}</div>
+        `;
+        talkingPointsList.appendChild(pCard);
+      });
+
+      // Render GCP Services Cloud
+      servicesCloud.innerHTML = '';
+      slide.services.forEach(svc => {
+        const chip = document.createElement('span');
+        chip.className = 'service-chip';
+        chip.textContent = svc;
+        servicesCloud.appendChild(chip);
+      });
+
+      // Update Header Controls
+      slideJumpSelect.value = index;
+      slideCounterDisplay.textContent = `${index + 1} / ${SLIDES_DATA.length}`;
+      progressBarFill.style.width = `${((index + 1) / SLIDES_DATA.length) * 100}%`;
+
+      // Update Navigation Buttons
+      prevBtn.disabled = index === 0;
+      imgPrevBtn.disabled = index === 0;
+      nextBtn.disabled = index === SLIDES_DATA.length - 1;
+      imgNextBtn.disabled = index === SLIDES_DATA.length - 1;
+      nextBtn.innerHTML = index === SLIDES_DATA.length - 1 ? 'Finish' : 'Next <span>→</span>';
+
+      // Update Indicator Dots
+      const dots = slideDotsContainer.querySelectorAll('.dot-btn');
+      dots.forEach((dot, dIdx) => {
+        dot.classList.toggle('active', dIdx === index);
+      });
+    }
+
+    function goToSlide(idx) {
+      renderSlide(idx);
+    }
+
+    function nextSlide() {
+      if (currentSlideIndex < SLIDES_DATA.length - 1) {
+        goToSlide(currentSlideIndex + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlideIndex > 0) {
+        goToSlide(currentSlideIndex - 1);
+      }
+    }
+
+    // ─── Lightbox Modal Actions ────────────────────────────────────────────────
+    function openLightbox() {
+      lightboxImg.src = SLIDES_DATA[currentSlideIndex].image;
+      lightboxModal.classList.add('active');
+    }
+
+    function closeLightbox() {
+      lightboxModal.classList.remove('active');
+    }
+
+    // ─── Theme & Layout Toggles ────────────────────────────────────────────────
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+      themeToggleBtn.textContent = isDarkMode ? '🌙' : '☀️';
+      themeToggleBtn.title = isDarkMode ? 'Switch to Light Theme (T)' : 'Switch to Dark Theme (T)';
+    }
+
+    function toggleWideMode() {
+      isWideMode = !isWideMode;
+      document.body.classList.toggle('wide-mode', isWideMode);
+      wideModeBtn.style.backgroundColor = isWideMode ? 'var(--card-highlight)' : 'transparent';
+      wideModeBtn.style.borderColor = isWideMode ? 'var(--gcp-blue)' : 'var(--border-subtle)';
+    }
+
+    function toggleSwapLayout() {
+      isSwappedLayout = !isSwappedLayout;
+      document.body.classList.toggle('swapped-layout', isSwappedLayout);
+      swapLayoutBtn.style.backgroundColor = isSwappedLayout ? 'var(--card-highlight)' : 'transparent';
+      swapLayoutBtn.style.borderColor = isSwappedLayout ? 'var(--gcp-blue)' : 'var(--border-subtle)';
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // ─── Event Listeners ───────────────────────────────────────────────────────
+    prevBtn.addEventListener('click', prevSlide);
+    nextBtn.addEventListener('click', nextSlide);
+    imgPrevBtn.addEventListener('click', prevSlide);
+    imgNextBtn.addEventListener('click', nextSlide);
+    slideJumpSelect.addEventListener('change', (e) => goToSlide(parseInt(e.target.value, 10)));
+    imageContainerCard.addEventListener('click', openLightbox);
+    lightboxCloseBtn.addEventListener('click', closeLightbox);
+    lightboxModal.addEventListener('click', (e) => {
+      if (e.target !== lightboxImg) closeLightbox();
+    });
+
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    wideModeBtn.addEventListener('click', toggleWideMode);
+    swapLayoutBtn.addEventListener('click', toggleSwapLayout);
+    fullscreenToggleBtn.addEventListener('click', toggleFullscreen);
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (lightboxModal.classList.contains('active')) {
+        if (e.key === 'Escape') closeLightbox();
+        return;
+      }
+
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'z' || e.key === 'Z') {
+        openLightbox();
+      } else if (e.key === 'w' || e.key === 'W') {
+        toggleWideMode();
+      } else if (e.key === 's' || e.key === 'S') {
+        toggleSwapLayout();
+      } else if (e.key === 't' || e.key === 'T') {
+        toggleTheme();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
+    });
+
+    // Initialize on page load
+    initControls();
+    renderSlide(0);
+  </script>
+</body>
+</html>
