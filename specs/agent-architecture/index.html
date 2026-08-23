@@ -159,6 +159,7 @@
       cursor: pointer;
       outline: none;
       transition: all 0.2s ease;
+      max-width: 320px;
     }
 
     .slide-jump-select:hover {
@@ -207,7 +208,7 @@
     .progress-bar-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--gcp-blue), var(--gcp-purple));
-      width: 12.5%;
+      width: 10%;
       transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -361,7 +362,7 @@
 
     .slide-title {
       font-family: var(--font-display);
-      font-size: 1.6rem;
+      font-size: 1.55rem;
       font-weight: 700;
       line-height: 1.25;
       color: var(--text-primary);
@@ -369,7 +370,7 @@
     }
 
     .slide-subtitle {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: var(--text-secondary);
       line-height: 1.45;
       font-weight: 500;
@@ -397,7 +398,7 @@
     }
 
     .takeaway-text {
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--text-primary);
       line-height: 1.45;
@@ -419,14 +420,14 @@
     .pillars-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     .pillar-card {
       background: var(--bg-surface-subtle);
       border: 1px solid var(--border-subtle);
       border-radius: 10px;
-      padding: 14px 16px;
+      padding: 12px 14px;
       transition: all 0.2s ease;
     }
 
@@ -436,13 +437,13 @@
     }
 
     .pillar-title {
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       font-weight: 700;
       color: var(--text-primary);
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .pillar-bullet {
@@ -454,7 +455,7 @@
     }
 
     .pillar-desc {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--text-secondary);
       line-height: 1.45;
       padding-left: 14px;
@@ -466,12 +467,12 @@
       border: 1px solid var(--border-subtle);
       border-left: 4px solid var(--gcp-purple);
       border-radius: 10px;
-      padding: 16px;
+      padding: 14px 16px;
       margin-top: auto;
     }
 
     .notes-header {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -479,11 +480,11 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .notes-content {
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       color: var(--text-secondary);
       line-height: 1.5;
     }
@@ -548,12 +549,12 @@
     .slide-dots {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
     }
 
     .dot-btn {
-      width: 10px;
-      height: 10px;
+      width: 9px;
+      height: 9px;
       border-radius: 5px;
       background-color: var(--border-strong);
       border: none;
@@ -623,7 +624,7 @@
         overflow-y: auto;
       }
       .image-panel {
-        min-height: 380px;
+        min-height: 360px;
         border-right: none;
         border-bottom: 1px solid var(--border-subtle);
       }
@@ -653,7 +654,7 @@
       <select id="slideJumpSelect" class="slide-jump-select" aria-label="Jump to Slide">
         <!-- Injected via JavaScript -->
       </select>
-      <span class="slide-counter" id="slideCounterDisplay">1 / 8</span>
+      <span class="slide-counter" id="slideCounterDisplay">1 / 10</span>
       <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme (T)">☀️</button>
       <button class="icon-btn" id="fullscreenToggleBtn" title="Toggle Fullscreen (F)">⛶</button>
     </div>
@@ -675,15 +676,15 @@
         <div class="image-overlay-tools">
           <span class="tool-badge">🔍 Click to Zoom (Z)</span>
         </div>
-        <img src="01_agent_architecture_title.jpg" alt="Agent Architecture Slide" class="slide-img" id="slideImage" />
+        <img src="00_intro_title_cover.jpg" alt="Agent Architecture Slide" class="slide-img" id="slideImage" />
       </div>
     </section>
 
     <!-- Right Column: Rich Synchronized Technical Content & Speaker Talking Points -->
     <section class="content-panel" id="contentPanel">
       <div class="slide-badge-row">
-        <span class="section-pill" id="sectionPill">Overview</span>
-        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 8</span>
+        <span class="section-pill" id="sectionPill">Cover</span>
+        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 10</span>
       </div>
 
       <h1 class="slide-title" id="slideTitle">Loading Slide...</h1>
@@ -754,33 +755,60 @@
     const SLIDES = [
       {
         id: 1,
-        section: "System Overview",
+        section: "Keynote Cover",
         title: "Enterprise Multi-Agent Architecture & Agent Engine Ecosystem",
-        subtitle: "Scalable, Intent-Driven Multi-Agent Framework on Vertex AI & Google Cloud Platform",
-        image: "01_agent_architecture_title.jpg",
-        takeaway: "The platform moves beyond single monolithic prompts by decomposing complex retail workflows into 6 specialized, governed agent pipelines running natively on Vertex AI Agent Runtime.",
+        subtitle: "Orchestration, Skills, Tools, BigQuery Analytics, A2UI & Model Armor on Google Cloud",
+        image: "00_intro_title_cover.jpg",
+        takeaway: "An enterprise-grade multi-agent architecture built on the Google Agent Development Kit (ADK) and Vertex AI Agent Runtime, transforming complex retail marketing into governed, data-driven agent workflows.",
         pillars: [
           {
-            title: "Decoupled Micro-Agent Pipelines",
-            desc: "Independent specialized agents for Data Analytics, Assortment Recommendations, A2UI Personalization, Strategy, and Copywriting."
+            title: "Executive Keynote Introduction",
+            desc: "Comprehensive overview of Google Cloud's modern Agentic AI capabilities for retail and marketing enterprises."
           },
           {
-            title: "Native Vertex AI Agent Runtime Hosting",
-            desc: "ADK agents deployed as containerized Reasoning Engines with seamless mTLS security and Gemini 3.6 Flash inference."
+            title: "Unified Agent Runtime Hosting",
+            desc: "Deploying multi-agent systems as containerized Reasoning Engines with enterprise mTLS and automated scaling."
           },
           {
-            title: "Grounded Enterprise Data Ground Truth",
-            desc: "Zero mock data; all customer analytics query 5 live Google BigQuery retail tables with schema-aware SQL generation."
+            title: "Real Enterprise Data Grounding",
+            desc: "Direct integration with Google BigQuery data warehouses for deterministic, real-time customer cohort analytics."
           },
           {
-            title: "Enterprise Guardrails & Model Armor Ingress",
-            desc: "GCP Agent Gateway provides governed CLIENT_TO_AGENT routing with real-time prompt shielding and jailbreak defense."
+            title: "Multi-Tenant Brand Adaptability",
+            desc: "Modular design powering both high-fashion luxury drops (Crazy Fashion) and Swedish grocery Stammis apps (ICA Sverige)."
           }
         ],
-        notes: "Welcome the audience and introduce the core challenge: enterprise marketing requires complex data queries, assortment curation, UI banners, and multi-channel copywriting. Rather than relying on fragile single prompts, our architecture organizes 6 distinct agent pipelines under a supervisor orchestrator on Vertex AI."
+        notes: "Welcome the leadership team and introduce the session topic: How to build and scale a production-grade multi-agent architecture on Google Cloud. Emphasize that we are demonstrating real agents, real BigQuery data, and real security guardrails."
       },
       {
         id: 2,
+        section: "System Topology",
+        title: "Enterprise Multi-Agent System & Cloud Runtime Topology",
+        subtitle: "Full-Stack Microservice Architecture across Cloud Run, Vertex AI, BigQuery & Agent Gateway",
+        image: "01_agent_architecture_title.jpg",
+        takeaway: "The platform decomposes monolithic LLM tasks across 6 specialized agent pipelines running natively on Vertex AI Agent Runtime, governed by Model Armor and Agent Gateway.",
+        pillars: [
+          {
+            title: "Decoupled Micro-Agent Pipelines",
+            desc: "Dedicated agents for Customer Analytics, Product Recommendations, A2UI Deal Banners, Strategy, and Copywriting."
+          },
+          {
+            title: "Vertex AI Agent Runtime",
+            desc: "ADK agents hosted on managed Reasoning Engines with seamless Gemini model inference and session state caching."
+          },
+          {
+            title: "Google BigQuery Data Warehouse",
+            desc: "Zero mock data; all customer analytics execute live SQL queries against 5 retail tables."
+          },
+          {
+            title: "Agent Gateway & Model Armor Ingress",
+            desc: "Governed CLIENT_TO_AGENT access with real-time prompt shielding, PII masking, and jailbreak defense."
+          }
+        ],
+        notes: "Walk through the architectural layers: Client UI ➔ FastAPI Gateway ➔ Agent Gateway & Model Armor ➔ Orchestrator ➔ Specialized Sub-Agents ➔ BigQuery. Explain why decoupling into specialized pipelines creates a robust enterprise architecture."
+      },
+      {
+        id: 3,
         section: "Orchestration",
         title: "Intelligent Orchestration & A2A Routing Supervisor",
         subtitle: "Dynamic Intent Classification & Agent-to-Agent (A2A) Protocol Delegation",
@@ -801,13 +829,13 @@
           },
           {
             title: "Live A2A Message Tracing",
-            desc: "Frontend protocol explorer visualizes inter-agent message handoffs, skill invocations, and supervisor routing in real time."
+            desc: "Frontend protocol visualizer displays inter-agent message handoffs, skill invocations, and supervisor routing in real time."
           }
         ],
-        notes: "Explain the supervisor pattern. Show how intent classification eliminates LLM hallucinations and excessive compute by routing user prompts directly to the minimal necessary sub-agent pipelines."
+        notes: "Explain the supervisor pattern. Show how intent classification eliminates hallucinations and excessive compute by routing user prompts directly to the minimal necessary sub-agent pipelines."
       },
       {
-        id: 3,
+        id: 4,
         section: "Data Analytics",
         title: "Customer Analytics Agent & BigQuery NL2SQL Tool",
         subtitle: "Zero-Mock Data Analysis across 5 Core Retail Tables in Google BigQuery",
@@ -834,7 +862,7 @@
         notes: "Highlight our zero-mock architecture. Emphasize that all numbers shown in the platform come directly from executed BigQuery queries, ensuring high confidence for marketing executives."
       },
       {
-        id: 4,
+        id: 5,
         section: "Assortment Engine",
         title: "Product Recommendation Pipeline & Merchandising Skill",
         subtitle: "SequentialAgent Pipeline Curating Data-Driven 5-Item Assortments",
@@ -861,7 +889,7 @@
         notes: "Explain the two-stage SequentialAgent design. Stage 1 focuses purely on domain reasoning and customer cohort matching, while Stage 2 formats and validates the output against a Pydantic schema."
       },
       {
-        id: 5,
+        id: 6,
         section: "Retail A2UI",
         title: "A2UI Personalization & Interactive Deal Engine",
         subtitle: "Agent-to-User Interface (A2UI) Dynamic UI Component Generation",
@@ -888,7 +916,7 @@
         notes: "Demonstrate A2UI. Instead of returning plain text paragraphs, the agent outputs rich, interactive UI components that customers can interact with directly—checking off ingredients, switching sizes, and activating loyalty deals."
       },
       {
-        id: 6,
+        id: 7,
         section: "Campaign & Content",
         title: "Omnichannel Strategy & Brand Voice Content Pipelines",
         subtitle: "Strategic Frameworks & Channel-Selective Creative Copywriting",
@@ -915,7 +943,7 @@
         notes: "Showcase our channel-selective copywriting. If a user only asks for an SMS, the agent generates only SMS copy respecting 160-character limits, without generating unnecessary emails or social posts."
       },
       {
-        id: 7,
+        id: 8,
         section: "Skills & Registry",
         title: "Enterprise Skills Architecture & Agent Registry",
         subtitle: "Modular Domain Knowledge & Centralized Skill Store on Google Cloud",
@@ -942,7 +970,7 @@
         notes: "Highlight the power of the Skill Standard. Marketing teams can update copywriting rules, retail calculation logic, or schema mappings in markdown without touching the underlying Python runtime code."
       },
       {
-        id: 8,
+        id: 9,
         section: "Security & Ops",
         title: "Governed Gateway, Model Armor & Telemetry Observability",
         subtitle: "Enterprise Ingress Security, Prompt Shielding & Distributed Tracing",
@@ -967,6 +995,33 @@
           }
         ],
         notes: "Conclude with enterprise governance. Point out that all agent actions are logged to Cloud Trace and GCS, while Model Armor prevents prompt injection and data exfiltration in real time."
+      },
+      {
+        id: 10,
+        section: "Summary & Impact",
+        title: "Key Architectural Takeaways & Enterprise Summary",
+        subtitle: "Accelerating Governed, Scalable Multi-Agent AI on Google Cloud",
+        image: "09_summary_conclusion.jpg",
+        takeaway: "Google Cloud provides the premier end-to-end foundation for building, deploying, governing, and observing multi-agent AI ecosystems in the enterprise.",
+        pillars: [
+          {
+            title: "Intent-Driven Orchestration",
+            desc: "A2A Supervisor routes prompts selectively, minimizing token overhead and latency."
+          },
+          {
+            title: "Grounded Retail Telemetry",
+            desc: "Live BigQuery Standard SQL analytics across 5 tables with zero mock data."
+          },
+          {
+            title: "Specialized Multi-Pipelines",
+            desc: "Two-stage SequentialAgents delivering assortments, A2UI deal banners with recipes, and channel copy."
+          },
+          {
+            title: "Governed Security & Observability",
+            desc: "Production-ready protection via Agent Gateway, Model Armor, Cloud Trace, and GCS completion logging."
+          }
+        ],
+        notes: "Deliver the closing summary. Reiterate that this architecture is production-ready, modular, and ready for deployment to any enterprise retail or marketing environment."
       }
     ];
 

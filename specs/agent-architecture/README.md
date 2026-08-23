@@ -4,16 +4,18 @@ Interactive executive and technical presentation deck covering the **GCP Multi-A
 
 ---
 
-## Slide Deck Overview
+## Complete 10-Slide Deck Overview
 
-1. **Slide 1**: Enterprise Multi-Agent Architecture & Agent Engine Ecosystem (`01_agent_architecture_title.jpg`)
-2. **Slide 2**: Intelligent Orchestration & A2A Routing Supervisor (`02_orchestration_a2a_routing.jpg`)
-3. **Slide 3**: Customer Analytics Agent & BigQuery NL2SQL Tool (`03_analytics_bigquery_nl2sql.jpg`)
-4. **Slide 4**: Product Recommendation Pipeline & Merchandising Skill (`04_recommendation_pipeline.jpg`)
-5. **Slide 5**: A2UI Personalization & Interactive Deal Engine (`05_a2ui_personalization_engine.jpg`)
-6. **Slide 6**: Omnichannel Strategy & Brand Voice Content Pipelines (`06_strategy_and_content_pipelines.jpg`)
-7. **Slide 7**: Enterprise Skills Architecture & Agent Registry (`07_skills_and_agent_registry.jpg`)
-8. **Slide 8**: Governed Gateway, Model Armor & Telemetry Observability (`08_gateway_security_observability.jpg`)
+1. **Slide 1**: Executive Keynote Cover (`00_intro_title_cover.jpg`)
+2. **Slide 2**: Enterprise Multi-Agent System & Cloud Runtime Topology (`01_agent_architecture_title.jpg`)
+3. **Slide 3**: Intelligent Orchestration & A2A Routing Supervisor (`02_orchestration_a2a_routing.jpg`)
+4. **Slide 4**: Customer Analytics Agent & BigQuery NL2SQL Tool (`03_analytics_bigquery_nl2sql.jpg`)
+5. **Slide 5**: Product Recommendation Pipeline & Merchandising Skill (`04_recommendation_pipeline.jpg`)
+6. **Slide 6**: A2UI Personalization & Interactive Deal Engine (`05_a2ui_personalization_engine.jpg`)
+7. **Slide 7**: Omnichannel Strategy & Brand Voice Content Pipelines (`06_strategy_and_content_pipelines.jpg`)
+8. **Slide 8**: Enterprise Skills Architecture & Agent Registry (`07_skills_and_agent_registry.jpg`)
+9. **Slide 9**: Governed Gateway, Model Armor & Telemetry Observability (`08_gateway_security_observability.jpg`)
+10. **Slide 10**: Key Architectural Takeaways & Enterprise Summary (`09_summary_conclusion.jpg`)
 
 ---
 
