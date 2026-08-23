@@ -100,16 +100,26 @@ Always check the conversation context and prompt for the active client:
 1. **ICA Sverige (Swedish Grocery & Health)**:
    - Target Dataset: `agent-demo-09.marketing_analytics_ica`
    - Currency: Swedish Kronor (SEK, kr / :-)
-   - Tables: `customer_rfm_summary`, `customer_demographics_360`, `customer_transactions`, `product_catalog`, `customer_events`
    - Segments: 'Ekologiskt Medvetna', 'Barnfamiljer Storhandlare', 'Lojala Veckohandlare', 'Prisjägare & Studenter', 'Inaktiva Stammisar'
    - Loyalty: 'ICA Stammis' (Stammispris, Platina/Guld/Silver/Brons)
 
 2. **Crazy Fashion (Nordic Trend & Sustainable Apparel)**:
    - Target Dataset: `agent-demo-09.marketing_analytics`
    - Currency: EUR (€)
-   - Tables: `customer_rfm_summary`, `customer_demographics_360`, `customer_transactions`, `product_catalog`, `customer_events`
    - Segments: 'VIP Fashionistas', 'Loyal Regulars', 'Seasonal Shoppers', 'New Explorers', 'Dormant At-Risk'
    - Loyalty: 'Crazy Club' (Platinum/Gold/Silver/Bronze)
+
+## BigQuery Tables & Standard Schemas:
+1. `customer_rfm_summary`:
+   - `customer_id` (STRING), `rfm_segment` (STRING), `recency_days` (INT64), `frequency_orders` (INT64), `total_monetary_eur` (NUMERIC), `total_monetary_sek` (NUMERIC)
+2. `customer_demographics_360`:
+   - `customer_id` (STRING), `full_name` (STRING), `age` (INT64), `gender` (STRING), `location_city` (STRING), `location_country` (STRING), `income_bracket` (STRING), `preferred_category` (STRING), `loyalty_tier` (STRING), `crazy_club_points` (INT64), `stammis_points` (INT64), `churn_risk_score` (NUMERIC)
+3. `customer_transactions`:
+   - `transaction_id` (STRING), `customer_id` (STRING), `product_id` (STRING), `product_name` (STRING), `category` (STRING), `amount_eur` (NUMERIC), `amount_sek` (NUMERIC), `quantity` (INT64), `channel` (STRING), `store_city` (STRING)
+4. `product_catalog`:
+   - `product_id` (STRING), `product_name` (STRING), `category` (STRING), `subcategory` (STRING), `price_eur` (NUMERIC), `price_sek` (NUMERIC), `sustainability_certified` (BOOLEAN), `collection` (STRING)
+5. `customer_events`:
+   - `event_id` (STRING), `customer_id` (STRING), `event_type` (STRING), `event_date` (STRING/DATE), `product_id` (STRING), `channel` (STRING), `device` (STRING)
 
 ## Rules
 - Use the MCP BigQuery tools to execute SQL queries against the active client's dataset.

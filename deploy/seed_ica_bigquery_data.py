@@ -194,7 +194,8 @@ def generate_ica_data():
             "rfm_segment": seg,
             "recency_days": recency,
             "frequency_orders": freq,
-            "total_monetary_eur": monetary,  # Column name kept uniform for schema parity
+            "total_monetary_eur": monetary,  # Standard parity column
+            "total_monetary_sek": monetary,  # Explicit SEK column
         })
 
         # Loyalty Stammis Points
@@ -224,6 +225,7 @@ def generate_ica_data():
             "preferred_category": pref_cat,
             "loyalty_tier": loyalty_tier,
             "crazy_club_points": stammis_points,  # Uniform column schema mapping
+            "stammis_points": stammis_points,     # Explicit Stammis column
             "churn_risk_score": churn_risk,
         })
         customers.append((cid, seg, city))
@@ -245,7 +247,8 @@ def generate_ica_data():
                 "product_id": pid,
                 "product_name": pname,
                 "category": pcat,
-                "amount_eur": amount,  # SEK amount stored in standard amount column
+                "amount_eur": amount,  # Parity column
+                "amount_sek": amount,  # Explicit SEK column
                 "quantity": qty,
                 "channel": channel,
                 "store_city": city,
@@ -284,7 +287,8 @@ def generate_ica_data():
             "product_name": p[1],
             "category": p[2],
             "subcategory": p[3],
-            "price_eur": p[4],  # SEK price stored
+            "price_eur": p[4],  # Parity column
+            "price_sek": p[4],  # Explicit SEK column
             "sustainability_certified": p[5],
             "collection": p[6],
         }
