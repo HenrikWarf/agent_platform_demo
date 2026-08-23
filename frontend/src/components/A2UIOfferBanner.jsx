@@ -10,6 +10,67 @@ import {
   RotateCcw
 } from 'lucide-react';
 
+/* ── Swedish Grocery Icon & Emoji Resolver ──────────────────────────────────── */
+const GROCERY_ICON_MAP = {
+  'milk': '🥛',
+  'mejeri': '🥛',
+  'dairy': '🥛',
+  'egg': '🥚',
+  'ägg': '🥚',
+  'apple': '🍎',
+  'frukt': '🍎',
+  'grönt': '🥦',
+  'gront': '🥦',
+  'tomato': '🥫',
+  'tomater': '🥫',
+  'krossade': '🥫',
+  'skafferi': '🥫',
+  'konserv': '🥫',
+  'meat': '🥩',
+  'kött': '🥩',
+  'kott': '🥩',
+  'färs': '🥩',
+  'nötfärs': '🥩',
+  'chark': '🥓',
+  'fish': '🐟',
+  'fisk': '🐟',
+  'lax': '🐟',
+  'fjällröding': '🐟',
+  'seafood': '🦐',
+  'räkor': '🦐',
+  'bread': '🍞',
+  'bröd': '🍞',
+  'bageri': '🥐',
+  'coffee': '☕',
+  'kaffe': '☕',
+  'oil': '🌻',
+  'olja': '🌻',
+  'rapsolja': '🌻',
+  'cheese': '🧀',
+  'ost': '🧀',
+  'prästost': '🧀',
+  'pasta': '🍝',
+  'shopping-bag': '🛍️',
+  'shopping_bag': '🛍️',
+  'bag': '🛍️',
+  'cart': '🛒',
+  'grocery': '🛒'
+};
+
+function resolveGroceryIcon(iconStr, productName = '', category = '') {
+  // If icon is already a multi-byte emoji character
+  if (iconStr && /\p{Extended_Pictographic}/u.test(iconStr)) {
+    return iconStr;
+  }
+  const combined = `${iconStr || ''} ${productName} ${category}`.toLowerCase();
+  for (const [key, emoji] of Object.entries(GROCERY_ICON_MAP)) {
+    if (combined.includes(key)) {
+      return emoji;
+    }
+  }
+  return '🛒';
+}
+
 /* ── Pre-configured Swedish Persona Archetypes for ICA Testing ─────────────── */
 const ICA_PERSONA_PRESETS = {
   eco: {
@@ -37,13 +98,7 @@ const ICA_PERSONA_PRESETS = {
       limit_text: "Max 2 köp/stammis"
     },
     valid_until: "Söndag 24 aug",
-    days_remaining: 3,
-    recipe_suggestion: {
-      title: "Klassiska Svenska Pannkakor med Eko-Mjölk & Sylt",
-      prep_time: "20 min",
-      servings: "4 port",
-      difficulty: "Enkel"
-    }
+    days_remaining: 3
   },
   family: {
     target_persona: "Barnfamilj / Storpack",
@@ -70,13 +125,7 @@ const ICA_PERSONA_PRESETS = {
       limit_text: "Max 2 köp/hushåll"
     },
     valid_until: "Söndag 24 aug",
-    days_remaining: 2,
-    recipe_suggestion: {
-      title: "Klassisk Familjelasagne med Riklig Köttfärssås & Mozzarella",
-      prep_time: "45 min",
-      servings: "6 port",
-      difficulty: "Medel"
-    }
+    days_remaining: 2
   },
   budget: {
     target_persona: "Prisjägare & Student",
@@ -103,13 +152,7 @@ const ICA_PERSONA_PRESETS = {
       limit_text: "Max 3 köp/stammis"
     },
     valid_until: "Söndag 24 aug",
-    days_remaining: 4,
-    recipe_suggestion: {
-      title: "Ugnsrostade Rotfrukter med Örter & Rapsolja",
-      prep_time: "30 min",
-      servings: "4 port",
-      difficulty: "Enkel"
-    }
+    days_remaining: 4
   }
 };
 
@@ -191,7 +234,14 @@ function FashionDropCardComponent({ initialData = {} }) {
   const [isSavedToBag, setIsSavedToBag] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 
-  const activeDrop = {
+  const hasRealData = Boolean(
+    initialData && (initialData.product_name || initialData.pricing || initialData.collection_title)
+  );
+
+  const activeDrop = hasRealData ? {
+    ...initialData,
+    pricing: { ...(initialData.pricing || {}) }
+  } : {
     ...FASHION_PERSONA_PRESETS[selectedPreset],
     ...initialData,
     pricing: {
@@ -201,16 +251,17 @@ function FashionDropCardComponent({ initialData = {} }) {
   };
 
   const {
-    collection_title,
-    drop_badge,
-    product_name,
-    category,
-    sustainability_tag,
-    fit_and_fabric,
+    collection_title = "STUDIO COLLECTION // AUTUMN 2026",
+    drop_badge = "MEMBER EXCLUSIVE",
+    product_name = "Tailored Garment",
+    category = "Apparel",
+    sustainability_tag = "100% Recycled Fibers 🌿",
+    fit_and_fabric = "Relaxed Fit • Structured Weave",
     color_options = ["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"],
     size_options = ["XS", "S", "M", "L", "XL"],
     pricing,
     personalization_reason,
+    target_persona,
     valid_until
   } = activeDrop;
 
@@ -265,29 +316,46 @@ function FashionDropCardComponent({ initialData = {} }) {
           </span>
         </div>
 
-        {/* Persona Archetype Switcher for Testing */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          {Object.keys(FASHION_PERSONA_PRESETS).map(key => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setSelectedPreset(key)}
-              style={{
-                fontSize: '0.62rem',
-                fontWeight: selectedPreset === key ? 700 : 500,
-                background: selectedPreset === key ? '#ffffff' : 'rgba(255,255,255,0.12)',
-                color: selectedPreset === key ? '#18181b' : '#ffffff',
-                border: 'none',
-                padding: '0.15rem 0.5rem',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {key.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        {/* Dynamic AI Persona Badge OR Standalone Preset Selector */}
+        {hasRealData ? (
+          <div style={{
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            background: 'rgba(255, 255, 255, 0.15)',
+            color: '#ffffff',
+            padding: '0.18rem 0.55rem',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem'
+          }}>
+            <Sparkles size={11} color="#fbbf24" />
+            <span>{target_persona || 'VIP Member Curation'}</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            {Object.keys(FASHION_PERSONA_PRESETS).map(key => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSelectedPreset(key)}
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: selectedPreset === key ? 700 : 500,
+                  background: selectedPreset === key ? '#ffffff' : 'rgba(255,255,255,0.12)',
+                  color: selectedPreset === key ? '#18181b' : '#ffffff',
+                  border: 'none',
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {key.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Main Editorial Content Grid ── */}
@@ -509,8 +577,15 @@ function IcaOfferBannerComponent({ initialData = {} }) {
   const [isLoadedToCard, setIsLoadedToCard] = useState(false);
   const [showBarcode, setShowBarcode] = useState(false);
 
-  // Merge provided data or fallback to the interactive persona preset
-  const activeOffer = {
+  const hasRealData = Boolean(
+    initialData && (initialData.product || initialData.pricing || initialData.personalization_reason)
+  );
+
+  const activeOffer = hasRealData ? {
+    ...initialData,
+    product: { ...(initialData.product || {}) },
+    pricing: { ...(initialData.pricing || {}) },
+  } : {
     ...ICA_PERSONA_PRESETS[selectedPersona],
     ...initialData,
     product: { ...ICA_PERSONA_PRESETS[selectedPersona].product, ...(initialData.product || {}) },
@@ -522,8 +597,9 @@ function IcaOfferBannerComponent({ initialData = {} }) {
     store_name = "ICA Maxi Lindhagen, Stockholm",
     badge_type = "Stammispris",
     personalization_reason = "Valt för dig baserat på dina tidigare köp av mejeriprodukter",
-    product,
-    pricing,
+    product = {},
+    pricing = {},
+    target_persona,
     valid_until = "Söndag 24 aug",
     days_remaining = 3,
   } = activeOffer;
@@ -531,6 +607,8 @@ function IcaOfferBannerComponent({ initialData = {} }) {
   const handleCardLoadToggle = () => {
     setIsLoadedToCard(prev => !prev);
   };
+
+  const resolvedIcon = resolveGroceryIcon(product.icon, product.name, product.category);
 
   return (
     <div style={{
@@ -543,7 +621,7 @@ function IcaOfferBannerComponent({ initialData = {} }) {
       margin: '0.8rem 0',
       transition: 'all 0.25s ease'
     }}>
-      {/* ── Top Header: Brand, Store Format & Persona Preset Switcher ── */}
+      {/* ── Top Header: Brand, Store Format & Persona Display ── */}
       <div style={{
         background: 'linear-gradient(135deg, #E01E26 0%, #b91c1c 100%)',
         color: '#ffffff',
@@ -577,32 +655,50 @@ function IcaOfferBannerComponent({ initialData = {} }) {
           </div>
         </div>
 
-        {/* Persona Switcher Pill Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <span style={{ fontSize: '0.62rem', fontWeight: 600, opacity: 0.85, marginRight: '0.2rem' }}>
-            Persona:
-          </span>
-          {Object.keys(ICA_PERSONA_PRESETS).map(key => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setSelectedPersona(key)}
-              style={{
-                fontSize: '0.62rem',
-                fontWeight: selectedPersona === key ? 800 : 600,
-                background: selectedPersona === key ? '#ffffff' : 'rgba(255,255,255,0.18)',
-                color: selectedPersona === key ? '#E01E26' : '#ffffff',
-                border: 'none',
-                padding: '0.18rem 0.55rem',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {key === 'eco' ? 'Eko' : key === 'family' ? 'Familj' : 'Budget'}
-            </button>
-          ))}
-        </div>
+        {/* Dynamic AI Persona Badge OR Standalone Preset Selector */}
+        {hasRealData ? (
+          <div style={{
+            fontSize: '0.68rem',
+            fontWeight: 800,
+            background: 'rgba(255, 255, 255, 0.2)',
+            color: '#ffffff',
+            padding: '0.2rem 0.6rem',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            letterSpacing: '0.02em'
+          }}>
+            <Sparkles size={11} color="#ffffff" />
+            <span>{target_persona || 'Personligt Stammispris'}</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.62rem', fontWeight: 600, opacity: 0.85, marginRight: '0.2rem' }}>
+              Persona:
+            </span>
+            {Object.keys(ICA_PERSONA_PRESETS).map(key => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSelectedPersona(key)}
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: selectedPersona === key ? 800 : 600,
+                  background: selectedPersona === key ? '#ffffff' : 'rgba(255,255,255,0.18)',
+                  color: selectedPersona === key ? '#E01E26' : '#ffffff',
+                  border: 'none',
+                  padding: '0.18rem 0.55rem',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {key === 'eco' ? 'Eko' : key === 'family' ? 'Familj' : 'Budget'}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Main Offer Body ── */}
@@ -623,7 +719,7 @@ function IcaOfferBannerComponent({ initialData = {} }) {
             }}>
               {badge_type}
             </span>
-            {product?.eco_badge && (
+            {product.eco_badge && (
               <span style={{
                 background: 'rgba(46, 125, 50, 0.12)',
                 color: '#2e7d32',
@@ -636,7 +732,7 @@ function IcaOfferBannerComponent({ initialData = {} }) {
                 {product.eco_badge}
               </span>
             )}
-            {product?.origin_badge && (
+            {product.origin_badge && (
               <span style={{
                 background: 'rgba(2, 132, 199, 0.1)',
                 color: '#0284c7',
@@ -675,7 +771,7 @@ function IcaOfferBannerComponent({ initialData = {} }) {
           borderRadius: '12px',
           padding: '1rem'
         }}>
-          {/* Icon / Image Placeholder */}
+          {/* Resolved Food Emoji / Icon */}
           <div style={{
             fontSize: '2.5rem',
             background: 'var(--bg-primary)',
@@ -685,21 +781,22 @@ function IcaOfferBannerComponent({ initialData = {} }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '1px solid var(--border-color)'
+            border: '1px solid var(--border-color)',
+            flexShrink: 0
           }}>
-            {product?.icon || '🛒'}
+            {resolvedIcon}
           </div>
 
           {/* Name & Subtitle */}
           <div>
             <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-              {product?.brand_line} • {product?.volume_weight}
+              {product.brand_line || 'ICA'} • {product.volume_weight || ''}
             </div>
             <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.15rem 0' }}>
-              {product?.name}
+              {product.name || 'Produkt'}
             </div>
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-              {pricing?.comparison_price} • Ord. pris {pricing?.regular_price}
+              {pricing.comparison_price} • Ord. pris {pricing.regular_price}
             </div>
           </div>
 
@@ -707,14 +804,14 @@ function IcaOfferBannerComponent({ initialData = {} }) {
           <div style={{ textAlign: 'right' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', color: '#E01E26', lineHeight: 1 }}>
               <span style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.03em' }}>
-                {pricing?.deal_price_major}
+                {pricing.deal_price_major || '0'}
               </span>
               <span style={{ fontSize: '1rem', fontWeight: 800, marginTop: '0.2rem' }}>
-                :{pricing?.deal_price_minor}
+                :{pricing.deal_price_minor || '00'}
               </span>
             </div>
             <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#E01E26', marginTop: '0.2rem' }}>
-              {pricing?.unit}
+              {pricing.unit || 'kr/st'}
             </div>
             <div style={{
               fontSize: '0.62rem',
@@ -726,12 +823,12 @@ function IcaOfferBannerComponent({ initialData = {} }) {
               marginTop: '0.25rem',
               display: 'inline-block'
             }}>
-              {pricing?.savings_text}
+              {pricing.savings_text}
             </div>
           </div>
         </div>
 
-        {/* Action Controls: Stammis Card Activation & List Quantity */}
+        {/* Action Controls: Stammis Card Activation & Barcode Toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
           
           {/* Main "Ladda till kortet" CTA Button */}
@@ -774,9 +871,9 @@ function IcaOfferBannerComponent({ initialData = {} }) {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              title: "Visa Streckkod för Snabbkassa"
+              justifyContent: 'center'
             }}
+            title="Visa Streckkod för Snabbkassa"
           >
             <QrCode size={16} />
           </button>
