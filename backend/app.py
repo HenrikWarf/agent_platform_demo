@@ -32,6 +32,12 @@ except ImportError:
     from config import Config
     from skill_registry import SkillRegistry
 
+from app.contexts import (
+    DEFAULT_CLIENT_ID,
+    get_client_context,
+    list_clients,
+)
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("agent_platform_backend")
@@ -77,15 +83,22 @@ bq_client = BigQueryClient()
 runtime_client = AgentRuntimeClient()
 skill_registry = SkillRegistry()
 
+_active_client_id = DEFAULT_CLIENT_ID
+
 class ChatRequest(BaseModel):
     prompt: str
     target_segment: str | None = None
     session_id: str | None = None
     user_id: str | None = None
+    client_id: str | None = None
 
 class GenerateSuggestionsRequest(BaseModel):
     messages: list[dict[str, Any]] = []
     current_segment: str | None = "All Cohorts (Full Dataset)"
+    client_id: str | None = None
+
+class ClientSwitchRequest(BaseModel):
+    client_id: str
 
 class SimulatorToggleRequest(BaseModel):
     active: bool
@@ -462,6 +475,34 @@ def run_evaluation():
         logger.error(f"Evaluation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+# ─── Multi-Client Context Endpoints ──────────────────────────────────────────
+
+@app.get("/api/clients")
+def get_clients_list():
+    """Lists all available client workspaces (Crazy Fashion, ICA Sverige)."""
+    return {
+        "active_client_id": _active_client_id,
+        "clients": list_clients(),
+    }
+
+@app.get("/api/clients/active")
+def get_active_client():
+    """Returns the currently active client context."""
+    ctx = get_client_context(_active_client_id)
+    return ctx.to_dict()
+
+@app.post("/api/clients/switch")
+def switch_client(req: ClientSwitchRequest):
+    """Switches the active client context."""
+    global _active_client_id
+    ctx = get_client_context(req.client_id)
+    _active_client_id = ctx.client_id
+    logger.info(f"Switched active client context to: {ctx.client_name} ({ctx.client_id})")
+    return {
+        "status": "SUCCESS",
+        "active_client": ctx.to_dict(),
+    }
+
 # ─── Dynamic AI Follow-Up Suggestions Endpoint ──────────────────────────────
 
 @app.post("/api/suggestions/generate")
@@ -471,13 +512,16 @@ def generate_suggestions(req: GenerateSuggestionsRequest):
     """
     try:
         from backend.suggestions_generator import generate_dynamic_followups
+        client_id = req.client_id or _active_client_id
         questions = generate_dynamic_followups(
             messages=req.messages,
-            current_segment=req.current_segment or "All Cohorts (Full Dataset)"
+            current_segment=req.current_segment or "All Cohorts (Full Dataset)",
+            client_id=client_id,
         )
         return {
             "questions": questions,
             "count": len(questions),
+            "client_id": client_id,
             "source": "gemini-3.6-flash"
         }
     except Exception as e:

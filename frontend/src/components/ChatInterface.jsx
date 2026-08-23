@@ -413,7 +413,16 @@ function getDynamicRecommendations(messages, shuffleSeed) {
   return combined;
 }
 
-export default function ChatInterface({ messages, setMessages, clearMessages, sessionId, setSessionId, userId }) {
+export default function ChatInterface({
+  messages,
+  setMessages,
+  clearMessages,
+  sessionId,
+  setSessionId,
+  userId,
+  _activeClient,
+  activeClientId = 'crazy_fashion'
+}) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentTrace, setCurrentTrace] = useState([]);
@@ -455,6 +464,7 @@ export default function ChatInterface({ messages, setMessages, clearMessages, se
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          client_id: activeClientId,
           messages: messages.map(m => ({
             role: m.role,
             content: m.content,
@@ -538,7 +548,12 @@ export default function ChatInterface({ messages, setMessages, clearMessages, se
       const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: sendPrompt, session_id: sessionId, user_id: userId })
+        body: JSON.stringify({
+          prompt: sendPrompt,
+          session_id: sessionId,
+          user_id: userId,
+          client_id: activeClientId
+        })
       });
 
       if (!response.ok || !response.body) {

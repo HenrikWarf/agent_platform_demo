@@ -66,36 +66,40 @@ def _format_conversation_context(messages: list[dict[str, Any]], max_turns: int 
 
 def generate_dynamic_followups(
     messages: list[dict[str, Any]],
-    current_segment: str = "All Cohorts (Full Dataset)"
+    current_segment: str = "All Cohorts (Full Dataset)",
+    client_id: str | None = None
 ) -> list[dict[str, Any]]:
-    """Calls Gemini 3.6 Flash to generate 6 dynamic follow-up marketing questions based on context."""
+    """Calls Gemini 3.6 Flash to generate 6 dynamic follow-up marketing questions based on client context."""
+    from app.contexts import get_client_context
+    client_ctx = get_client_context(client_id)
+
     context_str = _format_conversation_context(messages)
 
     system_instruction = (
-        "You are an expert AI Marketing Director for 'Crazy Fashion', a leading Nordic fashion retailer "
-        "(Stockholm HQ, omni-channel retail across Sweden, Norway, Denmark, Finland, EUR currency).\n\n"
+        f"You are an expert AI Marketing Director for '{client_ctx.client_name}', a leading Nordic {client_ctx.industry} "
+        f"(Headquarters: {client_ctx.headquarters}, Currency: {client_ctx.currency_code} ({client_ctx.currency_symbol}), Loyalty: {client_ctx.loyalty_program_name}).\n\n"
         "Your role is to inspect the recent conversation history between the marketer and our multi-agent AI assistant, "
         "and generate exactly 6 high-value, deep, actionable follow-up questions to steer the marketer to their next logical steps.\n\n"
         "Multi-Agent Capabilities Available:\n"
-        "1. Analytics Agent: Executes BigQuery SQL queries on customer_rfm_summary, customer_demographics_360, "
-        "customer_transactions, product_catalog, and customer_events.\n"
-        "2. Recommendation Pipeline: Curates 5 data-driven product recommendations from product_catalog matched to segment traits and past purchases.\n"
-        "3. Strategy Pipeline: Builds 3-pillar omnichannel campaign frameworks, 100% channel mix weightings, "
-        "projected revenue recoveries in EUR, and testable A/B hypotheses.\n"
-        "4. Content Pipeline: Crafts brand-aligned Nordic creative copy (email template, social media posts, SMS under 160 chars).\n"
+        f"1. Analytics Agent: Executes BigQuery SQL queries on {client_ctx.bigquery_dataset} tables (customer_rfm_summary, "
+        "customer_demographics_360, customer_transactions, product_catalog, and customer_events).\n"
+        "2. Recommendation Pipeline: Curates data-driven product recommendations from product_catalog matched to segment traits and past purchases.\n"
+        f"3. Strategy Pipeline: Builds 3-pillar omnichannel campaign frameworks, 100% channel mix weightings, "
+        f"projected revenue in {client_ctx.currency_symbol}, and testable A/B hypotheses.\n"
+        "4. Content & A2UI Pipeline: Crafts brand-aligned creative copy (email template, social media posts, SMS under 160 chars, and interactive A2UI deal banners).\n"
         "5. Multi-Agent Orchestrator: End-to-end full pipeline execution connecting data -> recommendations -> strategy -> creative.\n\n"
         "Distribution Requirements for the 6 Questions:\n"
         "- 1-2 BigQuery SQL drill-down questions (agent: 'Analytics Agent', category: 'analytics', color: 'var(--color-success)')\n"
-        "- 1 Product recommendation question (agent: 'Recommendation Pipeline', category: 'recommendation', color: '#10b981')\n"
+        "- 1 Product recommendation / A2UI offer question (agent: 'Recommendation Pipeline', category: 'recommendations', color: '#10b981')\n"
         "- 1-2 Campaign strategy / A/B testing questions (agent: 'Strategy Pipeline', category: 'strategy', color: 'var(--color-purple)')\n"
-        "- 1 Creative copy asset generation question (agent: 'Content Pipeline', category: 'content', color: 'var(--color-warning)')\n"
+        "- 1 Creative copy / banner asset generation question (agent: 'Content Pipeline', category: 'content', color: 'var(--color-warning)')\n"
         "- 1 End-to-end multi-agent orchestration question (agent: 'Multi-Agent Orchestrator', category: 'campaign', color: '#3b82f6')\n\n"
         "All questions must directly build upon the topics, customer segments, collections, and insights discussed in the conversation."
     )
 
     prompt = (
         f"Recent Conversation History:\n{context_str}\n\n"
-        "Generate 6 diverse, hyper-relevant follow-up questions for the marketer."
+        f"Generate 6 diverse, hyper-relevant follow-up questions tailored specifically for {client_ctx.client_name}."
     )
 
     gemini_location = os.environ.get("GEMINI_LOCATION", Config.GEMINI_LOCATION)
