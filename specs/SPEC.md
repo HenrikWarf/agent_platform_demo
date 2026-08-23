@@ -250,6 +250,7 @@ Each agent and platform role is visually distinct across both live streaming exe
 | **Marketing Orchestrator** | `marketing_orchestrator` | `#4f46e5` | `4px solid #4f46e5` | `rgba(79, 70, 229, 0.06)` | Royal Indigo Badge |
 | **Customer Insights & Analytics** | `analytics_agent` | `#0284c7` | `4px solid #0284c7` | `rgba(2, 132, 199, 0.06)` | Sky Cyan Badge |
 | **Product Recommendation Pipeline** | `recommendation_pipeline` | `#059669` | `4px solid #10b981` | `rgba(16, 185, 129, 0.06)` | Emerald Mint Badge |
+| **A2UI Personalization & Offer Banner Pipeline** | `a2ui_pipeline` | `#f97316` | `4px solid #f97316` | `rgba(249, 115, 22, 0.06)` | Coral Orange Badge |
 | **Omnichannel Strategy Pipeline** | `strategy_pipeline` | `#7c3aed` | `4px solid #7c3aed` | `rgba(124, 58, 237, 0.06)` | Electric Violet Badge |
 | **Brand Voice Content Pipeline** | `content_pipeline` | `#d97706` | `4px solid #d97706` | `rgba(217, 119, 6, 0.06)` | Warm Amber Badge |
 | **Agent Gateway & Model Armor** | `agent_gateway` | `#e11d48` | `4px solid #e11d48` | `rgba(225, 29, 72, 0.06)` | Rose Coral Badge |

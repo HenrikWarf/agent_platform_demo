@@ -68,37 +68,61 @@ The agent generates a structured JSON payload conforming to `A2UIOfferBannerSche
   "badge_type": "Stammispris",
   "personalization_reason": "Valt för dig baserat på dina tidigare köp av ekologiska mejeriprodukter",
   "product": {
-    "name": "Ekologisk Svensk Mellanmjölk",
+    "name": "Ekologiska Krossade Tomater 400g",
     "brand_line": "ICA I love eco",
-    "volume_weight": "1.5 Liter",
-    "origin_badge": "Från Sverige 🇸🇪",
-    "eco_badge": "KRAV 🌿",
-    "category": "Mejeri & Ägg",
-    "icon": "milk"
+    "volume_weight": "400g",
+    "origin_badge": "Italien 🇮🇹",
+    "eco_badge": "EU Ekologiskt 🌿",
+    "category": "Skafferi & Konserver",
+    "icon": "tomato"
   },
   "pricing": {
-    "deal_price_major": "24",
-    "deal_price_minor": "90",
+    "deal_price_major": "10",
+    "deal_price_minor": "00",
     "unit": "kr/st",
-    "regular_price": "34:90 kr/st",
-    "savings_text": "Spara 10:00 (29% rabatt)",
-    "comparison_price": "Jfr-pris 16:60/l",
-    "limit_text": "Max 2 köp/stammis"
+    "regular_price": "16:95 kr/st",
+    "savings_text": "Spara 6:95 (41% rabatt)",
+    "comparison_price": "Jfr-pris 25:00/kg",
+    "limit_text": "Max 4 köp/stammis"
   },
-  "validity": {
-    "valid_until": "Söndag 24 aug",
-    "days_remaining": 3,
-    "status": "active"
-  },
-  "interactive_actions": [
-    { "id": "load_to_card", "label": "Ladda till kortet", "type": "toggle" },
-    { "id": "add_to_list", "label": "Lägg i inköpslista", "type": "counter" },
-    { "id": "view_recipe", "label": "Receptförslag", "type": "accordion" }
+  "additional_deals": [
+    {
+      "product": {
+        "name": "Svensk Nötfärs 12% Färsk",
+        "brand_line": "ICA Svensk Råvara",
+        "volume_weight": "500g",
+        "origin_badge": "Från Sverige 🇸🇪",
+        "eco_badge": "Klimatdeklarerad 🌱",
+        "category": "Kött & Chark",
+        "icon": "meat"
+      },
+      "pricing": {
+        "deal_price_major": "49",
+        "deal_price_minor": "90",
+        "unit": "kr/st",
+        "regular_price": "69:90 kr/st",
+        "savings_text": "Spara 20:00 (29% rabatt)",
+        "comparison_price": "Jfr-pris 99:80/kg"
+      },
+      "badge_type": "Stammispris"
+    }
   ],
+  "valid_until": "Söndag 24 aug",
+  "days_remaining": 3,
   "recipe_suggestion": {
-    "title": "Krämig Kardemummakaka på Ekologisk Mjölk & Smör",
-    "prep_time": "35 min",
-    "servings": "6 port"
+    "title": "Klassisk Familjebolognese med Ekologiska Tomater & Basilika",
+    "prep_time": "25 min",
+    "servings": "4 port",
+    "difficulty": "Enkel",
+    "cost_per_serving": "ca 22 kr/port",
+    "ingredients": [
+      "400g ICA I love eco Krossade Tomater (Stammispris)",
+      "500g Svensk Nötfärs 12% (Stammispris)",
+      "400g Spaghetti",
+      "1 gul lök & 2 klyftor vitlök",
+      "2 msk ICA Kallpressad Rapsolja"
+    ],
+    "instructions_summary": "Bryn färs och lök i olja. Rör ner tomater och oregano. Sjud på svag värme 15 min under tiden pastan kokar."
   }
 }
 ```
@@ -109,10 +133,15 @@ The agent generates a structured JSON payload conforming to `A2UIOfferBannerSche
 
 1. **"Ladda till kortet" (Card Activation)**:
    - Interactive button with spring micro-interaction.
-   - Default: `[ + Ladda till kortet ]` (ICA Red button).
-   - Activated: `[ ✓ Laddat på ditt ICA-kort ]` (Emerald Green button with checkmark badge).
-2. **"Lägg i inköpslista" (Shopping List Counter)**:
-   - Increments/decrements quantity directly within the chat widget.
-3. **Interactive Persona Simulator**:
-   - Segment switchers: **Familj**, **Ekologiskt Medveten**, **Student/Budget**, **Gourmet/Helg**.
-   - Shows how the deal offer dynamically re-renders for each Swedish customer archetype.
+   - Single Deal: `[ + Ladda till kortet ]` ➔ `[ ✓ Laddat på ditt Stammiskort ]`.
+   - Multi-Deal Bundle: `[ + Ladda alla 3 erbjudanden till kortet ]` (activates complete meal basket in one click).
+2. **Interactive Swedish Recipe Drawer (`ICA Recept`)**:
+   - Expandable meal inspiration accordion with cooking time, portions, difficulty, and budget price per serving.
+   - Interactive checklist allowing customers to check off ingredients they already have at home.
+   - Direct *"Lägg ingredienser i ICA Inköpslistan"* action button.
+3. **Multi-Deal Tabbed Navigation**:
+   - Horizontal tab pills allowing users to preview and inspect each item in a dinner bundle.
+4. **In-Store Barcode / Self-Scanning Drawer**:
+   - Quick-toggle in-store barcode display with coupon code for checkout scanning.
+5. **Food Emoji & Asset Resolver**:
+   - Maps category strings ('milk', 'tomato', 'meat', 'fish', 'cheese', 'oil', etc.) to Swedish food emojis.

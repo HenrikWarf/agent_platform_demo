@@ -29,21 +29,21 @@ The application follows a microservice multi-agent topology powered by the **Goo
 |                                    |
 |       Agent Gateway & Model Armor  |  (Prompt Shield Inspection)
 |                                    |
-+----+--------------------+----------+----------+--------------------+----+
-     | (LLM delegation)   | (LLM delegation)    | (LLM delegation)   | (LLM delegation)
-     v                    v                     v                    v
-+------------------+ +------------------+ +------------------+ +------------------+
-| Analytics Agent  | | Recommender Pipe | | Strategy Pipeline| | Content Pipeline |
-| (BigQuery SQL)   | | (SequentialAgent)| | (SequentialAgent)| | (SequentialAgent)|
-+--------+---------+ +--------+---------+ +------------------+ +------------------+
-         |                    |
-         +----------+---------+
++----+--------------------+----------+----------+--------------------+----+--------------------+
+     | (LLM delegation)   | (LLM delegation)    | (LLM delegation)   | (LLM delegation)   | (LLM delegation)
+     v                    v                     v                    v                    v
++------------------+ +------------------+ +------------------+ +------------------+ +------------------+
+| Analytics Agent  | | Recommender Pipe | |  A2UI Pipeline   | | Strategy Pipeline| | Content Pipeline |
+| (BigQuery SQL)   | | (SequentialAgent)| | (SequentialAgent)| | (SequentialAgent)| | (SequentialAgent)|
++--------+---------+ +--------+---------+ +--------+---------+ +------------------+ +------------------+
+         |                    |                    |
+         +----------+---------+----------+---------+
                     |
                     v
-+-------------------------------------------------------------------------+
-|                             GOOGLE BIGQUERY                             |
-|               (agent-demo-09:marketing_analytics.tables)                |
-+-------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------------------+
+|                                           GOOGLE BIGQUERY                                           |
+|                              (agent-demo-09:marketing_analytics.tables)                             |
++-----------------------------------------------------------------------------------------------------+
 ```
 
 ---
@@ -201,6 +201,7 @@ Each executing agent and security boundary features distinct, vibrant colors, ac
 - **Marketing Orchestrator** (`#4f46e5`): Royal Indigo accent stripe, badge, and supervisor icons.
 - **Analytics Agent** (`#0284c7`): Sky Cyan accent stripe and database telemetry badge.
 - **Product Recommendation Pipeline** (`#059669`): Emerald Mint accent stripe and product catalog badge.
+- **A2UI Personalization & Offer Banner Pipeline** (`#f97316`): Coral Orange accent stripe and interactive UI component badge.
 - **Omnichannel Strategy Pipeline** (`#7c3aed`): Electric Violet accent stripe and framework metrics badge.
 - **Brand Voice Content Pipeline** (`#d97706`): Warm Amber accent stripe and creative copy badge.
 - **Agent Gateway & Model Armor** (`#e11d48`): Rose Coral accent stripe and security shield badge.
@@ -212,21 +213,25 @@ Each executing agent and security boundary features distinct, vibrant colors, ac
 
 ### 5.4 Response & Interactive UI Components
 - **Live Background Execution & Skill Trace**: Real-time SSE streaming visualizer showing active sub-agents, skill bindings, BigQuery SQL tool invocations, and Model Armor security checks.
+- **Interactive Dual-Client A2UI Deliverables**:
+  - **ICA Stammis Grocery Deal Banner**: Swedish retail deal card (`deal_price`, `comparison_price`, savings, origin/eco badges) with expandable `ICA Recept` drawer, interactive ingredients checklist, multi-deal bundle tabs, and in-store barcode toggle.
+  - **Crazy Fashion Drop Card**: H&M-inspired high-contrast luxury editorial card with size/color selectors, Crazy Club points, recycling bonus, and "Complete the Look" pieces.
 - **Collapsible SQL Accordion**: BigQuery SQL queries rendered in clean, flush-left collapsible `<details><summary>` accordions (`🔍 View Executed BigQuery SQL Query`).
 - **Dynamic AI Follow-Up Suggestions**: Server-side suggestions engine using Gemini 3.6 Flash on Vertex AI (`POST /api/suggestions/generate`) to inspect conversation turns and generate 6 context-rich follow-up prompts with target agent mappings.
 - **Interactive Objective Steering Accordion**: Objective categories (Dynamic Follow-ups, BigQuery Data, Product Recommendations, Campaign Strategy, Creative Copy, Full Omnichannel), shuffle button, and "✨ Generate AI Follow-ups" trigger button.
 - **Full-Screen Chat Focus View**: Seamless distraction-free expansion (`Maximize2` / `Minimize2` toggle with `Escape` key shortcut) that covers navigation headers and side panels in a full viewport overlay.
-- **Selective Deliverable Cards**: Recommendation, Strategy, and Content cards render only when real payload data is returned by downstream sub-agents.
+- **Selective Deliverable Cards**: Recommendation, Strategy, Content, and A2UI cards render only when real payload data is returned by downstream sub-agents.
 - **Agent Graph Visualizer**: Interactive A2A routing topology display.
 
 ### 5.5 Component Architecture
 | Component | Responsibility |
 |-----------|---------------|
 | `ChatInterface.jsx` | Main chat with SSE live background execution trace, markdown rendering, SQL accordion, Dynamic AI Follow-ups, full-screen focus view, session management |
+| `A2UIOfferBanner.jsx` | Interactive dual-client A2UI component rendering Swedish grocery Stammis deal banners with recipe pairing & multi-deal tabs (ICA) and H&M-style editorial fashion drop cards (Crazy Fashion) |
 | `A2AExplorer.jsx` | A2A protocol explorer with full-screen agent card modal |
 | `AgentGraphVisualizer.jsx` | Agent interaction flow graph with agent-specific color identities |
 | `SimulatorControls.jsx` | Real traffic simulator with per-agent KPI breakdown |
-| `BigQueryDataViewer.jsx` | Live BigQuery table sampling & inspection across all 5 tables |
+| `BigQueryDataViewer.jsx` | Live BigQuery table sampling & inspection across all tables |
 | `SkillsInspector.jsx` | Skill registry browser (filters CLI dev skills) |
 
 ---

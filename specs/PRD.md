@@ -30,31 +30,42 @@ The platform dynamically classifies user prompts into four specialized execution
 
 | Intent | Trigger | Execution Flow | Output |
 |--------|---------|---------------|--------|
-| `ANALYTICS_ONLY` | Data queries ("How many customers in VIP?", "Show revenue by city") | Orchestrator → AnalyticsAgent | Summary + SQL accordion. Strategy/Content/Rec cards suppressed. |
+| `ANALYTICS_ONLY` | Data queries ("How many customers in VIP?", "Show revenue by city") | Orchestrator → AnalyticsAgent | Summary + SQL accordion. Strategy/Content/Rec/A2UI cards suppressed. |
 | `RECOMMENDATIONS_ONLY` | Assortment curation ("Recommend products for Loyal Regulars") | Orchestrator → Analytics → Recommender | + 5 curated products card (EUR prices, sustainability, reasoning). |
+| `A2UI_COMPONENT_ONLY` | Interactive deal banners & drop cards ("Design a Stammis offer", "Create a VIP drop card") | Orchestrator → Analytics → A2UI Pipeline | + Interactive A2UI card (Stammis banner with recipe drawer or Fashion drop card). |
 | `STRATEGY_ONLY` | Framework requests without creative assets | Orchestrator → Analytics → Strategy | + Strategy framework (3 pillars, 100% channel mix, ROI). |
 | `FULL_CAMPAIGN` | End-to-end campaign or launch prompts | Orchestrator → Analytics → Strategy → Content | End-to-end: metrics + strategy + channel-selective creative copy. |
 
 ### 3.2 Natural Language to BigQuery SQL (NL2SQL)
-- **Schema-Aware**: AnalyticsAgent uses Gemini (`gemini-3.6-flash`) with schema knowledge of 5 Crazy Fashion BigQuery tables (`customer_rfm_summary`, `customer_demographics_360`, `customer_transactions`, `product_catalog`, `customer_events`).
-- **Live Execution**: SQL runs directly against BigQuery in EUR (€) — no mock or dummy fallbacks.
+- **Schema-Aware**: AnalyticsAgent uses Gemini (`gemini-3.6-flash`) with schema knowledge of BigQuery tables across active client datasets (Crazy Fashion and ICA Sverige).
+- **Live Execution**: SQL runs directly against BigQuery in EUR (€) or SEK (kr) — no mock or dummy fallbacks.
 - **SQL Accordion**: Executed SQL renders cleanly in collapsible `<details><summary>` containers (`🔍 View Executed BigQuery SQL Query`).
 
 ### 3.3 Product Recommendation Pipeline & Merchandising Skill
 - **Assortment Curation**: `recommendation_pipeline` (SequentialAgent combining reasoning and schema formatting) powered by `skills/product-recommender/SKILL.md`.
-- **Deterministic 5-Item Output**: Curates exactly 5 items from `product_catalog` with EUR pricing, sustainability badges, merchandising strategies, and cohort alignment rationale.
+- **Deterministic 5-Item Output**: Curates exactly 5 items from `product_catalog` with pricing, sustainability badges, merchandising strategies, and cohort alignment rationale.
 
-### 3.4 Channel-Selective Creative Copy Generation
+### 3.4 Dedicated A2UI Personalization Pipeline & Offer Banner Engine
+- **Multi-Tenant Retail UI Engine**: `a2ui_pipeline` (`SequentialAgent: a2ui_reasoner → a2ui_formatter`) powered by `A2UIComponentSchema`.
+- **Swedish Grocery Stammis Deal Banner (ICA Sverige)**:
+  - Personalized deal cards with `deal_price_major`/`minor`, comparison price (`Jfr-pris 16:60/l`), savings amount, origin badge (`Från Sverige 🇸🇪`), and eco badge (`KRAV 🌿`).
+  - **Interactive Recipe Integration (`ICA Recept`)**: Expandable meal pairings (`title`, `prep_time`, `servings`, `difficulty`, `cost_per_serving`) with interactive ingredients checklists and a direct *"Lägg ingredienser i ICA Inköpslistan"* action button.
+  - **Multi-Deal Offerings**: Interactive tabbed navigation across multiple complementary deals (e.g. Nötfärs + Krossade Tomater + Spaghetti) with batch `"Ladda alla erbjudanden till kortet"` CTA.
+- **H&M-Style Fashion Drop Card (Crazy Fashion)**:
+  - Editorial collection header (`STUDIO COLLECTION // AUTUMN 2026`), member exclusive badge, interactive size and color variant selectors, Crazy Club point calculation, and garment recycling voucher bonuses.
+  - Complete-the-look matching accessories with instant add-to-bag actions.
+
+### 3.5 Channel-Selective Creative Copy Generation
 - **Scope-Constrained Output**: The Content Pipeline formats output strictly to the marketing channel(s) requested (e.g. Email-only, Social-only, SMS-only under 160 characters), generating the full suite only when requested.
 - **Dedicated Channel UI Cards**: Distinct, clean cards for Email templates, Instagram post copy with hashtags, and SMS copy with real-time character counters.
 
-### 3.5 Model Armor Security & Governed Gateway
+### 3.6 Model Armor Security & Governed Gateway
 - **Prompt Shield**: Real-time validation via Model Armor (`marketing-prompt-shield` template)
 - **Agent Gateway**: `marketing-agent-gateway` with `CLIENT_TO_AGENT` governed access path
 
-### 3.6 Skill Store
-- Production marketing skills: `bigquery-customer-analytics`, `product-recommender`, `campaign-framework`, `brand-voice-craft`
-- CLI dev skills (`google-agents-cli-*`) automatically filtered from the web UI
+### 3.7 Multi-Client Context Engine & Dynamic Theming
+- **Seamless Context Switching**: Instant toggle between Crazy Fashion (Nordic fashion retailer) and ICA Sverige (Swedish grocery leader).
+- **Dynamic Theming & UI Sync**: Switching context automatically updates navbar branding, tab highlights, user input containers (Red for ICA, Indigo/Purple for Crazy Fashion), and BigQuery dataset bindings.
 
 ### 3.7 UI/UX & Interactive Capabilities
 - **Theme Engine**: Light Mode default (`data-theme="light"`) with Dark Mode toggle switch.

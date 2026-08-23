@@ -158,6 +158,38 @@ Adhere to ProductRecommendationSchema.`,
     skills: [
       { name: 'product-recommender', path: 'skills/product-recommender/SKILL.md' }
     ]
+  },
+  a2ui: {
+    name: 'A2UI Banner Agent',
+    role: 'SequentialAgent Pipeline',
+    model: 'gemini-3.6-flash',
+    color: '#f97316',
+    icon: Sparkles,
+    skill: 'a2ui-personalization',
+    description: 'SequentialAgent pipeline: designs interactive, personalized retail offer banners, Stammis grocery deal cards with recipe pairings, and H&M-style fashion drop cards.',
+    capabilities: [
+      'Generates personalized Swedish Stammis grocery offer cards (ICA) & high-fashion drop cards (Crazy Fashion)',
+      'Calculates discount percentages, savings amounts, and comparison prices (jfr-pris)',
+      'Pairs grocery deals with Swedish dinner recipes (ICA Recept) and ingredient checklists',
+      'Provides interactive CTAs ("Ladda till kortet", "Add to Bag", In-store Barcodes)',
+      'Supports multi-deal bundles with batch card activation',
+    ],
+    instruction: `Design tailored, interactive digital offer banners and UI components specifically formatted for the active client.
+
+For ICA Sverige:
+- Create Swedish Stammis deal cards (deal_price, comparison_price, savings, origin/eco badges)
+- Include rich meal pairings (prep_time, servings, difficulty, cost_per_serving, ingredients checklist, instructions)
+- Support multi-deal bundles (additional_deals) with master card loading
+
+For Crazy Fashion:
+- Create H&M-style editorial fashion drop cards (member pricing, size/color selectors, Crazy Club points)
+- Complete-the-look matching accessories and garment recycling vouchers`,
+    tools: [
+      { name: 'query_customer_data', description: 'Queries product catalog and customer purchase affinity in BigQuery.' }
+    ],
+    skills: [
+      { name: 'a2ui-personalization', path: 'skills/a2ui-personalization/SKILL.md' }
+    ]
   }
 };
 
@@ -511,6 +543,7 @@ export default function AgentGraphVisualizer({ a2aTrace, modelArmor }) {
     { key: 'orchestrator', ...AGENT_META.orchestrator },
     { key: 'analytics', ...AGENT_META.analytics },
     { key: 'recommendation', ...AGENT_META.recommendation },
+    { key: 'a2ui', ...AGENT_META.a2ui },
     { key: 'strategy', ...AGENT_META.strategy },
     { key: 'content', ...AGENT_META.content },
   ];
@@ -702,6 +735,7 @@ function getSenderColor(sender) {
   if (s.includes('orchestrator')) return '#4f46e5';
   if (s.includes('analytics') || s.includes('bigquery') || s.includes('sql')) return '#0284c7';
   if (s.includes('recommendation') || s.includes('recommender') || s.includes('catalog')) return '#059669';
+  if (s.includes('a2ui') || s.includes('banner')) return '#f97316';
   if (s.includes('strategy')) return '#7c3aed';
   if (s.includes('content') || s.includes('creative')) return '#d97706';
   if (s.includes('gateway') || s.includes('armor') || s.includes('security')) return '#e11d48';
@@ -714,6 +748,7 @@ function formatAgentName(name) {
   if (n.includes('orchestrator')) return 'Orchestrator';
   if (n.includes('analytics')) return 'Analytics';
   if (n.includes('recommendation') || n.includes('recommender')) return 'Recommender';
+  if (n.includes('a2ui') || n.includes('banner')) return 'A2UI Designer';
   if (n.includes('strategy')) return 'Strategy';
   if (n.includes('content')) return 'Content';
   if (n.includes('gateway') || n.includes('armor')) return 'Model Armor';

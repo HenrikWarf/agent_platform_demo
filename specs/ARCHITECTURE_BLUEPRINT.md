@@ -29,16 +29,18 @@ This document outlines the end-to-end system architecture and GCP deployment top
 
 ### 4. Agent Orchestration Engine (Agent Engine)
 Built with **Google Agent Development Kit (ADK)** and powered by **Gemini 3.6 Flash**:
-* **Root Orchestrator Agent (`marketing_orchestrator`)**: LLM-driven delegation to specialized sub-agents.
+* **Root Orchestrator Agent (`marketing_orchestrator`)**: LLM-driven delegation and routing to specialized sub-agents.
 * **Customer Insights & Analytics Agent (`analytics_agent`)**: Direct BigQuery Standard SQL generator and query executor using `skills/bigquery-customer-analytics`.
-* **Product Recommendation Pipeline (`recommendation_pipeline`)**: SequentialAgent curating tailored 5-product assortments from `product_catalog` with EUR pricing and merchandising rationale using `skills/product-recommender`.
+* **Product Recommendation Pipeline (`recommendation_pipeline`)**: SequentialAgent curating tailored 5-product assortments from `product_catalog` with EUR/SEK pricing and merchandising rationale using `skills/product-recommender`.
+* **A2UI Personalization & Offer Banner Pipeline (`a2ui_pipeline`)**: SequentialAgent (`a2ui_reasoner → a2ui_formatter`) generating interactive Swedish grocery Stammis deal banners with recipe pairings and H&M-style fashion drop cards using `A2UIComponentSchema`.
 * **Omnichannel Strategy Pipeline (`strategy_pipeline`)**: SequentialAgent generating strategic pillars, 100% channel mix weightings, and ROI projections using `skills/campaign-framework`.
-* **Brand Voice Content Pipeline (`content_pipeline`)**: SequentialAgent crafting brand-aligned Nordic emails, social posts, and SMS using `skills/brand-voice-craft`.
+* **Brand Voice Content Pipeline (`content_pipeline`)**: SequentialAgent crafting brand-aligned emails, social posts, and SMS using `skills/brand-voice-craft`.
 
 ### 5. Agent Registry & Skills Store
 * **Agent Registry** (`agentregistry.googleapis.com`): Centralized store for dynamically bound marketing skills:
   * `bigquery-customer-analytics`: BigQuery customer data analytics & SQL templates.
   * `product-recommender`: Assortment curation, price validation, and merchandising strategy.
+  * `a2ui-personalization`: Interactive UI component generation, Stammis deal calculations, and recipe pairings.
   * `campaign-framework`: Campaign frameworks & channel mix allocations.
   * `brand-voice-craft`: Brand tone & creative copywriting rules.
 
