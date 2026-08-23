@@ -2,21 +2,16 @@ import { useState } from 'react';
 import { 
   Sparkles, 
   Check, 
-  Plus, 
-  Minus, 
   ShoppingBag, 
   Clock, 
-  ChefHat, 
   MapPin, 
   QrCode, 
-  ChevronDown, 
-  ChevronUp, 
   Heart,
-  Leaf
+  RotateCcw
 } from 'lucide-react';
 
-/* ── Pre-configured Swedish Persona Archetypes for Live Testing ─────────────── */
-const PERSONA_PRESETS = {
+/* ── Pre-configured Swedish Persona Archetypes for ICA Testing ─────────────── */
+const ICA_PERSONA_PRESETS = {
   eco: {
     target_persona: "Ekologiskt Medveten",
     personalization_reason: "Valt för dig baserat på dina tidigare köp av KRAV-märkta mejeriprodukter",
@@ -115,61 +110,411 @@ const PERSONA_PRESETS = {
       servings: "4 port",
       difficulty: "Enkel"
     }
-  },
-  gourmet: {
-    target_persona: "Helglyx & Gourmet",
-    personalization_reason: "Valt för dig baserat på dina tidigare helginköp av delikatesser och färskvaror",
-    store_format: "ICA Maxi Stormarknad",
-    store_name: "ICA Maxi Nacka",
-    badge_type: "HelgKlipp!",
-    product: {
-      name: "Färsk Svensk Fjällrödingfilé",
-      brand_line: "ICA Selection Delikatess",
-      volume_weight: "ca 300g",
-      origin_badge: "Från Sverige 🇸🇪",
-      eco_badge: "ASC-Certifierad 🐟",
-      category: "Fisk & Skaldjur",
-      icon: "🐟"
-    },
+  }
+};
+
+/* ── Pre-configured H&M-Inspired Fashion Presets for Crazy Fashion ─────────── */
+const FASHION_PERSONA_PRESETS = {
+  vip: {
+    target_persona: "VIP Fashionista",
+    personalization_reason: "Curated exclusively for your Stockholm Studio VIP tier and high affinity with Sustainable Tailoring",
+    collection_title: "STUDIO COLLECTION // AUTUMN 2026",
+    drop_badge: "MEMBER EXCLUSIVE",
+    product_name: "NOVA Oversized Tailored Blazer",
+    category: "Womenswear / Tailoring & Suiting",
+    sustainability_tag: "100% Recycled Italian Wool 🌿",
+    fit_and_fabric: "Relaxed Boxy Fit • Heavyweight Structured Twill • Double Breasted",
+    color_options: ["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"],
+    size_options: ["XS", "S", "M", "L", "XL"],
     pricing: {
-      deal_price_major: "199",
-      deal_price_minor: "00",
-      unit: "kr/kg",
-      regular_price: "289:00 kr/kg",
-      savings_text: "Spara 90:00/kg (31% rabatt)",
-      comparison_price: "Jfr-pris 199:00/kg",
-      limit_text: "Gäller manuella fiskdisken"
+      regular_price: "€89.99",
+      member_price: "€64.99",
+      discount_pct: "-28% MEMBER DEAL",
+      crazy_club_points: "+180 Club Points",
+      garment_recycling_bonus: "Extra -15% with in-store garment drop-off"
     },
-    valid_until: "Lördag 23 aug",
-    days_remaining: 1,
-    recipe_suggestion: {
-      title: "Smörstekt Fjällröding med Sandefjordsmörsås & Dillslungad Färskpotatis",
-      prep_time: "25 min",
-      servings: "2 port",
-      difficulty: "Medel"
-    }
+    valid_until: "Sunday 24 Aug Midnight",
+    cta_text: "Claim Member Deal & Shop Now"
+  },
+  eco: {
+    target_persona: "Eco Trendsetter",
+    personalization_reason: "Selected for your frequent circular apparel purchases and eco-conscious preferences",
+    collection_title: "CONSCIOUS EDIT // CIRCULAR CAPSULE",
+    drop_badge: "CONSCIOUS CHOICE 🌿",
+    product_name: "LUNA Wide-Leg Organic Trousers",
+    category: "Womenswear / Sustainable Bottoms",
+    sustainability_tag: "GOTS-Certified Organic French Linen 🌿",
+    fit_and_fabric: "High-Waisted Fluid Drape • Breathable Natural Weave",
+    color_options: ["Sage Green", "Warm Sand", "Chalk White"],
+    size_options: ["XS", "S", "M", "L", "XL"],
+    pricing: {
+      regular_price: "€69.99",
+      member_price: "€49.99",
+      discount_pct: "-29% CONSCIOUS OFFER",
+      crazy_club_points: "+140 Club Points",
+      garment_recycling_bonus: "Extra -15% with garment recycling voucher"
+    },
+    valid_until: "Sunday 24 Aug Midnight",
+    cta_text: "Claim Member Deal & Shop Now"
   }
 };
 
 /**
- * A2UIOfferBanner: An interactive, brand-accurate Swedish Retail Offer component for ICA
- * Demonstrates Agent-to-User Interface (A2UI) declarative UI generation in chat.
+ * A2UIOfferBanner: Interactive Agent-to-User Interface (A2UI) component supporting
+ * both ICA Sverige (Swedish Grocery Deal Banner) and Crazy Fashion (H&M-Style Editorial Drop Card).
  */
 export default function A2UIOfferBanner({ data = {} }) {
+  // Determine if this is a Crazy Fashion drop card or ICA Stammis banner
+  const isCrazyFashion = (
+    data.client_type === 'crazy_fashion' ||
+    Boolean(data.fashion_drop_card) ||
+    Boolean(data.collection_title) ||
+    (data.brand && data.brand.toLowerCase().includes('fashion'))
+  );
+
+  if (isCrazyFashion) {
+    const rawFashionData = data.fashion_drop_card || data;
+    return <FashionDropCardComponent initialData={rawFashionData} />;
+  }
+
+  const rawIcaData = data.ica_offer_banner || data;
+  return <IcaOfferBannerComponent initialData={rawIcaData} />;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * 1. CRAZY FASHION // H&M-INSPIRED EDITORIAL DROP CARD COMPONENT
+ * ───────────────────────────────────────────────────────────────────────────── */
+function FashionDropCardComponent({ initialData = {} }) {
+  const [selectedPreset, setSelectedPreset] = useState('vip');
+  const [selectedSize, setSelectedSize] = useState('M');
+  const [selectedColor, setSelectedColor] = useState(0);
+  const [isSavedToBag, setIsSavedToBag] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+
+  const activeDrop = {
+    ...FASHION_PERSONA_PRESETS[selectedPreset],
+    ...initialData,
+    pricing: {
+      ...FASHION_PERSONA_PRESETS[selectedPreset].pricing,
+      ...(initialData.pricing || {})
+    }
+  };
+
+  const {
+    collection_title,
+    drop_badge,
+    product_name,
+    category,
+    sustainability_tag,
+    fit_and_fabric,
+    color_options = ["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"],
+    size_options = ["XS", "S", "M", "L", "XL"],
+    pricing,
+    personalization_reason,
+    valid_until
+  } = activeDrop;
+
+  const colorSwatches = [
+    { name: color_options[0] || 'Oatmeal Heather', hex: '#d6c7b2' },
+    { name: color_options[1] || 'Midnight Navy', hex: '#1e293b' },
+    { name: color_options[2] || 'Charcoal Slate', hex: '#475569' }
+  ];
+
+  return (
+    <div style={{
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      borderRadius: '16px',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-color)',
+      boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+      overflow: 'hidden',
+      margin: '0.8rem 0',
+      transition: 'all 0.25s ease'
+    }}>
+      {/* ── Top Editorial Header ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #18181b, #27272a)',
+        color: '#ffffff',
+        padding: '0.75rem 1.1rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '0.5rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{
+            fontSize: '0.65rem',
+            fontWeight: 800,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: '#a1a1aa'
+          }}>
+            {collection_title}
+          </span>
+          <span style={{
+            fontSize: '0.62rem',
+            fontWeight: 800,
+            background: '#4f46e5',
+            color: '#ffffff',
+            padding: '0.15rem 0.55rem',
+            borderRadius: '12px',
+            letterSpacing: '0.04em'
+          }}>
+            {drop_badge}
+          </span>
+        </div>
+
+        {/* Persona Archetype Switcher for Testing */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          {Object.keys(FASHION_PERSONA_PRESETS).map(key => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSelectedPreset(key)}
+              style={{
+                fontSize: '0.62rem',
+                fontWeight: selectedPreset === key ? 700 : 500,
+                background: selectedPreset === key ? '#ffffff' : 'rgba(255,255,255,0.12)',
+                color: selectedPreset === key ? '#18181b' : '#ffffff',
+                border: 'none',
+                padding: '0.15rem 0.5rem',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {key.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Main Editorial Content Grid ── */}
+      <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        
+        {/* Title, Category & Wishlist */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.8rem' }}>
+          <div>
+            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {category}
+            </span>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0.4rem', letterSpacing: '-0.02em' }}>
+              {product_name}
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                color: '#059669',
+                background: 'rgba(5, 150, 105, 0.1)',
+                border: '1px solid rgba(5, 150, 105, 0.25)',
+                padding: '0.12rem 0.5rem',
+                borderRadius: '6px'
+              }}>
+                {sustainability_tag}
+              </span>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                {fit_and_fabric}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsLiked(prev => !prev)}
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: isLiked ? '#e11d48' : 'var(--text-muted)',
+              transition: 'all 0.15s ease'
+            }}
+            title={isLiked ? "Saved to Wishlist" : "Save to Wishlist"}
+          >
+            <Heart size={16} fill={isLiked ? '#e11d48' : 'none'} />
+          </button>
+        </div>
+
+        {/* ── Pricing & Member Discount Banner (H&M High-Contrast Style) ── */}
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '12px',
+          padding: '0.9rem 1.1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.8rem'
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem' }}>
+              <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#e11d48', letterSpacing: '-0.02em' }}>
+                {pricing?.member_price || '€59.99'}
+              </span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontWeight: 600 }}>
+                {pricing?.regular_price || '€79.99'}
+              </span>
+              <span style={{
+                fontSize: '0.68rem',
+                fontWeight: 800,
+                background: '#e11d48',
+                color: '#ffffff',
+                padding: '0.15rem 0.45rem',
+                borderRadius: '4px'
+              }}>
+                {pricing?.discount_pct || '-25% OFF'}
+              </span>
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+              Member Special • Valid until {valid_until || 'Sunday Midnight'}
+            </div>
+          </div>
+
+          {/* Crazy Club Loyalty Perks */}
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4f46e5', display: 'flex', alignItems: 'center', gap: '0.3rem', justifyContent: 'flex-end' }}>
+              <Sparkles size={13} />
+              <span>{pricing?.crazy_club_points || '+150 Club Points'}</span>
+            </div>
+            {pricing?.garment_recycling_bonus && (
+              <div style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
+                <RotateCcw size={11} />
+                <span>{pricing.garment_recycling_bonus}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Interactive Color & Size Selector ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'var(--bg-primary)', padding: '0.8rem', borderRadius: '10px' }}>
+          
+          {/* Color Selector */}
+          <div>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+              Color: <strong style={{ color: 'var(--text-main)' }}>{colorSwatches[selectedColor]?.name}</strong>
+            </div>
+            <div style={{ display: 'flex', gap: '0.45rem' }}>
+              {colorSwatches.map((c, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedColor(idx)}
+                  style={{
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '50%',
+                    background: c.hex,
+                    border: selectedColor === idx ? '2px solid #4f46e5' : '1px solid var(--border-color)',
+                    boxShadow: selectedColor === idx ? '0 0 0 2px rgba(79, 70, 229, 0.3)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title={c.name}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Size Selector */}
+          <div>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+              Select Size:
+            </div>
+            <div style={{ display: 'flex', gap: '0.35rem' }}>
+              {size_options.map(sz => (
+                <button
+                  key={sz}
+                  type="button"
+                  onClick={() => setSelectedSize(sz)}
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: selectedSize === sz ? 800 : 600,
+                    background: selectedSize === sz ? '#18181b' : 'var(--bg-secondary)',
+                    color: selectedSize === sz ? '#ffffff' : 'var(--text-main)',
+                    border: selectedSize === sz ? '1px solid #18181b' : '1px solid var(--border-color)',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {sz}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Main Call To Action Button ── */}
+        <button
+          type="button"
+          onClick={() => setIsSavedToBag(prev => !prev)}
+          style={{
+            background: isSavedToBag ? '#059669' : 'linear-gradient(135deg, #18181b, #312e81)',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '12px',
+            padding: '0.85rem 1.4rem',
+            fontSize: '0.88rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.55rem',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {isSavedToBag ? <Check size={18} /> : <ShoppingBag size={18} />}
+          {isSavedToBag ? '✓ Added to Club Bag!' : `Add to Bag • Size ${selectedSize}`}
+        </button>
+
+        {/* ── Personalization Rationale Drawer ── */}
+        {personalization_reason && (
+          <div style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '10px',
+            padding: '0.65rem 0.9rem',
+            fontSize: '0.72rem',
+            color: 'var(--text-muted)',
+            lineHeight: '1.45',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <Sparkles size={14} color="#4f46e5" style={{ flexShrink: 0 }} />
+            <span><strong>Why you see this:</strong> {personalization_reason}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * 2. ICA SVERIGE // STAMMIS GROCERY DEAL BANNER COMPONENT
+ * ───────────────────────────────────────────────────────────────────────────── */
+function IcaOfferBannerComponent({ initialData = {} }) {
   const [selectedPersona, setSelectedPersona] = useState('eco');
   const [isLoadedToCard, setIsLoadedToCard] = useState(false);
-  const [listQuantity, setListQuantity] = useState(0);
-  const [showRecipe, setShowRecipe] = useState(false);
   const [showBarcode, setShowBarcode] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
 
   // Merge provided data or fallback to the interactive persona preset
   const activeOffer = {
-    ...PERSONA_PRESETS[selectedPersona],
-    ...data,
-    product: { ...PERSONA_PRESETS[selectedPersona].product, ...(data.product || {}) },
-    pricing: { ...PERSONA_PRESETS[selectedPersona].pricing, ...(data.pricing || {}) },
-    recipe_suggestion: { ...PERSONA_PRESETS[selectedPersona].recipe_suggestion, ...(data.recipe_suggestion || {}) }
+    ...ICA_PERSONA_PRESETS[selectedPersona],
+    ...initialData,
+    product: { ...ICA_PERSONA_PRESETS[selectedPersona].product, ...(initialData.product || {}) },
+    pricing: { ...ICA_PERSONA_PRESETS[selectedPersona].pricing, ...(initialData.pricing || {}) },
   };
 
   const {
@@ -181,552 +526,311 @@ export default function A2UIOfferBanner({ data = {} }) {
     pricing,
     valid_until = "Söndag 24 aug",
     days_remaining = 3,
-    recipe_suggestion
   } = activeOffer;
 
   const handleCardLoadToggle = () => {
     setIsLoadedToCard(prev => !prev);
   };
 
-  const handleAddToList = () => {
-    setListQuantity(prev => prev + 1);
-  };
-
-  const handleDecrementList = () => {
-    setListQuantity(prev => Math.max(0, prev - 1));
-  };
-
   return (
     <div style={{
-      background: 'var(--bg-card, #ffffff)',
-      border: '1px solid rgba(224, 30, 38, 0.25)',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       borderRadius: '16px',
-      boxShadow: '0 4px 20px rgba(224, 30, 38, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-color)',
+      boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
       overflow: 'hidden',
-      fontFamily: "var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)",
       margin: '0.8rem 0',
       transition: 'all 0.25s ease'
     }}>
-      {/* ─── Top Brand Header & Persona Selector Bar ─────────────────── */}
+      {/* ── Top Header: Brand, Store Format & Persona Preset Switcher ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #E01E26 0%, #B81319 100%)',
+        background: 'linear-gradient(135deg, #E01E26 0%, #b91c1c 100%)',
         color: '#ffffff',
-        padding: '0.75rem 1rem',
+        padding: '0.75rem 1.1rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '0.5rem'
       }}>
-        {/* Brand Logo & Store Format */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div style={{
             background: '#ffffff',
             color: '#E01E26',
             fontWeight: 900,
             fontSize: '0.95rem',
-            letterSpacing: '-0.03em',
-            padding: '0.15rem 0.55rem',
+            padding: '0.2rem 0.5rem',
             borderRadius: '6px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.2rem'
+            letterSpacing: '-0.02em'
           }}>
-            <span>ICA</span>
+            ICA
           </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff', lineHeight: 1.2 }}>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 800, lineHeight: 1.2 }}>
               {store_format}
-            </span>
-            <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-              <MapPin size={10} /> {store_name}
-            </span>
+            </div>
+            <div style={{ fontSize: '0.65rem', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <MapPin size={10} />
+              <span>{store_name}</span>
+            </div>
           </div>
         </div>
 
-        {/* Stammis Loyalty Badge & Like Toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <span style={{
-            background: '#FFE600',
-            color: '#1F2328',
-            fontWeight: 800,
-            fontSize: '0.68rem',
-            padding: '0.18rem 0.5rem',
-            borderRadius: '12px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
-          }}>
-            ⭐ {badge_type}
+        {/* Persona Switcher Pill Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <span style={{ fontSize: '0.62rem', fontWeight: 600, opacity: 0.85, marginRight: '0.2rem' }}>
+            Persona:
           </span>
-
-          <button
-            type="button"
-            onClick={() => setIsLiked(!isLiked)}
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '28px',
-              height: '28px',
-              color: isLiked ? '#FFE600' : '#ffffff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.15s'
-            }}
-            title={isLiked ? 'Sparad i dina favoriter' : 'Spara som favorit'}
-          >
-            <Heart size={14} fill={isLiked ? '#FFE600' : 'none'} />
-          </button>
-        </div>
-      </div>
-
-      {/* ─── Interactive Persona Switcher Simulator (A2UI Demonstration) ──── */}
-      <div style={{
-        background: 'rgba(224, 30, 38, 0.04)',
-        borderBottom: '1px solid rgba(224, 30, 38, 0.12)',
-        padding: '0.4rem 0.8rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.4rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.68rem', color: 'var(--text-muted, #5f6368)', fontWeight: 600 }}>
-          <Sparkles size={11} color="#E01E26" />
-          <span>A2UI Kundprofil:</span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-          {[
-            { id: 'eco', label: '🌿 Eko-Medveten' },
-            { id: 'family', label: '👨‍👩‍👧‍👦 Barnfamilj' },
-            { id: 'budget', label: '🏷️ Prisjägare' },
-            { id: 'gourmet', label: '🍷 Gourmet' }
-          ].map(persona => (
+          {Object.keys(ICA_PERSONA_PRESETS).map(key => (
             <button
-              key={persona.id}
+              key={key}
               type="button"
-              onClick={() => {
-                setSelectedPersona(persona.id);
-                setIsLoadedToCard(false);
-                setListQuantity(0);
-                setShowRecipe(false);
-              }}
+              onClick={() => setSelectedPersona(key)}
               style={{
-                fontSize: '0.65rem',
-                fontWeight: selectedPersona === persona.id ? 700 : 500,
-                background: selectedPersona === persona.id ? '#E01E26' : 'var(--bg-secondary, #f1f3f4)',
-                color: selectedPersona === persona.id ? '#ffffff' : 'var(--text-main, #202124)',
+                fontSize: '0.62rem',
+                fontWeight: selectedPersona === key ? 800 : 600,
+                background: selectedPersona === key ? '#ffffff' : 'rgba(255,255,255,0.18)',
+                color: selectedPersona === key ? '#E01E26' : '#ffffff',
                 border: 'none',
-                padding: '0.18rem 0.5rem',
+                padding: '0.18rem 0.55rem',
                 borderRadius: '12px',
                 cursor: 'pointer',
-                transition: 'all 0.15s'
+                transition: 'all 0.15s ease'
               }}
             >
-              {persona.label}
+              {key === 'eco' ? 'Eko' : key === 'family' ? 'Familj' : 'Budget'}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ─── Personalization Rationale Banner ─────────────────────────── */}
-      <div style={{
-        background: 'rgba(255, 230, 0, 0.12)',
-        borderBottom: '1px dashed rgba(224, 30, 38, 0.2)',
-        padding: '0.45rem 1rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.45rem',
-        fontSize: '0.72rem',
-        color: 'var(--text-main, #202124)'
-      }}>
-        <span style={{ fontSize: '0.85rem' }}>🎯</span>
-        <span>
-          <strong style={{ color: '#E01E26' }}>Personligt Stammiserbjudande:</strong> {personalization_reason}
-        </span>
-      </div>
-
-      {/* ─── Main Deal & Product Content Stage ────────────────────────── */}
-      <div style={{
-        padding: '1rem',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(90px, 110px) 1fr',
-        gap: '1rem',
-        alignItems: 'center'
-      }}>
-        {/* Product Visual Icon & Badges */}
-        <div style={{
-          background: 'radial-gradient(circle, rgba(224,30,38,0.06) 0%, rgba(255,255,255,0.9) 100%)',
-          border: '1px solid var(--border-color, #dadce0)',
-          borderRadius: '12px',
-          height: '110px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.02)'
-        }}>
-          <span style={{ fontSize: '3rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}>
-            {product.icon || '🛍️'}
-          </span>
-          <span style={{
-            position: 'absolute',
-            bottom: '4px',
-            fontSize: '0.62rem',
-            fontWeight: 700,
-            background: 'rgba(0,0,0,0.75)',
-            color: '#ffffff',
-            padding: '0.08rem 0.4rem',
-            borderRadius: '4px'
-          }}>
-            {product.volume_weight}
-          </span>
-        </div>
-
-        {/* Product Details & Bold Scandinavian Price Splash */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-          {/* Brand line & Certification Badges */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+      {/* ── Main Offer Body ── */}
+      <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        
+        {/* Badge & Expiry Countdown */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <span style={{
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              color: '#008744',
-              background: 'rgba(0, 135, 68, 0.1)',
-              padding: '0.1rem 0.4rem',
-              borderRadius: '4px'
+              background: '#E01E26',
+              color: '#ffffff',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              padding: '0.2rem 0.6rem',
+              borderRadius: '6px',
+              letterSpacing: '0.02em',
+              textTransform: 'uppercase'
             }}>
-              {product.brand_line}
+              {badge_type}
             </span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted, #5f6368)' }}>
-              {product.origin_badge}
-            </span>
-            {product.eco_badge && (
+            {product?.eco_badge && (
               <span style={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                color: '#008744',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.15rem'
+                background: 'rgba(46, 125, 50, 0.12)',
+                color: '#2e7d32',
+                border: '1px solid rgba(46, 125, 50, 0.3)',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                padding: '0.18rem 0.5rem',
+                borderRadius: '6px'
               }}>
-                <Leaf size={10} /> {product.eco_badge}
+                {product.eco_badge}
+              </span>
+            )}
+            {product?.origin_badge && (
+              <span style={{
+                background: 'rgba(2, 132, 199, 0.1)',
+                color: '#0284c7',
+                border: '1px solid rgba(2, 132, 199, 0.25)',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                padding: '0.18rem 0.5rem',
+                borderRadius: '6px'
+              }}>
+                {product.origin_badge}
               </span>
             )}
           </div>
 
-          {/* Product Headline */}
-          <h3 style={{
-            fontSize: '1.05rem',
-            fontWeight: 800,
-            color: 'var(--text-main, #202124)',
-            lineHeight: 1.25,
-            margin: '0.1rem 0'
-          }}>
-            {product.name}
-          </h3>
-
-          {/* Bold Price Presentation Block */}
           <div style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: '0.5rem',
-            marginTop: '0.15rem',
-            flexWrap: 'wrap'
-          }}>
-            {/* Massive Deal Price */}
-            <div style={{ display: 'flex', alignItems: 'baseline', color: '#E01E26' }}>
-              <span style={{ fontSize: '2rem', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.03em' }}>
-                {pricing.deal_price_major}
-              </span>
-              <span style={{ fontSize: '1.1rem', fontWeight: 800, verticalAlign: 'super', marginLeft: '1px' }}>
-                :{pricing.deal_price_minor}
-              </span>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted, #5f6368)', marginLeft: '0.25rem' }}>
-                {pricing.unit}
-              </span>
-            </div>
-
-            {/* Regular Price & Strikethrough */}
-            <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.68rem' }}>
-              <span style={{ textDecoration: 'line-through', color: 'var(--text-muted, #80868b)' }}>
-                {pricing.regular_price}
-              </span>
-              <span style={{
-                fontWeight: 700,
-                color: '#008744',
-                background: 'rgba(0, 135, 68, 0.1)',
-                padding: '0.05rem 0.35rem',
-                borderRadius: '3px',
-                width: 'fit-content'
-              }}>
-                {pricing.savings_text}
-              </span>
-            </div>
-          </div>
-
-          {/* Comparison Price & Limitation Footnote */}
-          <div style={{
-            fontSize: '0.66rem',
-            color: 'var(--text-muted, #5f6368)',
+            fontSize: '0.7rem',
+            color: 'var(--text-muted)',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.6rem',
-            marginTop: '0.1rem'
+            gap: '0.25rem',
+            fontWeight: 600
           }}>
-            <span>{pricing.comparison_price}</span>
-            <span>•</span>
-            <span>{pricing.limit_text}</span>
+            <Clock size={12} color="#E01E26" />
+            <span>Gäller t.o.m. {valid_until} ({days_remaining} dgr kvar)</span>
           </div>
         </div>
-      </div>
 
-      {/* ─── Validity & Expiry Countdown Bar ──────────────────────────── */}
-      <div style={{
-        background: 'var(--bg-secondary, #f8f9fa)',
-        borderTop: '1px solid var(--border-color, #dadce0)',
-        borderBottom: '1px solid var(--border-color, #dadce0)',
-        padding: '0.4rem 1rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        fontSize: '0.7rem',
-        color: 'var(--text-muted, #5f6368)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-          <Clock size={12} color="#E01E26" />
-          <span>Gäller t.o.m. <strong>{valid_until}</strong></span>
-        </div>
-
-        <span style={{
-          fontSize: '0.65rem',
-          fontWeight: 700,
-          color: days_remaining <= 2 ? '#E01E26' : '#008744',
-          background: days_remaining <= 2 ? 'rgba(224,30,38,0.1)' : 'rgba(0,135,68,0.1)',
-          padding: '0.1rem 0.4rem',
-          borderRadius: '4px'
+        {/* Product Details & Price Display */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'auto 1fr auto',
+          alignItems: 'center',
+          gap: '1rem',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '12px',
+          padding: '1rem'
         }}>
-          ⏱️ {days_remaining} {days_remaining === 1 ? 'dag kvar' : 'dagar kvar'}
-        </span>
-      </div>
-
-      {/* ─── Interactive Action Buttons (A2UI Core Actions) ───────────── */}
-      <div style={{
-        padding: '0.8rem 1rem',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        gap: '0.5rem',
-        background: 'var(--bg-card, #ffffff)'
-      }}>
-        {/* Primary Action: Ladda till kortet */}
-        <button
-          type="button"
-          onClick={handleCardLoadToggle}
-          style={{
-            flex: '1 1 180px',
-            background: isLoadedToCard ? '#008744' : '#E01E26',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.55rem 0.9rem',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            cursor: 'pointer',
+          {/* Icon / Image Placeholder */}
+          <div style={{
+            fontSize: '2.5rem',
+            background: 'var(--bg-primary)',
+            borderRadius: '12px',
+            width: '64px',
+            height: '64px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.4rem',
-            boxShadow: isLoadedToCard 
-              ? '0 2px 8px rgba(0, 135, 68, 0.3)' 
-              : '0 2px 8px rgba(224, 30, 38, 0.3)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          {isLoadedToCard ? (
-            <>
-              <Check size={15} strokeWidth={3} />
-              <span>Laddat på ICA-kortet</span>
-            </>
-          ) : (
-            <>
-              <Plus size={15} strokeWidth={2.5} />
-              <span>Ladda till ICA-kortet</span>
-            </>
-          )}
-        </button>
+            border: '1px solid var(--border-color)'
+          }}>
+            {product?.icon || '🛒'}
+          </div>
 
-        {/* Secondary Action: Lägg i inköpslista with interactive quantity counter */}
-        {listQuantity === 0 ? (
+          {/* Name & Subtitle */}
+          <div>
+            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              {product?.brand_line} • {product?.volume_weight}
+            </div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.15rem 0' }}>
+              {product?.name}
+            </div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+              {pricing?.comparison_price} • Ord. pris {pricing?.regular_price}
+            </div>
+          </div>
+
+          {/* Large Swedish Deal Price */}
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', color: '#E01E26', lineHeight: 1 }}>
+              <span style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.03em' }}>
+                {pricing?.deal_price_major}
+              </span>
+              <span style={{ fontSize: '1rem', fontWeight: 800, marginTop: '0.2rem' }}>
+                :{pricing?.deal_price_minor}
+              </span>
+            </div>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#E01E26', marginTop: '0.2rem' }}>
+              {pricing?.unit}
+            </div>
+            <div style={{
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              color: '#ffffff',
+              background: '#E01E26',
+              padding: '0.1rem 0.35rem',
+              borderRadius: '4px',
+              marginTop: '0.25rem',
+              display: 'inline-block'
+            }}>
+              {pricing?.savings_text}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Controls: Stammis Card Activation & List Quantity */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          
+          {/* Main "Ladda till kortet" CTA Button */}
           <button
             type="button"
-            onClick={handleAddToList}
+            onClick={handleCardLoadToggle}
             style={{
-              background: 'var(--bg-secondary, #f1f3f4)',
-              color: 'var(--text-main, #202124)',
-              border: '1px solid var(--border-color, #dadce0)',
-              borderRadius: '8px',
-              padding: '0.55rem 0.85rem',
-              fontSize: '0.76rem',
-              fontWeight: 600,
+              flex: 2,
+              minWidth: '200px',
+              background: isLoadedToCard ? '#2e7d32' : '#E01E26',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.75rem 1.2rem',
+              fontSize: '0.84rem',
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem',
-              transition: 'all 0.15s'
+              justifyContent: 'center',
+              gap: '0.5rem',
+              boxShadow: isLoadedToCard ? '0 4px 12px rgba(46, 125, 50, 0.3)' : '0 4px 14px rgba(224, 30, 38, 0.35)',
+              transition: 'all 0.2s ease'
             }}
           >
-            <ShoppingBag size={13} color="#E01E26" />
-            <span>Lägg i inköpslista</span>
+            {isLoadedToCard ? <Check size={16} /> : <Sparkles size={16} />}
+            <span>{isLoadedToCard ? '✓ Laddat på ditt Stammiskort' : 'Ladda till kortet'}</span>
           </button>
-        ) : (
+
+          {/* In-Store Barcode Modal Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowBarcode(prev => !prev)}
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '10px',
+              padding: '0.75rem',
+              color: 'var(--text-main)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              title: "Visa Streckkod för Snabbkassa"
+            }}
+          >
+            <QrCode size={16} />
+          </button>
+        </div>
+
+        {/* ── Expandable In-Store Barcode / Self-Scanning Drawer ── */}
+        {showBarcode && (
           <div style={{
+            background: 'var(--bg-secondary)',
+            border: '1px dashed #E01E26',
+            borderRadius: '10px',
+            padding: '0.8rem 1rem',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, marginBottom: '0.3rem', color: '#E01E26' }}>
+              Blippa i självscanning / snabbkassan:
+            </div>
+            <div style={{
+              fontFamily: 'monospace',
+              letterSpacing: '4px',
+              fontSize: '1.2rem',
+              fontWeight: 800,
+              background: 'var(--bg-primary)',
+              padding: '0.4rem',
+              borderRadius: '4px',
+              border: '1px solid var(--border-color)',
+              display: 'inline-block'
+            }}>
+              ||| | |||| | || ||||| 73108650012
+            </div>
+            <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+              Kupongkod: ICA-STAMMIS-2026-X09 • Rabatten dras automatiskt i kassan
+            </div>
+          </div>
+        )}
+
+        {/* Personalization Rationale Footer */}
+        {personalization_reason && (
+          <div style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            padding: '0.55rem 0.8rem',
+            fontSize: '0.7rem',
+            color: 'var(--text-muted)',
             display: 'flex',
             alignItems: 'center',
-            background: 'var(--bg-secondary, #f1f3f4)',
-            border: '1px solid #E01E26',
-            borderRadius: '8px',
-            overflow: 'hidden'
+            gap: '0.45rem'
           }}>
-            <button
-              type="button"
-              onClick={handleDecrementList}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: '0.5rem 0.6rem',
-                cursor: 'pointer',
-                color: '#E01E26',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <Minus size={12} />
-            </button>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0 0.4rem', color: '#E01E26' }}>
-              {listQuantity} st i lista
-            </span>
-            <button
-              type="button"
-              onClick={handleAddToList}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: '0.5rem 0.6rem',
-                cursor: 'pointer',
-                color: '#E01E26',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <Plus size={12} />
-            </button>
+            <Sparkles size={13} color="#E01E26" style={{ flexShrink: 0 }} />
+            <span><strong>Personlig anpassning:</strong> {personalization_reason}</span>
           </div>
         )}
-
-        {/* Optional Secondary Action: Matchande recept toggle */}
-        {recipe_suggestion && (
-          <button
-            type="button"
-            onClick={() => setShowRecipe(!showRecipe)}
-            style={{
-              background: 'transparent',
-              color: 'var(--text-muted, #5f6368)',
-              border: '1px solid var(--border-color, #dadce0)',
-              borderRadius: '8px',
-              padding: '0.55rem 0.75rem',
-              fontSize: '0.74rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              transition: 'all 0.15s'
-            }}
-          >
-            <ChefHat size={13} color="#E01E26" />
-            <span>Recept</span>
-            {showRecipe ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </button>
-        )}
-
-        {/* Snabbkassa / Barcode modal toggle */}
-        <button
-          type="button"
-          onClick={() => setShowBarcode(!showBarcode)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            padding: '0.55rem 0.4rem',
-            color: 'var(--text-muted, #80868b)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-          title="Visa streckkod för självscanning"
-        >
-          <QrCode size={16} />
-        </button>
       </div>
-
-      {/* ─── Expandable Recipe Suggestion Accordion ───────────────────── */}
-      {showRecipe && recipe_suggestion && (
-        <div style={{
-          background: 'rgba(224, 30, 38, 0.03)',
-          borderTop: '1px dashed var(--border-color, #dadce0)',
-          padding: '0.75rem 1rem',
-          fontSize: '0.75rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-            <span style={{ fontWeight: 700, color: '#E01E26', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <ChefHat size={13} /> {recipe_suggestion.title}
-            </span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted, #5f6368)' }}>
-              ⏱️ {recipe_suggestion.prep_time} • 🍽️ {recipe_suggestion.servings}
-            </span>
-          </div>
-          <p style={{ margin: 0, color: 'var(--text-muted, #5f6368)', lineHeight: 1.4, fontSize: '0.72rem' }}>
-            Inspirerande vardagsrecept framtaget för att matcha din stammisrabatt. Ingredienserna finns samlade på din inköpslista i ICA-appen.
-          </p>
-        </div>
-      )}
-
-      {/* ─── Expandable In-Store Barcode / Self-Scanning Modal ─────────── */}
-      {showBarcode && (
-        <div style={{
-          background: '#ffffff',
-          borderTop: '1px solid var(--border-color, #dadce0)',
-          padding: '0.8rem 1rem',
-          textAlign: 'center',
-          color: '#1F2328'
-        }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, marginBottom: '0.3rem', color: '#E01E26' }}>
-            Blippa i självscanning / snabbkassan:
-          </div>
-          <div style={{
-            fontFamily: 'monospace',
-            letterSpacing: '4px',
-            fontSize: '1.2rem',
-            fontWeight: 800,
-            background: '#f8f9fa',
-            padding: '0.4rem',
-            borderRadius: '4px',
-            border: '1px solid #dadce0',
-            display: 'inline-block'
-          }}>
-            ||| | |||| | || ||||| 73108650012
-          </div>
-          <div style={{ fontSize: '0.62rem', color: '#5f6368', marginTop: '0.2rem' }}>
-            Kupongkod: ICA-STAMMIS-2026-X09 • Rabatten dras automatiskt i kassan
-          </div>
-        </div>
-      )}
     </div>
   );
 }

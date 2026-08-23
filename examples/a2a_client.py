@@ -19,7 +19,6 @@ import google.auth
 import google.auth.transport.requests
 import requests
 
-
 # Agent Runtime A2A endpoints
 RUNTIME_ID = "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936"
 BASE_URL = "https://us-central1-aiplatform.googleapis.com/reasoningEngines/v1"
@@ -77,7 +76,7 @@ def send_a2a_message(prompt: str, streaming: bool = False):
     print(f"💬 Sending A2A Message: \"{prompt[:60]}...\"")
     print("=" * 60)
 
-    task_id = str(uuid.uuid4())
+    _task_id = str(uuid.uuid4())
 
     # A2A v1.0 JSON-RPC request
     payload = {
@@ -182,7 +181,7 @@ def main():
     prompt = sys.argv[1] if len(sys.argv) > 1 else "What are the top 5 customer segments by total revenue?"
 
     # Step 1: Fetch the agent card
-    card = fetch_agent_card()
+    _card = fetch_agent_card()
 
     # Step 2: Send an A2A message
     send_a2a_message(prompt, streaming=False)

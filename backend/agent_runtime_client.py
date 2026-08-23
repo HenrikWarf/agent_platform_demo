@@ -447,7 +447,41 @@ class AgentRuntimeClient:
                     recorded_steps.append(step_rec_fmt)
                     yield {"type": "step", "step": step_rec_fmt}
 
-                # 8. Check for Content Pipeline routing
+                # 8. Check for A2UI Pipeline routing
+                if ("a2ui" in author or "a2ui" in transfer_to) and "a2ui_routing" not in seen_author_stages:
+                    seen_author_stages.add("a2ui_routing")
+                    step_a2ui = {
+                        "id": f"step_a2ui_{uuid.uuid4().hex[:6]}",
+                        "timestamp": now_str(),
+                        "stage": "reasoning",
+                        "agent": "a2ui_pipeline",
+                        "agent_name": "A2UI Component Designer",
+                        "title": "Designing Interactive Personalization UI",
+                        "detail": "Crafting tailored digital offer component with dynamic pricing and member perks",
+                        "status": "running",
+                        "icon": "sparkles",
+                    }
+                    recorded_steps.append(step_a2ui)
+                    yield {"type": "step", "step": step_a2ui}
+
+                # 9. Check for A2UI Formatting
+                if ("a2ui_formatter" in author or "a2ui_json" in author) and "a2ui_fmt" not in seen_author_stages:
+                    seen_author_stages.add("a2ui_fmt")
+                    step_a2ui_fmt = {
+                        "id": f"step_a2ui_fmt_{uuid.uuid4().hex[:6]}",
+                        "timestamp": now_str(),
+                        "stage": "formatting",
+                        "agent": "a2ui_pipeline",
+                        "agent_name": "A2UI Pipeline (Structured Output)",
+                        "title": "Validating A2UI Component Schema",
+                        "detail": "Formatting structured Pydantic A2UIComponentSchema for interactive client banner",
+                        "status": "completed",
+                        "icon": "file-text",
+                    }
+                    recorded_steps.append(step_a2ui_fmt)
+                    yield {"type": "step", "step": step_a2ui_fmt}
+
+                # 10. Check for Content Pipeline routing
                 if ("content" in author or "content" in transfer_to) and "content_routing" not in seen_author_stages:
                     seen_author_stages.add("content_routing")
                     step_content = {
@@ -592,6 +626,7 @@ class AgentRuntimeClient:
         strategy = {}
         content = {}
         recommendation = {}
+        a2ui = {}
         a2a_trace = []
         sql_executed = ""
         seen_agents = []
@@ -623,6 +658,11 @@ class AgentRuntimeClient:
                     if parsed and ("recommended_products" in parsed or "target_segment" in parsed):
                         recommendation = parsed
                         continue
+                elif author in ("a2ui_formatter", "a2ui_agent") and not a2ui:
+                    parsed = self._try_parse_json(text)
+                    if parsed and ("client_type" in parsed or "ica_offer_banner" in parsed or "fashion_drop_card" in parsed or "deal_price_major" in parsed or "collection_title" in parsed):
+                        a2ui = parsed
+                        continue
 
                 # Keep as summary text (orchestrator speaks last)
                 last_text = text
@@ -647,8 +687,8 @@ class AgentRuntimeClient:
             if transfer_to and (not seen_agents or seen_agents[-1] != transfer_to):
                 seen_agents.append(transfer_to)
 
-        # If strategy/content/recommendation weren't found from specific authors, try parsing from any text
-        if not strategy or not content or not recommendation:
+        # If structured outputs weren't found from specific authors, try parsing from any text
+        if not strategy or not content or not recommendation or not a2ui:
             for event in events:
                 text = self._extract_text(event.get("content", {}))
                 if text:
@@ -660,6 +700,8 @@ class AgentRuntimeClient:
                             content = {"generated_assets": parsed}
                         elif not recommendation and ("recommended_products" in parsed):
                             recommendation = parsed
+                        elif not a2ui and ("client_type" in parsed or "ica_offer_banner" in parsed or "fashion_drop_card" in parsed or "deal_price_major" in parsed or "collection_title" in parsed):
+                            a2ui = parsed
 
         # Build A2A trace as sender→receiver pairs
         # Filter out internal formatter agents from the trace display
@@ -668,13 +710,17 @@ class AgentRuntimeClient:
             "analytics_agent": "bigquery_customer_analytics",
             "recommendation_agent": "product_recommender",
             "recommendation_pipeline": "product_recommender",
+            "a2ui_agent": "a2ui_designer",
+            "a2ui_pipeline": "a2ui_designer",
             "strategy_agent": "omnichannel_strategy",
             "strategy_pipeline": "omnichannel_strategy",
             "content_agent": "brand_voice",
             "content_pipeline": "brand_voice",
         }
         intent = "ANALYTICS_ONLY"
-        if any("recommendation" in a for a in seen_agents):
+        if any("a2ui" in a for a in seen_agents):
+            intent = "A2UI_COMPONENT_ONLY"
+        elif any("recommendation" in a for a in seen_agents):
             intent = "RECOMMENDATIONS_ONLY"
         elif any("strategy" in a for a in seen_agents):
             intent = "STRATEGY_ONLY"
@@ -701,6 +747,7 @@ class AgentRuntimeClient:
             "user_id": user_id,
             "analytics": analytics,
             "recommendation": recommendation,
+            "a2ui": a2ui,
             "strategy": strategy,
             "content": content,
             "sql_executed": sql_executed,
@@ -797,7 +844,7 @@ class AgentRuntimeClient:
                 "type": "orchestrator",
                 "description": "Routes objectives to Analytics, Recommendations, Strategy, and Content agents.",
                 "skills": [],
-                "sub_agents": ["analytics_agent", "recommendation_pipeline", "strategy_pipeline", "content_pipeline"],
+                "sub_agents": ["analytics_agent", "recommendation_pipeline", "a2ui_pipeline", "strategy_pipeline", "content_pipeline"],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
             {
@@ -815,6 +862,15 @@ class AgentRuntimeClient:
                 "type": "specialist",
                 "description": "Curates tailored 5-product assortments and merchandising strategies for customer cohorts.",
                 "skills": ["product-recommender"],
+                "sub_agents": [],
+                "runtime": "agent_runtime" if self.is_configured else "not_deployed",
+            },
+            {
+                "agent_id": "a2ui_pipeline",
+                "name": "A2UI Component & Personalization Designer",
+                "type": "specialist",
+                "description": "Designs personalized interactive retail UI components, Stammis grocery deal cards, and H&M-style fashion drop cards.",
+                "skills": ["a2ui-personalization"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from google.cloud import bigquery
 
+
 def create_agent_events_view():
     client = bigquery.Client(project="agent-demo-09", location="US")
 
-    sql = """
+    sql = r"""
 CREATE OR REPLACE VIEW `agent-demo-09.agent_analytics.agent_events_v2` AS
 WITH trace_spans AS (
   SELECT

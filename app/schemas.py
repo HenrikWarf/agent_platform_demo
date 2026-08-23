@@ -121,3 +121,47 @@ class A2UIOfferBannerSchema(BaseModel):
     recipe_suggestion: A2UIRecipe | None = Field(default=None, description="Optional matching recipe pairing")
 
 
+# ─── Fashion A2UI Drop Card Schema (Crazy Fashion / H&M-Inspired Apparel) ────
+
+class FashionPricing(BaseModel):
+    regular_price: str = Field(description="Regular retail price, e.g. '€79.99'")
+    member_price: str = Field(description="Crazy Club member price, e.g. '€59.99'")
+    discount_pct: str = Field(description="Discount percentage badge, e.g. '-25% MEMBER OFFER'")
+    crazy_club_points: str = Field(default="+150 Club Points", description="Points earned on purchase")
+    garment_recycling_bonus: str | None = Field(
+        default="Extra -15% with garment recycling voucher",
+        description="Recycling perk description"
+    )
+
+
+class FashionDropCardSchema(BaseModel):
+    brand: str = Field(default="Crazy Fashion", description="Brand name")
+    collection_title: str = Field(default="AUTUMN DROP // SUSTAINABLE EDIT", description="Collection headline, e.g. 'AUTUMN DROP // SUSTAINABLE EDIT'")
+    drop_badge: str = Field(default="MEMBER EXCLUSIVE", description="Badge pill, e.g. 'MEMBER EXCLUSIVE', 'TRENDING NOW', 'LIMITED RUN'")
+    product_name: str = Field(description="Product title, e.g. 'NOVA Oversized Wool Blazer'")
+    category: str = Field(description="Category, e.g. 'Womenswear / Tailoring', 'Menswear / Knitwear'")
+    sustainability_tag: str = Field(default="100% Recycled Italian Wool 🌿", description="Conscious material tag")
+    fit_and_fabric: str = Field(description="Fit description, e.g. 'Relaxed boxy silhouette • Structured heavy twill'")
+    color_options: list[str] = Field(default=["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"], description="Color variants")
+    size_options: list[str] = Field(default=["XS", "S", "M", "L", "XL"], description="Available sizes")
+    pricing: FashionPricing = Field(description="Pricing breakdown")
+    personalization_reason: str = Field(description="Why this item was curated for the customer segment")
+    target_persona: str = Field(description="Customer persona name, e.g. 'VIP Fashionista', 'Eco Trendsetter'")
+    cta_text: str = Field(default="Claim Member Deal & Shop Now", description="Call-to-action button text")
+    valid_until: str = Field(default="Sunday Midnight", description="Offer validity")
+
+
+# ─── Unified A2UI Component Schema ──────────────────────────────────────────
+
+class A2UIComponentSchema(BaseModel):
+    client_type: str = Field(description="'ica_sweden' or 'crazy_fashion'")
+    ica_offer_banner: A2UIOfferBannerSchema | None = Field(
+        default=None,
+        description="Stammis grocery app deal card (populated when active client is ICA Sverige)"
+    )
+    fashion_drop_card: FashionDropCardSchema | None = Field(
+        default=None,
+        description="H&M-style editorial fashion drop card (populated when active client is Crazy Fashion)"
+    )
+
+

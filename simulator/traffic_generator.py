@@ -2,10 +2,11 @@
 Synthetic Traffic Generator & Load Simulator
 Simulates active user traffic by sending synthetic marketing prompts to the Agent Gateway / Agent Engine.
 """
-import time
-import requests
-import random
 import logging
+import random
+import time
+
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("traffic_simulator")
