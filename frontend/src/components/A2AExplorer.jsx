@@ -4,7 +4,7 @@ import { Globe, Send, RefreshCw, CheckCircle, AlertCircle, Copy, ChevronDown, Ch
 
 const API_BASE = '';
 
-export default function A2AExplorer() {
+export default function A2AExplorer({ activeClient }) {
   const [agentCard, setAgentCard] = useState(null);
   const [cardLoading, setCardLoading] = useState(false);
   const [cardError, setCardError] = useState(null);
@@ -154,9 +154,10 @@ export default function A2AExplorer() {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     background: variant === 'primary'
-      ? 'linear-gradient(135deg, var(--color-primary), var(--color-purple))'
+      ? (activeClient?.header_gradient || 'linear-gradient(135deg, var(--color-primary), var(--color-purple))')
       : 'var(--chip-bg)',
     color: variant === 'primary' ? '#ffffff' : 'var(--text-main)',
+    boxShadow: variant === 'primary' ? `0 2px 8px ${activeClient?.primary_color || 'rgba(37, 99, 235, 0.25)'}40` : undefined,
     opacity: 1,
   });
 

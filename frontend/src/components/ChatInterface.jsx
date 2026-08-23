@@ -420,7 +420,7 @@ export default function ChatInterface({
   sessionId,
   setSessionId,
   userId,
-  _activeClient,
+  activeClient,
   activeClientId = 'crazy_fashion'
 }) {
   const [prompt, setPrompt] = useState('');
@@ -755,7 +755,7 @@ export default function ChatInterface({
             onClick={() => setIsExpanded(prev => !prev)}
             title={isExpanded ? "Exit Fullscreen Focus View (Esc)" : "Expand chat to cover the entire view"}
             style={{
-              background: isExpanded ? 'linear-gradient(135deg, var(--color-primary), var(--color-purple))' : 'var(--bg-secondary)',
+              background: isExpanded ? (activeClient?.header_gradient || 'linear-gradient(135deg, var(--color-primary), var(--color-purple))') : 'var(--bg-secondary)',
               border: isExpanded ? 'none' : '1px solid var(--border-color)',
               color: isExpanded ? '#ffffff' : 'var(--text-main)',
               padding: '0.35rem 0.75rem',
@@ -766,13 +766,13 @@ export default function ChatInterface({
               display: 'flex',
               alignItems: 'center',
               gap: '0.35rem',
-              boxShadow: isExpanded ? '0 2px 8px rgba(37, 99, 235, 0.3)' : '0 1px 2px rgba(0,0,0,0.03)',
+              boxShadow: isExpanded ? `0 2px 8px ${activeClient?.primary_color || 'rgba(37, 99, 235, 0.3)'}50` : '0 1px 2px rgba(0,0,0,0.03)',
               transition: 'all 0.15s'
             }}
             onMouseEnter={e => {
               if (!isExpanded) {
-                e.currentTarget.style.borderColor = 'var(--color-primary)';
-                e.currentTarget.style.color = 'var(--color-primary)';
+                e.currentTarget.style.borderColor = activeClient?.primary_color || 'var(--color-primary)';
+                e.currentTarget.style.color = activeClient?.primary_color || 'var(--color-primary)';
               }
             }}
             onMouseLeave={e => {
@@ -1414,9 +1414,9 @@ export default function ChatInterface({
             <span style={{
               fontSize: '0.68rem',
               fontWeight: 700,
-              background: 'rgba(37, 99, 235, 0.08)',
-              color: 'var(--color-primary)',
-              border: '1px solid rgba(37, 99, 235, 0.2)',
+              background: `${activeClient?.primary_color || 'rgba(37, 99, 235, 0.08)'}18`,
+              color: activeClient?.primary_color || 'var(--color-primary)',
+              border: `1px solid ${activeClient?.primary_color || 'rgba(37, 99, 235, 0.2)'}35`,
               padding: '0.12rem 0.5rem',
               borderRadius: '12px'
             }}>
@@ -1434,7 +1434,7 @@ export default function ChatInterface({
               }}
               title="Call Gemini 3.6 Flash on Vertex AI to generate 6 live contextual follow-up questions"
               style={{
-                background: 'linear-gradient(135deg, var(--color-primary), var(--color-purple))',
+                background: activeClient?.header_gradient || 'linear-gradient(135deg, var(--color-primary), var(--color-purple))',
                 border: 'none',
                 borderRadius: '6px',
                 color: '#ffffff',
@@ -1445,7 +1445,7 @@ export default function ChatInterface({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                boxShadow: `0 2px 8px ${activeClient?.primary_color || 'rgba(37, 99, 235, 0.25)'}40`,
                 transition: 'all 0.15s'
               }}
               onMouseEnter={e => { if (!generatingAI) e.currentTarget.style.opacity = '0.9'; }}
@@ -1478,7 +1478,7 @@ export default function ChatInterface({
                 boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
                 transition: 'all 0.15s'
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
+              onMouseEnter={e => { e.currentTarget.style.color = activeClient?.primary_color || 'var(--color-primary)'; e.currentTarget.style.borderColor = activeClient?.primary_color || 'var(--color-primary)'; e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
               onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
             >
               <Shuffle size={12} />
@@ -1493,6 +1493,9 @@ export default function ChatInterface({
             {OBJECTIVE_CATEGORIES.map(cat => {
               const Icon = cat.icon;
               const isSelected = selectedCategory === cat.id;
+              const catHighlight = (cat.id === 'recommended' || cat.id === 'campaign' || cat.id === 'a2ui')
+                ? (activeClient?.primary_color || cat.color)
+                : cat.color;
               return (
                 <button
                   key={cat.id}
@@ -1501,20 +1504,22 @@ export default function ChatInterface({
                   style={{
                     fontSize: '0.72rem',
                     fontWeight: isSelected ? 700 : 600,
-                    background: isSelected ? 'var(--color-primary)' : 'var(--bg-secondary)',
+                    background: isSelected
+                      ? ((cat.id === 'recommended' || cat.id === 'campaign') ? (activeClient?.header_gradient || catHighlight) : catHighlight)
+                      : 'var(--bg-secondary)',
                     color: isSelected ? '#ffffff' : 'var(--text-main)',
-                    border: isSelected ? '1px solid var(--color-primary)' : '1px solid var(--border-color)',
+                    border: isSelected ? `1px solid ${catHighlight}` : '1px solid var(--border-color)',
                     padding: '0.35rem 0.75rem',
                     borderRadius: '20px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.35rem',
-                    boxShadow: isSelected ? '0 2px 8px rgba(37, 99, 235, 0.25)' : '0 1px 2px rgba(0,0,0,0.03)',
+                    boxShadow: isSelected ? `0 2px 8px ${catHighlight}40` : '0 1px 2px rgba(0,0,0,0.03)',
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <Icon size={12} color={isSelected ? '#ffffff' : cat.color} />
+                  <Icon size={12} color={isSelected ? '#ffffff' : catHighlight} />
                   {cat.label}
                 </button>
               );
@@ -1529,7 +1534,7 @@ export default function ChatInterface({
             padding: '0.5rem 0.8rem',
             borderRadius: '8px',
             border: '1px solid var(--border-color)',
-            borderLeft: `3px solid ${currentCategoryObj?.color || 'var(--color-primary)'}`,
+            borderLeft: `3px solid ${currentCategoryObj?.color || activeClient?.primary_color || 'var(--color-primary)'}`,
             lineHeight: '1.4',
             display: 'flex',
             alignItems: 'center',
@@ -1670,14 +1675,14 @@ export default function ChatInterface({
             outline: 'none',
             transition: 'border-color 0.2s ease'
           }}
-          onFocus={e => e.target.style.borderColor = 'var(--color-primary)'}
+          onFocus={e => e.target.style.borderColor = activeClient?.primary_color || 'var(--color-primary)'}
           onBlur={e => e.target.style.borderColor = 'var(--input-border)'}
         />
         <button
           type="submit"
           disabled={loading || !prompt.trim()}
           style={{
-            background: 'linear-gradient(135deg, var(--color-primary), var(--color-purple))',
+            background: activeClient?.header_gradient || 'linear-gradient(135deg, var(--color-primary), var(--color-purple))',
             border: 'none',
             borderRadius: '12px',
             padding: '0.8rem 1.4rem',
@@ -1687,7 +1692,7 @@ export default function ChatInterface({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 15px rgba(66, 133, 244, 0.4)',
+            boxShadow: `0 4px 15px ${activeClient?.primary_color || 'rgba(66, 133, 244, 0.4)'}50`,
             transition: 'all 0.2s ease'
           }}
         >

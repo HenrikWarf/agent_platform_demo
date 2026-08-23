@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Activity, Play, Square, BarChart2, CheckCircle2, XCircle, ShieldCheck, ShieldAlert, ChevronDown, ChevronRight, FileText, AlertCircle, RefreshCw, Zap, Clock, TrendingUp, Hash } from 'lucide-react';
 
-export default function SimulatorControls() {
+export default function SimulatorControls({ activeClient }) {
   const [active, setActive] = useState(false);
   const [simMetrics, setSimMetrics] = useState(null);
   const pollRef = useRef(null);
@@ -24,75 +24,50 @@ export default function SimulatorControls() {
   // Poll simulator status when active
   useEffect(() => {
     if (active) {
-      const poll = () => {
-        fetch('/api/simulator/status')
-          .then(r => r.json())
-          .then(data => {
+      pollRef.current = setInterval(async () => {
+        try {
+          const res = await fetch('/api/simulator/status');
+          if (res.ok) {
+            const data = await res.json();
             setSimMetrics(data);
-            // Log new requests
-            if (data.recent_requests && data.recent_requests.length > 0) {
-              const latest = data.recent_requests[0];
-              if (latest && latest.timestamp) {
-                addLog(
-                  `[Simulator] ${latest.status} | ${latest.latency_ms}ms | ${latest.prompt}`,
-                  latest.status === 'SUCCESS' ? 'success' : latest.status === 'ERROR' ? 'error' : 'info'
-                );
-              }
-            }
-          })
-          .catch(() => {});
-      };
-      poll();
-      pollRef.current = setInterval(poll, 6000);
-      return () => clearInterval(pollRef.current);
+          }
+        } catch {
+          // Ignore polling errors
+        }
+      }, 2000);
     } else {
-      if (pollRef.current) clearInterval(pollRef.current);
+      clearInterval(pollRef.current);
     }
-  }, [active, addLog]);
+    return () => clearInterval(pollRef.current);
+  }, [active]);
 
-  const toggleSimulator = () => {
-    const nextState = !active;
-    fetch('/api/simulator/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ active: nextState })
-    })
-      .then(r => r.json())
-      .then(data => {
-        setActive(data.simulator_active);
-        addLog(
-          `Synthetic traffic generator ${data.simulator_active ? 'STARTED (sending marketing prompts to Agent Runtime)' : 'STOPPED'}`,
-          data.simulator_active ? 'success' : 'warn'
-        );
-      })
-      .catch(err => {
-        console.error(err);
-        addLog('Failed to toggle simulator state.', 'error');
+  const toggleSimulator = async () => {
+    const newActive = !active;
+    setActive(newActive);
+    try {
+      await fetch('/api/simulator/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newActive }),
       });
+      addLog(`Traffic simulator ${newActive ? 'STARTED' : 'STOPPED'}. Target: live Agent Runtime`, newActive ? 'success' : 'warn');
+    } catch {
+      addLog('Failed to toggle simulator.', 'error');
+    }
   };
 
   const runEvaluation = async () => {
     setEvalLoading(true);
     setEvalError(null);
-    addLog('Starting Golden Marketing Benchmark Evaluation...', 'info');
+    setEvalResult(null);
+    addLog('Starting automated multi-agent evaluation suite against Agent Runtime...', 'info');
 
     try {
-      const res = await fetch('/api/eval/run', { method: 'POST' });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'Evaluation request failed');
-      }
+      const res = await fetch('/api/evaluation/run', { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       const data = await res.json();
       setEvalResult(data);
-
-      addLog(`Evaluation completed: ${data.benchmark_score_pct}% (${data.passed_cases}/${data.total_cases} passed)`, data.benchmark_score_pct >= 80 ? 'success' : 'warn');
-
-      if (data.details) {
-        data.details.forEach(d => {
-          const icon = d.status === 'PASS' ? '✅' : '❌';
-          addLog(`  ${icon} [${d.eval_id}] ${d.status} — Safety: ${d.safety_eval?.passed ? 'correct' : 'MISMATCH'}`, d.status === 'PASS' ? 'success' : 'error');
-        });
-      }
+      addLog(`Evaluation completed: ${data.passed}/${data.total} passed (${data.overall_score * 100}%). Overall status: ${data.passed === data.total ? 'PASS' : 'FAIL'}`, data.passed === data.total ? 'success' : 'error');
     } catch (err) {
       setEvalError(err.message);
       addLog(`Evaluation failed: ${err.message}`, 'error');
@@ -130,11 +105,30 @@ export default function SimulatorControls() {
   });
 
   return (
-    <div style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '1.4rem', height: '100%', overflowY: 'auto', width: '100%' }}>
+    <div style={{
+      padding: '1.5rem',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1.5rem',
+      height: '100%',
+      overflowY: 'auto',
+      maxWidth: '1200px',
+      margin: '0 auto',
+      width: '100%',
+    }}>
+      {/* Header */}
       <div>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>
+        <h2 style={{
+          fontSize: '1.25rem',
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginBottom: '0.3rem',
+          color: 'var(--text-main)',
+        }}>
           <Activity size={22} color="var(--color-purple)" />
-          Traffic Simulator & OpenTelemetry Observability
+          Live Traffic Simulator & Cloud Trace Telemetry
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
           Send real synthetic traffic to the Agent Runtime or run the evaluation suite against live infrastructure.
@@ -150,7 +144,7 @@ export default function SimulatorControls() {
             minWidth: '240px',
             padding: '0.85rem 1.4rem',
             borderRadius: '12px',
-            background: active ? 'rgba(234,67,53,0.15)' : 'linear-gradient(135deg, var(--color-primary), var(--color-purple))',
+            background: active ? 'rgba(234,67,53,0.15)' : (activeClient?.header_gradient || 'linear-gradient(135deg, var(--color-primary), var(--color-purple))'),
             color: active ? 'var(--color-danger)' : '#ffffff',
             border: active ? '1px solid var(--color-danger)' : 'none',
             fontSize: '0.88rem',
@@ -160,7 +154,7 @@ export default function SimulatorControls() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: '0.5rem',
-            boxShadow: active ? 'none' : '0 4px 15px rgba(66,133,244,0.4)',
+            boxShadow: active ? 'none' : `0 4px 15px ${activeClient?.primary_color || 'rgba(66,133,244,0.4)'}50`,
             transition: 'all 0.2s ease'
           }}
         >

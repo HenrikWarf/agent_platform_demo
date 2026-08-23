@@ -85,7 +85,9 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    document.documentElement.setAttribute('data-client', activeClientId);
+    document.body.setAttribute('data-client', activeClientId);
+  }, [theme, activeClientId]);
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
