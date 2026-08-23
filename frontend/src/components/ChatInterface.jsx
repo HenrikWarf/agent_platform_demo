@@ -3,11 +3,12 @@ import {
   Send, Sparkles, Cpu, FileText, CheckCircle2, Share2, Mail,
   TrendingUp, Trash2, Database, Layers, Shuffle, ArrowRight,
   Maximize2, Minimize2, Zap, ChevronDown, ChevronUp, Terminal, Shield, MessageSquare,
-  ShoppingBag, Tag
+  ShoppingBag, Tag, CreditCard
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AgentGraphVisualizer from './AgentGraphVisualizer';
+import A2UIOfferBanner from './A2UIOfferBanner';
 
 const AGENT_THEMES = {
   orchestrator: {
@@ -116,6 +117,7 @@ const getAgentTheme = (agent, agentName) => {
 
 const OBJECTIVE_CATEGORIES = [
   { id: 'recommended', label: 'Dynamic & Follow-ups', icon: Sparkles, color: '#4f46e5', desc: 'Context-aware suggestions dynamically generated from recent messages & target cohort.' },
+  { id: 'a2ui', label: 'A2UI Retail Deals (ICA)', icon: CreditCard, color: '#E01E26', desc: 'Agent-to-UI (A2UI) declarative widgets: personalized Swedish retail offers, Stammis loyalty pricing, and interactive app banners.' },
   { id: 'analytics', label: 'BigQuery Data', icon: Database, color: '#0284c7', desc: 'SQL customer queries: RFM segments, demographics, behavioral events, and transaction streams.' },
   { id: 'recommendations', label: 'Product Recommendations', icon: ShoppingBag, color: '#059669', desc: '5-product assortment curation tailored to customer segment attributes, spending capacity, and past purchases.' },
   { id: 'strategy', label: 'Campaign Strategy', icon: TrendingUp, color: '#7c3aed', desc: 'Omnichannel frameworks: 3-pillar architectures, channel mix weights, and A/B test hypotheses.' },
@@ -124,6 +126,36 @@ const OBJECTIVE_CATEGORIES = [
 ];
 
 const CATEGORY_QUESTIONS = {
+  a2ui: [
+    {
+      title: "ICA Stammis Eko-Deal Banner",
+      prompt: "Generate an A2UI personalized deal banner for ICA Sweden targeting the 'Ekologiskt Medveten' customer persona with KRAV-certified dairy products, Stammis loyalty pricing, and interactive app card actions.",
+      agent: "A2UI Creative Agent",
+      badge: "ICA Eko",
+      color: "#E01E26"
+    },
+    {
+      title: "ICA Maxi Barnfamilj Storpack",
+      prompt: "Create an A2UI personalized offer banner for ICA Maxi Stormarknad for a 'Barnfamilj' purchasing Swedish meat storpack with savings calculations, comparison price, and recipe suggestion.",
+      agent: "A2UI Creative Agent",
+      badge: "ICA Family",
+      color: "#E01E26"
+    },
+    {
+      title: "ICA Prisjägare & Student Deal",
+      prompt: "Generate an A2UI retail offer banner for ICA Supermarket targeting price-conscious students with staple pantry discounts and instant 'Ladda till kortet' activation.",
+      agent: "A2UI Creative Agent",
+      badge: "ICA Budget",
+      color: "#E01E26"
+    },
+    {
+      title: "ICA Helglyx Delikatess Klipp",
+      prompt: "Design an A2UI HelgKlipp offer banner for ICA Maxi fresh fish & seafood delicacies with Nordic recipe pairing and weekend countdown timer.",
+      agent: "A2UI Creative Agent",
+      badge: "ICA Helg",
+      color: "#E01E26"
+    }
+  ],
   analytics: [
     {
       title: "RFM Segment Comparison",
@@ -777,6 +809,20 @@ export default function ChatInterface({ messages, setMessages, clearMessages, se
               <div className="markdown-body" style={{ color: msg.role === 'user' ? '#ffffff' : 'var(--text-main)' }}>
                 <MarkdownRenderer content={msg.content} isUser={msg.role === 'user'} />
               </div>
+
+              {/* A2UI Dynamic Offer Banner (ICA Sweden Retail Personalization) */}
+              {msg.role === 'assistant' && (
+                msg.data?.a2ui ||
+                (msg.content && (
+                  msg.content.toLowerCase().includes('ica') ||
+                  msg.content.toLowerCase().includes('stammis') ||
+                  msg.content.toLowerCase().includes('a2ui') ||
+                  msg.content.toLowerCase().includes('ladda till kortet') ||
+                  msg.content.toLowerCase().includes('personligt erbjudande')
+                ))
+              ) && (
+                <A2UIOfferBanner data={msg.data?.a2ui || {}} />
+              )}
 
               {/* Product Recommendation Output Card */}
               {msg.data?.recommendation && Object.keys(msg.data.recommendation).length > 0 && (
