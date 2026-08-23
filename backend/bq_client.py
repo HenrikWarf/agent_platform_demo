@@ -97,32 +97,34 @@ class BigQueryClient:
             logger.error(f"Error executing BigQuery SQL for segment '{segment_filter}': {e}")
             raise RuntimeError(f"BigQuery query execution failed: {e}") from e
 
-    def get_table_total_rows(self, table_name: str = "customer_rfm_summary") -> int:
+    def get_table_total_rows(self, table_name: str = "customer_rfm_summary", dataset_id: str | None = None) -> int:
         """Fetches live row count from BigQuery table metadata."""
-        allowed_tables = ["customer_rfm_summary", "customer_demographics_360", "customer_transactions"]
+        allowed_tables = ["customer_rfm_summary", "customer_demographics_360", "customer_transactions", "product_catalog", "customer_events"]
         if table_name not in allowed_tables:
             table_name = "customer_rfm_summary"
 
         if not self.client:
             raise RuntimeError("BigQuery client is not active.")
 
+        target_dataset = dataset_id or self.dataset_id
         try:
-            table_ref = self.client.get_table(f"{self.project_id}.{self.dataset_id}.{table_name}")
+            table_ref = self.client.get_table(f"{self.project_id}.{target_dataset}.{table_name}")
             return table_ref.num_rows
         except Exception as e:
-            logger.error(f"Error fetching table metadata for {table_name}: {e}")
-            raise RuntimeError(f"Failed to fetch metadata for table '{table_name}': {e}") from e
+            logger.error(f"Error fetching table metadata for {target_dataset}.{table_name}: {e}")
+            raise RuntimeError(f"Failed to fetch metadata for table '{target_dataset}.{table_name}': {e}") from e
 
-    def get_sample_customers(self, table_name: str = "customer_rfm_summary", limit: int = 10) -> list[dict[str, Any]]:
+    def get_sample_customers(self, table_name: str = "customer_rfm_summary", limit: int = 10, dataset_id: str | None = None) -> list[dict[str, Any]]:
         """Returns sample rows of customer profiles from specified BigQuery table."""
-        allowed_tables = ["customer_rfm_summary", "customer_demographics_360", "customer_transactions"]
+        allowed_tables = ["customer_rfm_summary", "customer_demographics_360", "customer_transactions", "product_catalog", "customer_events"]
         if table_name not in allowed_tables:
             table_name = "customer_rfm_summary"
 
         if not self.client:
             raise RuntimeError("BigQuery client is not active.")
 
-        query = f"SELECT * FROM `{self.project_id}.{self.dataset_id}.{table_name}` LIMIT {limit}"
+        target_dataset = dataset_id or self.dataset_id
+        query = f"SELECT * FROM `{self.project_id}.{target_dataset}.{table_name}` LIMIT {limit}"
         try:
             import datetime
             import decimal
@@ -141,7 +143,7 @@ class BigQueryClient:
                 rows.append(row_dict)
             return rows
         except Exception as e:
-            logger.error(f"Error executing BigQuery sample query for table '{table_name}': {e}")
+            logger.error(f"Error executing BigQuery sample query for table '{target_dataset}.{table_name}': {e}")
             raise RuntimeError(f"BigQuery sample query failed: {e}") from e
 
     def execute_custom_sql(self, sql_query: str) -> list[dict[str, Any]]:

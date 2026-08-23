@@ -321,12 +321,19 @@ def list_bigquery_tables():
     }
 
 @app.get("/api/bigquery/sample")
-def get_bigquery_sample(table_name: str = "customer_rfm_summary"):
-    """Returns sample BigQuery customer rows and total live row count for specified table."""
-    sample_rows = bq_client.get_sample_customers(table_name=table_name)
-    total_rows = bq_client.get_table_total_rows(table_name=table_name)
+def get_bigquery_sample(table_name: str = "customer_rfm_summary", client_id: str | None = None):
+    """Returns sample BigQuery customer rows and total live row count for specified table and client context."""
+    target_client_id = client_id or _active_client_id
+    ctx = get_client_context(target_client_id)
+    target_dataset = ctx.bigquery_dataset
+
+    sample_rows = bq_client.get_sample_customers(table_name=table_name, dataset_id=target_dataset)
+    total_rows = bq_client.get_table_total_rows(table_name=table_name, dataset_id=target_dataset)
     return {
-        "dataset": Config.BIGQUERY_DATASET,
+        "dataset": target_dataset,
+        "client_id": target_client_id,
+        "client_name": ctx.client_name,
+        "currency_symbol": ctx.currency_symbol,
         "table": table_name,
         "total_rows": total_rows,
         "sample_data": sample_rows,
@@ -341,13 +348,15 @@ def process_chat(req: ChatRequest):
     Model Armor security screening is enforced at the Agent Gateway infrastructure level
     via the :streamQuery governed endpoint — no application-level pre-flight needed.
     """
-    logger.info(f"Received chat request: '{req.prompt}' (session_id={req.session_id})")
+    active_cid = req.client_id or _active_client_id
+    logger.info(f"Received chat request: '{req.prompt}' (client_id={active_cid}, session_id={req.session_id})")
 
     result = runtime_client.query(
         prompt=req.prompt,
         target_segment=req.target_segment or "All Cohorts (Full Dataset)",
         session_id=req.session_id,
         user_id=req.user_id,
+        client_id=active_cid,
     )
     result["agent_gateway"] = {
         "resource": Config.AGENT_GATEWAY_URL,
@@ -360,7 +369,8 @@ def process_chat(req: ChatRequest):
 @app.post("/api/chat/stream")
 def process_chat_stream(req: ChatRequest):
     """Streams real-time agent background execution steps, tool calls, and final response via SSE."""
-    logger.info(f"Received streaming chat request: '{req.prompt}' (session_id={req.session_id})")
+    active_cid = req.client_id or _active_client_id
+    logger.info(f"Received streaming chat request: '{req.prompt}' (client_id={active_cid}, session_id={req.session_id})")
 
     def event_generator():
         for chunk in runtime_client.query_stream(
@@ -368,6 +378,7 @@ def process_chat_stream(req: ChatRequest):
             target_segment=req.target_segment or "All Cohorts (Full Dataset)",
             session_id=req.session_id,
             user_id=req.user_id,
+            client_id=active_cid,
         ):
             yield f"data: {json.dumps(chunk)}\n\n"
 

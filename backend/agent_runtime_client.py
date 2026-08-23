@@ -167,6 +167,7 @@ class AgentRuntimeClient:
         target_segment: str = "All Cohorts (Full Dataset)",
         session_id: str | None = None,
         user_id: str | None = None,
+        client_id: str | None = None,
     ) -> collections.abc.Generator[dict[str, Any], None, None]:
         """Send a prompt to Agent Runtime via :streamQuery and yield real-time background execution steps.
 
@@ -179,6 +180,36 @@ class AgentRuntimeClient:
 
         recorded_steps: list[dict[str, Any]] = []
 
+        from app.contexts import get_client_context
+        client_ctx = get_client_context(client_id)
+
+        # Contextualize prompt dynamically for the active client
+        if client_ctx.client_id == "ica_sweden":
+            effective_prompt = (
+                f"[CLIENT IDENTITY & CONTEXT: {client_ctx.client_name.upper()} (SWEDISH GROCERY & HEALTH RETAILER)]\n"
+                f"You represent {client_ctx.client_name} exclusively ({client_ctx.tagline}).\n"
+                f"Industry: {client_ctx.industry} | HQ: {client_ctx.headquarters}\n"
+                f"Currency Standard: {client_ctx.currency_code} ({client_ctx.currency_symbol})\n"
+                f"Loyalty Program: {client_ctx.loyalty_program_name} (Stammispris, Personal coupons, monthly bonus vouchers)\n"
+                f"Target BigQuery Dataset: `agent-demo-09.{client_ctx.bigquery_dataset}` (Tables: customer_rfm_summary, customer_demographics_360, customer_transactions, product_catalog, customer_events)\n"
+                f"Customer Segments: {', '.join(client_ctx.customer_segments)}\n"
+                f"Product Categories: {', '.join(client_ctx.product_categories)}\n\n"
+                f"{client_ctx.company_prompt}\n\n"
+                f"MANDATORY CLIENT INSTRUCTIONS:\n"
+                f"1. You are the AI Marketing Orchestrator for {client_ctx.client_name}. If asked who you work for or what company this is, answer {client_ctx.client_name}.\n"
+                f"2. For any customer analysis or BigQuery SQL queries, query the `{client_ctx.bigquery_dataset}` dataset and Swedish segments (e.g. 'Ekologiskt Medvetna', 'Barnfamiljer Storhandlare', 'Prisjägare & Studenter').\n"
+                f"3. All monetary numbers and prices MUST be in Swedish Kronor ({client_ctx.currency_symbol}).\n\n"
+                f"USER QUESTION:\n{prompt}"
+            )
+        else:
+            effective_prompt = (
+                f"[CLIENT IDENTITY & CONTEXT: {client_ctx.client_name.upper()}]\n"
+                f"You represent {client_ctx.client_name} ({client_ctx.tagline}).\n"
+                f"Currency: {client_ctx.currency_code} ({client_ctx.currency_symbol}) | Loyalty: {client_ctx.loyalty_program_name}\n"
+                f"Target BigQuery Dataset: `agent-demo-09.{client_ctx.bigquery_dataset}`\n\n"
+                f"USER QUESTION:\n{prompt}"
+            )
+
         # Resolve persistent session
         user_id, session_id, is_new_session = self.get_or_create_session(
             user_id=user_id, session_id=session_id
@@ -186,18 +217,18 @@ class AgentRuntimeClient:
 
         # Step 1: Orchestrator A2A Supervisor Step
         if is_new_session:
-            step_title = "A2A Multi-Agent Supervisor Initialized"
-            step_detail = f"Session {session_id[:16]}... started. Analyzing user objective intent and evaluating optimal routing path..."
+            step_title = f"A2A Multi-Agent Supervisor Initialized ({client_ctx.client_name})"
+            step_detail = f"Session {session_id[:16]}... started for {client_ctx.client_name}. Evaluating user objective and routing path..."
         else:
-            step_title = "A2A Multi-Agent Supervisor (Active Session)"
-            step_detail = f"Continuing session {session_id[:16]}... Evaluating follow-up context and routing path..."
+            step_title = f"A2A Multi-Agent Supervisor ({client_ctx.client_name})"
+            step_detail = f"Continuing session {session_id[:16]}... for {client_ctx.client_name}. Evaluating follow-up context..."
 
         step_orch = {
             "id": f"step_orch_{uuid.uuid4().hex[:6]}",
             "timestamp": now_str(),
             "stage": "orchestrating",
             "agent": "marketing_orchestrator",
-            "agent_name": "Orchestrator Agent (A2A Supervisor)",
+            "agent_name": f"Orchestrator Agent ({client_ctx.client_name})",
             "title": step_title,
             "detail": step_detail,
             "status": "completed",
@@ -253,7 +284,7 @@ class AgentRuntimeClient:
                 json={
                     "class_method": "stream_query",
                     "input": {
-                        "message": prompt,
+                        "message": effective_prompt,
                         "user_id": user_id,
                         "session_id": session_id,
                     },
@@ -290,9 +321,9 @@ class AgentRuntimeClient:
                         "timestamp": now_str(),
                         "stage": "delegation",
                         "agent": "analytics_agent",
-                        "agent_name": "Customer Insights & Analytics Agent",
+                        "agent_name": f"Customer Insights & Analytics Agent ({client_ctx.client_name})",
                         "title": "Routing to Analytics Agent",
-                        "detail": "Activating skill 'bigquery-customer-analytics' against 5 BigQuery customer tables",
+                        "detail": f"Activating skill 'bigquery-customer-analytics' against 5 {client_ctx.client_name} BigQuery customer tables",
                         "skill": "bigquery-customer-analytics",
                         "status": "running",
                         "icon": "database",
@@ -313,9 +344,9 @@ class AgentRuntimeClient:
                         "timestamp": now_str(),
                         "stage": "tool_call",
                         "agent": "analytics_agent",
-                        "agent_name": "Customer Insights & Analytics Agent",
+                        "agent_name": f"Customer Insights & Analytics Agent ({client_ctx.client_name})",
                         "title": f"Invoking Tool: {tool_name}",
-                        "detail": f"Executing SQL in BigQuery: {sql_snippet[:90]}..." if sql_snippet else f"Executing query tool '{tool_name}' on BigQuery data warehouse",
+                        "detail": f"Executing SQL in BigQuery: {sql_snippet[:90]}..." if sql_snippet else f"Executing query tool '{tool_name}' on BigQuery dataset '{client_ctx.bigquery_dataset}'",
                         "tool": tool_name,
                         "skill": "bigquery-customer-analytics",
                         "status": "running",
@@ -336,9 +367,9 @@ class AgentRuntimeClient:
                         "timestamp": now_str(),
                         "stage": "tool_result",
                         "agent": "analytics_agent",
-                        "agent_name": "Customer Insights & Analytics Agent",
+                        "agent_name": f"Customer Insights & Analytics Agent ({client_ctx.client_name})",
                         "title": "BigQuery Data Query Completed",
-                        "detail": f"Retrieved {row_count} customer rows from dataset 'agent-demo-09.marketing_analytics'" if row_count else "BigQuery execution succeeded with zero errors",
+                        "detail": f"Retrieved {row_count} customer rows from dataset 'agent-demo-09.{client_ctx.bigquery_dataset}'" if row_count else f"BigQuery query completed on dataset '{client_ctx.bigquery_dataset}'",
                         "tool": tool_name or "query_customer_data",
                         "status": "completed",
                         "icon": "check",
@@ -518,6 +549,7 @@ class AgentRuntimeClient:
         target_segment: str = "All Cohorts (Full Dataset)",
         session_id: str | None = None,
         user_id: str | None = None,
+        client_id: str | None = None,
     ) -> dict[str, Any]:
         """Send a prompt to Agent Runtime via :streamQuery and return structured results."""
         final_res = None
@@ -526,6 +558,7 @@ class AgentRuntimeClient:
             target_segment=target_segment,
             session_id=session_id,
             user_id=user_id,
+            client_id=client_id,
         ):
             if event.get("type") == "final":
                 final_res = event.get("data")

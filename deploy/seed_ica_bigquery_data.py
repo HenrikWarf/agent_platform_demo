@@ -303,6 +303,17 @@ def seed_to_bigquery():
         return
 
     client = bigquery.Client(project=PROJECT_ID)
+
+    # Ensure dataset exists in us-central1
+    dataset_ref = bigquery.DatasetReference(PROJECT_ID, DATASET_ID)
+    try:
+        dataset = bigquery.Dataset(dataset_ref)
+        dataset.location = "us-central1"
+        client.create_dataset(dataset, exists_ok=True)
+        logger.info(f"Ensured BigQuery dataset '{PROJECT_ID}.{DATASET_ID}' exists in us-central1.")
+    except Exception as e:
+        logger.warning(f"Could not create dataset {DATASET_ID}: {e}")
+
     rfm_data, demo_data, tx_data, prod_data, ev_data = generate_ica_data()
 
     tables = [

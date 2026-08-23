@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Database, RefreshCw, Layers, Users, Table } from 'lucide-react';
 
-export default function BigQueryDataViewer() {
+export default function BigQueryDataViewer({ activeClient }) {
+  const activeClientId = activeClient?.client_id || 'crazy_fashion';
   const [tables, setTables] = useState([
     { id: 'customer_rfm_summary', name: 'Customer RFM Segmentation Summary' },
     { id: 'customer_demographics_360', name: 'Customer Demographics & 360 Profiles' },
-    { id: 'customer_transactions', name: 'Real-time Customer Transaction Stream' }
+    { id: 'customer_transactions', name: 'Real-time Customer Transaction Stream' },
+    { id: 'product_catalog', name: 'Retail Product & Merchandising Catalog' },
+    { id: 'customer_events', name: 'Customer Behavioral & Omni-channel Events' }
   ]);
   const [selectedTable, setSelectedTable] = useState('customer_rfm_summary');
   const [data, setData] = useState(null);
@@ -13,7 +16,7 @@ export default function BigQueryDataViewer() {
 
   const fetchSample = useCallback((tableName) => {
     setLoading(true);
-    fetch(`/api/bigquery/sample?table_name=${tableName}`)
+    fetch(`/api/bigquery/sample?table_name=${tableName}&client_id=${activeClientId}`)
       .then(res => res.json())
       .then(resData => {
         setData(resData);
@@ -23,7 +26,7 @@ export default function BigQueryDataViewer() {
         console.error(err);
         setLoading(false);
       });
-  }, []);
+  }, [activeClientId]);
 
   useEffect(() => {
     let ignore = false;
@@ -34,7 +37,7 @@ export default function BigQueryDataViewer() {
       })
       .catch(err => console.error(err));
 
-    fetch(`/api/bigquery/sample?table_name=${selectedTable}`)
+    fetch(`/api/bigquery/sample?table_name=${selectedTable}&client_id=${activeClientId}`)
       .then(res => res.json())
       .then(resData => {
         if (!ignore) {
@@ -50,7 +53,7 @@ export default function BigQueryDataViewer() {
     return () => {
       ignore = true;
     };
-  }, [selectedTable]);
+  }, [selectedTable, activeClientId]);
 
   const handleTableChange = (e) => {
     const newTable = e.target.value;
