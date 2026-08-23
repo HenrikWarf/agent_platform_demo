@@ -7,7 +7,13 @@ import {
   MapPin, 
   QrCode, 
   Heart,
-  RotateCcw
+  RotateCcw,
+  ChefHat,
+  ChevronDown,
+  ChevronUp,
+  Layers,
+  Utensils,
+  Plus
 } from 'lucide-react';
 
 /* ── Swedish Grocery Icon & Emoji Resolver ──────────────────────────────────── */
@@ -50,6 +56,7 @@ const GROCERY_ICON_MAP = {
   'ost': '🧀',
   'prästost': '🧀',
   'pasta': '🍝',
+  'spaghetti': '🍝',
   'shopping-bag': '🛍️',
   'shopping_bag': '🛍️',
   'bag': '🛍️',
@@ -58,7 +65,6 @@ const GROCERY_ICON_MAP = {
 };
 
 function resolveGroceryIcon(iconStr, productName = '', category = '') {
-  // If icon is already a multi-byte emoji character
   if (iconStr && /\p{Extended_Pictographic}/u.test(iconStr)) {
     return iconStr;
   }
@@ -75,30 +81,88 @@ function resolveGroceryIcon(iconStr, productName = '', category = '') {
 const ICA_PERSONA_PRESETS = {
   eco: {
     target_persona: "Ekologiskt Medveten",
-    personalization_reason: "Valt för dig baserat på dina tidigare köp av KRAV-märkta mejeriprodukter",
+    personalization_reason: "Valt för dig baserat på dina tidigare köp av KRAV-märkta skafferivaror & mejeriprodukter",
     store_format: "ICA Maxi Stormarknad",
     store_name: "ICA Maxi Lindhagen, Stockholm",
-    badge_type: "Stammispris",
+    badge_type: "Personligt Stammispris",
     product: {
-      name: "Ekologisk Svensk Mellanmjölk 1.5L",
+      name: "Ekologiska Krossade Tomater 400g",
       brand_line: "ICA I love eco",
-      volume_weight: "1.5 Liter",
-      origin_badge: "Från Sverige 🇸🇪",
-      eco_badge: "KRAV 🌿",
-      category: "Mejeri & Ägg",
-      icon: "🥛"
+      volume_weight: "400g",
+      origin_badge: "Italien 🇮🇹",
+      eco_badge: "EU Ekologiskt 🌿",
+      category: "Skafferi & Konserver",
+      icon: "🥫"
     },
     pricing: {
-      deal_price_major: "24",
-      deal_price_minor: "90",
+      deal_price_major: "10",
+      deal_price_minor: "00",
       unit: "kr/st",
-      regular_price: "34:90 kr/st",
-      savings_text: "Spara 10:00 (29% rabatt)",
-      comparison_price: "Jfr-pris 16:60/l",
-      limit_text: "Max 2 köp/stammis"
+      regular_price: "16:95 kr/st",
+      savings_text: "Spara 6:95 (41% rabatt)",
+      comparison_price: "Jfr-pris 25:00/kg",
+      limit_text: "Max 4 köp/stammis"
     },
-    valid_until: "Söndag 24 aug",
-    days_remaining: 3
+    additional_deals: [
+      {
+        product: {
+          name: "Svensk Nötfärs 12% Färsk",
+          brand_line: "ICA Svensk Råvara",
+          volume_weight: "500g",
+          origin_badge: "Från Sverige 🇸🇪",
+          eco_badge: "Klimatdeklarerad 🌱",
+          category: "Kött & Chark",
+          icon: "🥩"
+        },
+        pricing: {
+          deal_price_major: "49",
+          deal_price_minor: "90",
+          unit: "kr/st",
+          regular_price: "69:90 kr/st",
+          savings_text: "Spara 20:00 (29% rabatt)",
+          comparison_price: "Jfr-pris 99:80/kg"
+        },
+        badge_type: "Stammispris"
+      },
+      {
+        product: {
+          name: "Ekologisk Ekologisk Spaghetti 500g",
+          brand_line: "ICA I love eco",
+          volume_weight: "500g",
+          origin_badge: "Italien 🇮🇹",
+          eco_badge: "KRAV 🌿",
+          category: "Skafferi & Pasta",
+          icon: "🍝"
+        },
+        pricing: {
+          deal_price_major: "14",
+          deal_price_minor: "90",
+          unit: "kr/st",
+          regular_price: "21:90 kr/st",
+          savings_text: "Spara 7:00 (32% rabatt)",
+          comparison_price: "Jfr-pris 29:80/kg"
+        },
+        badge_type: "Stammispris"
+      }
+    ],
+    recipe_suggestion: {
+      title: "Klassisk Familjebolognese med Ekologiska Tomater & Basilika",
+      prep_time: "25 min",
+      servings: "4 port",
+      difficulty: "Enkel",
+      cost_per_serving: "ca 22 kr/port",
+      ingredients: [
+        "400g ICA I love eco Krossade Tomater (Erbjudande)",
+        "500g Svensk Nötfärs 12% (Erbjudande)",
+        "400g Spaghetti (Erbjudande)",
+        "1 gul lök & 2 klyftor vitlök",
+        "2 msk ICA Kallpressad Rapsolja",
+        "Färsk basilika & riven parmesan"
+      ],
+      instructions_summary: "Bryn färs och lök i olja. Rör ner tomater och oregano. Sjud på svag värme 15 min under tiden pastan kokar al dente."
+    },
+    valid_until: "Söndag 30 aug",
+    days_remaining: 7
   },
   family: {
     target_persona: "Barnfamilj / Storpack",
@@ -124,8 +188,23 @@ const ICA_PERSONA_PRESETS = {
       comparison_price: "Jfr-pris 89:90/kg",
       limit_text: "Max 2 köp/hushåll"
     },
-    valid_until: "Söndag 24 aug",
-    days_remaining: 2
+    recipe_suggestion: {
+      title: "Klassisk Familjelasagne med Riklig Köttfärssås & Mozzarella",
+      prep_time: "45 min",
+      servings: "6 port",
+      difficulty: "Medel",
+      cost_per_serving: "ca 26 kr/port",
+      ingredients: [
+        "1000g Färsk Svensk Nötfärs",
+        "2 frp Krossade Tomater",
+        "1 paket Lasagneplattor",
+        "5 dl Mjölk & Bechamelsås",
+        "150g Riven Gratängost"
+      ],
+      instructions_summary: "Varva köttfärssås, bechamel och lasagneplattor i ugnsform. Toppa med ost och grädda i 200°C i 30 minuter."
+    },
+    valid_until: "Söndag 30 aug",
+    days_remaining: 7
   },
   budget: {
     target_persona: "Prisjägare & Student",
@@ -151,8 +230,22 @@ const ICA_PERSONA_PRESETS = {
       comparison_price: "Jfr-pris 39:80/l",
       limit_text: "Max 3 köp/stammis"
     },
-    valid_until: "Söndag 24 aug",
-    days_remaining: 4
+    recipe_suggestion: {
+      title: "Ugnsrostade Svenska Rotfrukter med Örter & Rapsolja",
+      prep_time: "30 min",
+      servings: "4 port",
+      difficulty: "Enkel",
+      cost_per_serving: "ca 14 kr/port",
+      ingredients: [
+        "500g Morötter & Palsternackor",
+        "500g Fast Potatis",
+        "3 msk ICA Kallpressad Rapsolja",
+        "Flingsalt & Färsk Timjan"
+      ],
+      instructions_summary: "Klyfta rotfrukter, vänd i olja och kryddor. Rosta i ugn på 225°C i 25-30 minuter tills gyllene."
+    },
+    valid_until: "Söndag 30 aug",
+    days_remaining: 7
   }
 };
 
@@ -176,6 +269,24 @@ const FASHION_PERSONA_PRESETS = {
       crazy_club_points: "+180 Club Points",
       garment_recycling_bonus: "Extra -15% with in-store garment drop-off"
     },
+    additional_look_items: [
+      {
+        product_name: "LUNA Wide-Leg Recycled Wool Trousers",
+        category: "Bottoms",
+        sustainability_tag: "100% Recycled Wool 🌿",
+        regular_price: "€69.99",
+        member_price: "€49.99",
+        discount_pct: "-28%"
+      },
+      {
+        product_name: "Organic Silk Touch Neck Scarf",
+        category: "Accessories",
+        sustainability_tag: "Organic Silk 🌿",
+        regular_price: "€29.99",
+        member_price: "€19.99",
+        discount_pct: "-33%"
+      }
+    ],
     valid_until: "Sunday 24 Aug Midnight",
     cta_text: "Claim Member Deal & Shop Now"
   },
@@ -204,10 +315,9 @@ const FASHION_PERSONA_PRESETS = {
 
 /**
  * A2UIOfferBanner: Interactive Agent-to-User Interface (A2UI) component supporting
- * both ICA Sverige (Swedish Grocery Deal Banner) and Crazy Fashion (H&M-Style Editorial Drop Card).
+ * both ICA Sverige (Swedish Grocery Deal Banner + Recipe) and Crazy Fashion (H&M-Style Editorial Drop Card).
  */
 export default function A2UIOfferBanner({ data = {} }) {
-  // Determine if this is a Crazy Fashion drop card or ICA Stammis banner
   const isCrazyFashion = (
     data.client_type === 'crazy_fashion' ||
     Boolean(data.fashion_drop_card) ||
@@ -260,6 +370,7 @@ function FashionDropCardComponent({ initialData = {} }) {
     color_options = ["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"],
     size_options = ["XS", "S", "M", "L", "XL"],
     pricing,
+    additional_look_items,
     personalization_reason,
     target_persona,
     valid_until
@@ -316,7 +427,6 @@ function FashionDropCardComponent({ initialData = {} }) {
           </span>
         </div>
 
-        {/* Dynamic AI Persona Badge OR Standalone Preset Selector */}
         {hasRealData ? (
           <div style={{
             fontSize: '0.65rem',
@@ -446,7 +556,6 @@ function FashionDropCardComponent({ initialData = {} }) {
             </div>
           </div>
 
-          {/* Crazy Club Loyalty Perks */}
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4f46e5', display: 'flex', alignItems: 'center', gap: '0.3rem', justifyContent: 'flex-end' }}>
               <Sparkles size={13} />
@@ -463,8 +572,6 @@ function FashionDropCardComponent({ initialData = {} }) {
 
         {/* ── Interactive Color & Size Selector ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'var(--bg-primary)', padding: '0.8rem', borderRadius: '10px' }}>
-          
-          {/* Color Selector */}
           <div>
             <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
               Color: <strong style={{ color: 'var(--text-main)' }}>{colorSwatches[selectedColor]?.name}</strong>
@@ -491,7 +598,6 @@ function FashionDropCardComponent({ initialData = {} }) {
             </div>
           </div>
 
-          {/* Size Selector */}
           <div>
             <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
               Select Size:
@@ -520,6 +626,58 @@ function FashionDropCardComponent({ initialData = {} }) {
             </div>
           </div>
         </div>
+
+        {/* ── Optional "Complete the Look" Sub-Items ── */}
+        {additional_look_items && additional_look_items.length > 0 && (
+          <div style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '10px',
+            padding: '0.8rem'
+          }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Layers size={13} color="#4f46e5" />
+              <span>Complete the Look with Matching Pieces</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {additional_look_items.map((item, idx) => (
+                <div key={idx} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'var(--bg-primary)',
+                  padding: '0.5rem 0.7rem',
+                  borderRadius: '6px',
+                  fontSize: '0.74rem'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{item.product_name}</div>
+                    <div style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 600 }}>{item.sustainability_tag}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontWeight: 800, color: '#e11d48' }}>{item.member_price}</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{item.regular_price}</span>
+                    <button type="button" style={{
+                      background: 'rgba(79, 70, 229, 0.12)',
+                      border: '1px solid rgba(79, 70, 229, 0.3)',
+                      color: '#4f46e5',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}>
+                      <Plus size={11} /> Add
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Main Call To Action Button ── */}
         <button
@@ -570,45 +728,78 @@ function FashionDropCardComponent({ initialData = {} }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * 2. ICA SVERIGE // STAMMIS GROCERY DEAL BANNER COMPONENT
+ * 2. ICA SVERIGE // STAMMIS GROCERY DEAL BANNER & RECIPE COMPONENT
  * ───────────────────────────────────────────────────────────────────────────── */
 function IcaOfferBannerComponent({ initialData = {} }) {
   const [selectedPersona, setSelectedPersona] = useState('eco');
+  const [activeDealIndex, setActiveDealIndex] = useState(0);
   const [isLoadedToCard, setIsLoadedToCard] = useState(false);
   const [showBarcode, setShowBarcode] = useState(false);
+  const [showRecipe, setShowRecipe] = useState(true);
+  const [ingredientsChecked, setIngredientsChecked] = useState({});
+  const [isListSaved, setIsListSaved] = useState(false);
 
   const hasRealData = Boolean(
     initialData && (initialData.product || initialData.pricing || initialData.personalization_reason)
   );
 
-  const activeOffer = hasRealData ? {
+  const baseOffer = hasRealData ? {
     ...initialData,
     product: { ...(initialData.product || {}) },
     pricing: { ...(initialData.pricing || {}) },
+    additional_deals: initialData.additional_deals || [],
+    recipe_suggestion: initialData.recipe_suggestion || null
   } : {
     ...ICA_PERSONA_PRESETS[selectedPersona],
     ...initialData,
     product: { ...ICA_PERSONA_PRESETS[selectedPersona].product, ...(initialData.product || {}) },
     pricing: { ...ICA_PERSONA_PRESETS[selectedPersona].pricing, ...(initialData.pricing || {}) },
+    additional_deals: ICA_PERSONA_PRESETS[selectedPersona].additional_deals || [],
+    recipe_suggestion: ICA_PERSONA_PRESETS[selectedPersona].recipe_suggestion || null
   };
+
+  // Compile all deals into a unified array for tab navigation
+  const allDeals = [
+    {
+      product: baseOffer.product,
+      pricing: baseOffer.pricing,
+      badge_type: baseOffer.badge_type || "Stammispris",
+      recipe_suggestion: baseOffer.recipe_suggestion
+    },
+    ...(baseOffer.additional_deals || [])
+  ];
+
+  const currentDeal = allDeals[activeDealIndex] || allDeals[0];
+  const activeProduct = currentDeal.product || {};
+  const activePricing = currentDeal.pricing || {};
+  const activeRecipe = currentDeal.recipe_suggestion || baseOffer.recipe_suggestion;
 
   const {
     store_format = "ICA Maxi Stormarknad",
     store_name = "ICA Maxi Lindhagen, Stockholm",
-    badge_type = "Stammispris",
     personalization_reason = "Valt för dig baserat på dina tidigare köp av mejeriprodukter",
-    product = {},
-    pricing = {},
     target_persona,
     valid_until = "Söndag 24 aug",
     days_remaining = 3,
-  } = activeOffer;
+  } = baseOffer;
 
   const handleCardLoadToggle = () => {
     setIsLoadedToCard(prev => !prev);
   };
 
-  const resolvedIcon = resolveGroceryIcon(product.icon, product.name, product.category);
+  const handleToggleIngredient = (idx) => {
+    setIngredientsChecked(prev => ({
+      ...prev,
+      [idx]: !prev[idx]
+    }));
+  };
+
+  const handleSaveIngredientsToList = () => {
+    setIsListSaved(true);
+    setTimeout(() => setIsListSaved(false), 3000);
+  };
+
+  const resolvedIcon = resolveGroceryIcon(activeProduct.icon, activeProduct.name, activeProduct.category);
 
   return (
     <div style={{
@@ -655,7 +846,6 @@ function IcaOfferBannerComponent({ initialData = {} }) {
           </div>
         </div>
 
-        {/* Dynamic AI Persona Badge OR Standalone Preset Selector */}
         {hasRealData ? (
           <div style={{
             fontSize: '0.68rem',
@@ -681,7 +871,10 @@ function IcaOfferBannerComponent({ initialData = {} }) {
               <button
                 key={key}
                 type="button"
-                onClick={() => setSelectedPersona(key)}
+                onClick={() => {
+                  setSelectedPersona(key);
+                  setActiveDealIndex(0);
+                }}
                 style={{
                   fontSize: '0.62rem',
                   fontWeight: selectedPersona === key ? 800 : 600,
@@ -701,6 +894,51 @@ function IcaOfferBannerComponent({ initialData = {} }) {
         )}
       </div>
 
+      {/* ── Multi-Deal Bundle Tabs (If multiple offerings are present) ── */}
+      {allDeals.length > 1 && (
+        <div style={{
+          background: 'var(--bg-secondary)',
+          borderBottom: '1px solid var(--border-color)',
+          padding: '0.5rem 1.1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          overflowX: 'auto'
+        }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: '0.2rem', whiteSpace: 'nowrap' }}>
+            Dina {allDeals.length} Erbjudanden:
+          </span>
+          {allDeals.map((deal, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setActiveDealIndex(idx)}
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: activeDealIndex === idx ? 800 : 600,
+                background: activeDealIndex === idx ? '#E01E26' : 'var(--bg-primary)',
+                color: activeDealIndex === idx ? '#ffffff' : 'var(--text-main)',
+                border: activeDealIndex === idx ? '1px solid #E01E26' : '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '0.25rem 0.65rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem'
+              }}
+            >
+              <span>{resolveGroceryIcon(deal.product?.icon, deal.product?.name, deal.product?.category)}</span>
+              <span>{deal.product?.name || `Erbjudande ${idx + 1}`}</span>
+              <strong style={{ opacity: activeDealIndex === idx ? 1 : 0.8 }}>
+                {deal.pricing?.deal_price_major ? `${deal.pricing.deal_price_major}:-` : ''}
+              </strong>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* ── Main Offer Body ── */}
       <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         
@@ -717,9 +955,9 @@ function IcaOfferBannerComponent({ initialData = {} }) {
               letterSpacing: '0.02em',
               textTransform: 'uppercase'
             }}>
-              {badge_type}
+              {currentDeal.badge_type || "Stammispris"}
             </span>
-            {product.eco_badge && (
+            {activeProduct.eco_badge && (
               <span style={{
                 background: 'rgba(46, 125, 50, 0.12)',
                 color: '#2e7d32',
@@ -729,10 +967,10 @@ function IcaOfferBannerComponent({ initialData = {} }) {
                 padding: '0.18rem 0.5rem',
                 borderRadius: '6px'
               }}>
-                {product.eco_badge}
+                {activeProduct.eco_badge}
               </span>
             )}
-            {product.origin_badge && (
+            {activeProduct.origin_badge && (
               <span style={{
                 background: 'rgba(2, 132, 199, 0.1)',
                 color: '#0284c7',
@@ -742,7 +980,7 @@ function IcaOfferBannerComponent({ initialData = {} }) {
                 padding: '0.18rem 0.5rem',
                 borderRadius: '6px'
               }}>
-                {product.origin_badge}
+                {activeProduct.origin_badge}
               </span>
             )}
           </div>
@@ -790,13 +1028,13 @@ function IcaOfferBannerComponent({ initialData = {} }) {
           {/* Name & Subtitle */}
           <div>
             <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-              {product.brand_line || 'ICA'} • {product.volume_weight || ''}
+              {activeProduct.brand_line || 'ICA'} • {activeProduct.volume_weight || ''}
             </div>
             <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.15rem 0' }}>
-              {product.name || 'Produkt'}
+              {activeProduct.name || 'Produkt'}
             </div>
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-              {pricing.comparison_price} • Ord. pris {pricing.regular_price}
+              {activePricing.comparison_price} • Ord. pris {activePricing.regular_price}
             </div>
           </div>
 
@@ -804,14 +1042,14 @@ function IcaOfferBannerComponent({ initialData = {} }) {
           <div style={{ textAlign: 'right' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', color: '#E01E26', lineHeight: 1 }}>
               <span style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.03em' }}>
-                {pricing.deal_price_major || '0'}
+                {activePricing.deal_price_major || '0'}
               </span>
               <span style={{ fontSize: '1rem', fontWeight: 800, marginTop: '0.2rem' }}>
-                :{pricing.deal_price_minor || '00'}
+                :{activePricing.deal_price_minor || '00'}
               </span>
             </div>
             <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#E01E26', marginTop: '0.2rem' }}>
-              {pricing.unit || 'kr/st'}
+              {activePricing.unit || 'kr/st'}
             </div>
             <div style={{
               fontSize: '0.62rem',
@@ -823,10 +1061,148 @@ function IcaOfferBannerComponent({ initialData = {} }) {
               marginTop: '0.25rem',
               display: 'inline-block'
             }}>
-              {pricing.savings_text}
+              {activePricing.savings_text}
             </div>
           </div>
         </div>
+
+        {/* ── Interactive Swedish Recipe Pairing Drawer (ICA Specialty) ── */}
+        {activeRecipe && (
+          <div style={{
+            background: 'var(--bg-primary)',
+            border: '1px solid rgba(224, 30, 38, 0.25)',
+            borderRadius: '12px',
+            overflow: 'hidden'
+          }}>
+            {/* Recipe Header Toggle */}
+            <button
+              type="button"
+              onClick={() => setShowRecipe(prev => !prev)}
+              style={{
+                width: '100%',
+                background: 'rgba(224, 30, 38, 0.05)',
+                border: 'none',
+                borderBottom: showRecipe ? '1px solid rgba(224, 30, 38, 0.15)' : 'none',
+                padding: '0.7rem 0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ChefHat size={16} color="#E01E26" />
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#E01E26' }}>
+                  🍳 Veckans Stammis-Recept: {activeRecipe.title}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  {showRecipe ? 'Dölj recept' : 'Visa recept & ingredienser'}
+                </span>
+                {showRecipe ? <ChevronUp size={15} color="#E01E26" /> : <ChevronDown size={15} color="#E01E26" />}
+              </div>
+            </button>
+
+            {/* Expandable Recipe Body */}
+            {showRecipe && (
+              <div style={{ padding: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                
+                {/* Recipe Metrics Badges */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.68rem', background: 'var(--bg-secondary)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <Clock size={11} color="#E01E26" /> {activeRecipe.prep_time || '25 min'}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', background: 'var(--bg-secondary)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <Utensils size={11} color="#E01E26" /> {activeRecipe.servings || '4 port'}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', background: 'var(--bg-secondary)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 700, color: 'var(--text-main)' }}>
+                    Svårighet: {activeRecipe.difficulty || 'Enkel'}
+                  </span>
+                  {activeRecipe.cost_per_serving && (
+                    <span style={{ fontSize: '0.68rem', background: 'rgba(46, 125, 50, 0.12)', color: '#2e7d32', border: '1px solid rgba(46, 125, 50, 0.25)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 800 }}>
+                      💰 {activeRecipe.cost_per_serving}
+                    </span>
+                  )}
+                </div>
+
+                {/* Ingredients Checklist */}
+                {activeRecipe.ingredients && activeRecipe.ingredients.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                      Ingredienser:
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.35rem' }}>
+                      {activeRecipe.ingredients.map((ing, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => handleToggleIngredient(idx)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.45rem',
+                            fontSize: '0.72rem',
+                            color: ingredientsChecked[idx] ? 'var(--text-muted)' : 'var(--text-main)',
+                            textDecoration: ingredientsChecked[idx] ? 'line-through' : 'none',
+                            cursor: 'pointer',
+                            background: 'var(--bg-secondary)',
+                            padding: '0.3rem 0.5rem',
+                            borderRadius: '6px'
+                          }}
+                        >
+                          <div style={{
+                            width: '14px',
+                            height: '14px',
+                            borderRadius: '4px',
+                            border: ingredientsChecked[idx] ? '1px solid #E01E26' : '1px solid var(--border-color)',
+                            background: ingredientsChecked[idx] ? '#E01E26' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {ingredientsChecked[idx] && <Check size={10} color="#ffffff" />}
+                          </div>
+                          <span>{ing}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Instructions summary & Inköpslista CTA */}
+                {activeRecipe.instructions_summary && (
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0', fontStyle: 'italic', lineHeight: '1.4' }}>
+                    💡 <strong>Tillagningstips:</strong> {activeRecipe.instructions_summary}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleSaveIngredientsToList}
+                  style={{
+                    alignSelf: 'flex-start',
+                    background: isListSaved ? '#2e7d32' : 'var(--bg-secondary)',
+                    color: isListSaved ? '#ffffff' : '#E01E26',
+                    border: '1px solid rgba(224, 30, 38, 0.3)',
+                    borderRadius: '8px',
+                    padding: '0.35rem 0.8rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {isListSaved ? <Check size={13} /> : <Plus size={13} />}
+                  <span>{isListSaved ? '✓ Sparat i ICA Inköpslista!' : 'Lägg ingredienser i Inköpslistan'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Action Controls: Stammis Card Activation & Barcode Toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
@@ -855,7 +1231,11 @@ function IcaOfferBannerComponent({ initialData = {} }) {
             }}
           >
             {isLoadedToCard ? <Check size={16} /> : <Sparkles size={16} />}
-            <span>{isLoadedToCard ? '✓ Laddat på ditt Stammiskort' : 'Ladda till kortet'}</span>
+            <span>
+              {isLoadedToCard 
+                ? (allDeals.length > 1 ? `✓ Laddat alla ${allDeals.length} erbjudanden på ditt Stammiskort` : '✓ Laddat på ditt Stammiskort')
+                : (allDeals.length > 1 ? `Ladda alla ${allDeals.length} erbjudanden till kortet` : 'Ladda till kortet')}
+            </span>
           </button>
 
           {/* In-Store Barcode Modal Toggle */}

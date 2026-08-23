@@ -101,24 +101,44 @@ class A2UIPricing(BaseModel):
 
 
 class A2UIRecipe(BaseModel):
-    title: str = Field(description="Recipe title in Swedish matching the ingredient")
+    title: str = Field(description="Recipe title in Swedish matching the ingredient, e.g. 'Klassisk Bolognese med Ekologiska Tomater'")
     prep_time: str = Field(default="25 min", description="Cooking/prep time, e.g. '25 min'")
     servings: str = Field(default="4 port", description="Number of servings, e.g. '4 port'")
     difficulty: str = Field(default="Enkel", description="Difficulty level, e.g. 'Enkel', 'Medel'")
+    cost_per_serving: str | None = Field(default="ca 24 kr/port", description="Calculated budget cost per portion")
+    ingredients: list[str] = Field(
+        default=["400g Ekologiska Krossade Tomater", "500g Svensk Nötfärs 12%", "1 gul lök", "2 vitlöksklyftor", "Pasta"],
+        description="Key ingredients list for the dish"
+    )
+    instructions_summary: str | None = Field(
+        default="Fräs färs och hackad lök i rapsolja. Tillsätt tomater och kryddor. Låt småputtra 15 min och servera med nykokt pasta.",
+        description="Brief 1-2 sentence cooking guide"
+    )
+
+
+class A2UIDealItem(BaseModel):
+    product: A2UIProductInfo = Field(description="Product information")
+    pricing: A2UIPricing = Field(description="Deal pricing and savings calculations")
+    badge_type: str = Field(default="Stammispris", description="Badge type for this item, e.g. 'Stammispris', 'HelgKlipp!'")
+    recipe_suggestion: A2UIRecipe | None = Field(default=None, description="Optional recipe pairing for this deal item")
 
 
 class A2UIOfferBannerSchema(BaseModel):
     brand: str = Field(default="ICA", description="Retailer brand name, e.g. 'ICA'")
     store_format: str = Field(default="ICA Maxi Stormarknad", description="Store format, e.g. 'ICA Maxi', 'ICA Kvantum', 'ICA Supermarket', 'ICA Nära'")
     store_name: str = Field(default="ICA Maxi Lindhagen, Stockholm", description="Store location name")
-    badge_type: str = Field(default="Stammispris", description="Badge type, e.g. 'Stammispris', 'Personligt Erbjudande', 'HelgKlipp!'")
+    badge_type: str = Field(default="Stammispris", description="Primary badge type, e.g. 'Stammispris', 'Personligt Erbjudande', 'HelgKlipp!'")
     personalization_reason: str = Field(description="Personalization reason in Swedish explaining why this customer received the deal")
     target_persona: str = Field(default="Ekologiskt Medveten", description="Target customer persona, e.g. 'Barnfamilj', 'Ekologiskt Medveten', 'Prisjägare', 'Gourmet'")
-    product: A2UIProductInfo = Field(description="Product information")
-    pricing: A2UIPricing = Field(description="Deal pricing and savings calculations")
+    product: A2UIProductInfo = Field(description="Hero product information")
+    pricing: A2UIPricing = Field(description="Hero deal pricing and savings calculations")
+    additional_deals: list[A2UIDealItem] | None = Field(
+        default=None,
+        description="Optional additional personalized deal items in a multi-offer bundle (1-3 complementary deals)"
+    )
     valid_until: str = Field(default="Söndag 24 aug", description="Expiry date in Swedish, e.g. 'Söndag 24 aug'")
     days_remaining: int = Field(default=3, description="Days remaining on the offer")
-    recipe_suggestion: A2UIRecipe | None = Field(default=None, description="Optional matching recipe pairing")
+    recipe_suggestion: A2UIRecipe | None = Field(default=None, description="Optional matching Swedish recipe pairing with ingredients list")
 
 
 # ─── Fashion A2UI Drop Card Schema (Crazy Fashion / H&M-Inspired Apparel) ────
@@ -134,17 +154,30 @@ class FashionPricing(BaseModel):
     )
 
 
+class FashionDropItem(BaseModel):
+    product_name: str = Field(description="Product title, e.g. 'Tailored Wide Trousers'")
+    category: str = Field(description="Category, e.g. 'Bottoms'")
+    sustainability_tag: str = Field(default="100% Recycled Fibers 🌿", description="Material tag")
+    regular_price: str = Field(description="Regular price, e.g. '€59.99'")
+    member_price: str = Field(description="Member price, e.g. '€44.99'")
+    discount_pct: str = Field(description="Discount badge, e.g. '-25%'")
+
+
 class FashionDropCardSchema(BaseModel):
     brand: str = Field(default="Crazy Fashion", description="Brand name")
     collection_title: str = Field(default="AUTUMN DROP // SUSTAINABLE EDIT", description="Collection headline, e.g. 'AUTUMN DROP // SUSTAINABLE EDIT'")
     drop_badge: str = Field(default="MEMBER EXCLUSIVE", description="Badge pill, e.g. 'MEMBER EXCLUSIVE', 'TRENDING NOW', 'LIMITED RUN'")
-    product_name: str = Field(description="Product title, e.g. 'NOVA Oversized Wool Blazer'")
+    product_name: str = Field(description="Hero product title, e.g. 'NOVA Oversized Wool Blazer'")
     category: str = Field(description="Category, e.g. 'Womenswear / Tailoring', 'Menswear / Knitwear'")
     sustainability_tag: str = Field(default="100% Recycled Italian Wool 🌿", description="Conscious material tag")
     fit_and_fabric: str = Field(description="Fit description, e.g. 'Relaxed boxy silhouette • Structured heavy twill'")
     color_options: list[str] = Field(default=["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"], description="Color variants")
     size_options: list[str] = Field(default=["XS", "S", "M", "L", "XL"], description="Available sizes")
     pricing: FashionPricing = Field(description="Pricing breakdown")
+    additional_look_items: list[FashionDropItem] | None = Field(
+        default=None,
+        description="Optional 'Complete the Look' matching pieces (1-2 items)"
+    )
     personalization_reason: str = Field(description="Why this item was curated for the customer segment")
     target_persona: str = Field(description="Customer persona name, e.g. 'VIP Fashionista', 'Eco Trendsetter'")
     cta_text: str = Field(default="Claim Member Deal & Shop Now", description="Call-to-action button text")
@@ -157,11 +190,11 @@ class A2UIComponentSchema(BaseModel):
     client_type: str = Field(description="'ica_sweden' or 'crazy_fashion'")
     ica_offer_banner: A2UIOfferBannerSchema | None = Field(
         default=None,
-        description="Stammis grocery app deal card (populated when active client is ICA Sverige)"
+        description="Stammis grocery app deal card with recipe pairing and multi-deal support (populated when active client is ICA Sverige)"
     )
     fashion_drop_card: FashionDropCardSchema | None = Field(
         default=None,
-        description="H&M-style editorial fashion drop card (populated when active client is Crazy Fashion)"
+        description="H&M-style editorial fashion drop card with complete-the-look items (populated when active client is Crazy Fashion)"
     )
 
 
