@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Enterprise Multi-Agent Architecture & Agent Engine Ecosystem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font-display: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-body: 'Google Sans Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Google Cloud Theme Colors */
+      --gcp-blue: #1a73e8;
+      --gcp-blue-hover: #1557b0;
+      --gcp-blue-light: #e8f0fe;
+      --gcp-green: #1e8e3e;
+      --gcp-yellow: #f9ab00;
+      --gcp-red: #d93025;
+      --gcp-purple: #7c3aed;
+      --gcp-orange: #f97316;
+      
+      /* Light Mode Palette */
+      --bg-primary: #f8f9fa;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #ffffff;
+      --bg-surface-subtle: #f1f3f4;
+      --border-subtle: #dadce0;
+      --border-strong: #bdc1c6;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --text-tertiary: #80868b;
+      --card-highlight: #e8f0fe;
+      --card-highlight-border: #aecbfa;
+      --card-highlight-text: #174ea6;
+      --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      --shadow-md: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+      --shadow-lg: 0 2px 6px 2px rgba(60,64,67,0.15), 0 8px 24px 4px rgba(60,64,67,0.15);
+      --badge-bg: #e8f0fe;
+      --badge-text: #1a73e8;
+      --chip-bg: #f1f3f4;
+      --chip-text: #3c4043;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #121316;
+      --bg-surface: #1e1f23;
+      --bg-surface-elevated: #282a2f;
+      --bg-surface-subtle: #2d3135;
+      --border-subtle: #3c4043;
+      --border-strong: #5f6368;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --text-tertiary: #80868b;
+      --card-highlight: #172b4d;
+      --card-highlight-border: #1a73e8;
+      --card-highlight-text: #8ab4f8;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+      --badge-bg: #172b4d;
+      --badge-text: #8ab4f8;
+      --chip-bg: #2d3135;
+      --chip-text: #e8eaed;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* ─── Top Header Bar ────────────────────────────────────────── */
+    header {
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      height: 58px;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 20;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--gcp-blue), var(--gcp-purple));
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .brand-tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background-color: var(--badge-bg);
+      color: var(--badge-text);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slide-jump-select {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .slide-jump-select:hover {
+      border-color: var(--gcp-blue);
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--bg-surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background-color: var(--bg-surface-subtle);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      background: var(--chip-bg);
+      border-radius: 6px;
+    }
+
+    /* Progress Bar */
+    .progress-bar-container {
+      height: 3px;
+      width: 100%;
+      background-color: var(--border-subtle);
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gcp-blue), var(--gcp-purple));
+      width: 12.5%;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ─── Main Stage (Split View) ───────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 58px - 3px - 62px);
+      height: calc(100dvh - 58px - 3px - 62px);
+      overflow: hidden;
+    }
+
+    /* Left Column: Slide Image Panel */
+    .image-panel {
+      flex: 1.25;
+      background-color: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      border-right: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    .image-container-card {
+      width: 100%;
+      max-width: 1100px;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-in;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .image-container-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .slide-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background-color: #0b0f19;
+      display: block;
+      transition: opacity 0.25s ease;
+    }
+
+    .image-overlay-tools {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .image-container-card:hover .image-overlay-tools {
+      opacity: 1;
+    }
+
+    .tool-badge {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .img-nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 22px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.2s ease, background 0.2s ease;
+    }
+
+    .image-panel:hover .img-nav-arrow {
+      opacity: 0.9;
+    }
+
+    .img-nav-arrow:hover {
+      opacity: 1 !important;
+      background: var(--bg-surface-subtle);
+    }
+
+    .img-nav-prev { left: 12px; }
+    .img-nav-next { right: 12px; }
+
+    /* Right Column: Technical Details & Speaker Notes */
+    .content-panel {
+      flex: 1;
+      background-color: var(--bg-surface);
+      overflow-y: auto;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .slide-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+    }
+
+    .slide-number-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+    }
+
+    .slide-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .slide-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      font-weight: 500;
+    }
+
+    /* Executive Takeaway Banner */
+    .takeaway-card {
+      background: var(--card-highlight);
+      border: 1px solid var(--card-highlight-border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-top: 4px;
+    }
+
+    .takeaway-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--card-highlight-text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .takeaway-text {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.45;
+    }
+
+    /* Technical Pillars Section */
+    .section-header {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: -6px;
+    }
+
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .pillar-card {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px 16px;
+      transition: all 0.2s ease;
+    }
+
+    .pillar-card:hover {
+      border-color: var(--border-strong);
+      transform: translateX(3px);
+    }
+
+    .pillar-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .pillar-bullet {
+      width: 6px;
+      height: 6px;
+      border-radius: 3px;
+      background-color: var(--gcp-blue);
+      display: inline-block;
+    }
+
+    .pillar-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      padding-left: 14px;
+    }
+
+    /* Speaker Notes Section */
+    .notes-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-left: 4px solid var(--gcp-purple);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: auto;
+    }
+
+    .notes-header {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gcp-purple);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .notes-content {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ─── Bottom Navigation Bar ─────────────────────────────────── */
+    footer {
+      height: 62px;
+      min-height: 62px;
+      background-color: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 20;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-nav {
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+      background-color: var(--bg-surface-subtle);
+      border-color: var(--border-strong);
+    }
+
+    .btn-nav.primary {
+      background-color: var(--gcp-blue);
+      color: white;
+      border-color: var(--gcp-blue);
+    }
+
+    .btn-nav.primary:hover:not(:disabled) {
+      background-color: var(--gcp-blue-hover);
+      box-shadow: 0 2px 6px rgba(26, 115, 232, 0.4);
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Slide Thumbnails Dots */
+    .slide-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot-btn {
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      background-color: var(--border-strong);
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dot-btn:hover {
+      background-color: var(--gcp-blue);
+      transform: scale(1.2);
+    }
+
+    .dot-btn.active {
+      width: 22px;
+      background-color: var(--gcp-blue);
+      border-radius: 6px;
+    }
+
+    .keyboard-guide {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+
+    .key-cap {
+      font-family: var(--font-mono);
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--chip-bg);
+      border: 1px solid var(--border-subtle);
+      color: var(--chip-text);
+      font-size: 0.7rem;
+    }
+
+    /* Fullscreen Lightbox Modal */
+    .lightbox-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.94);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+      backdrop-filter: blur(8px);
+    }
+
+    .lightbox-modal.active {
+      display: flex;
+    }
+
+    .lightbox-img {
+      max-width: 95vw;
+      max-height: 95vh;
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.8);
+      object-fit: contain;
+    }
+
+    @media (max-width: 960px) {
+      main {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+      }
+      .image-panel {
+        min-height: 380px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .content-panel {
+        overflow-y: visible;
+        padding: 24px 20px;
+      }
+      .keyboard-guide {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <header>
+    <div class="brand-section">
+      <a href="#" class="brand-logo">
+        <span class="logo-badge">✦</span>
+        <span class="brand-title-text">GCP Multi-Agent Platform</span>
+      </a>
+      <span class="brand-tag">Agent Architecture Deck</span>
+    </div>
+
+    <div class="header-controls">
+      <select id="slideJumpSelect" class="slide-jump-select" aria-label="Jump to Slide">
+        <!-- Injected via JavaScript -->
+      </select>
+      <span class="slide-counter" id="slideCounterDisplay">1 / 8</span>
+      <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme (T)">☀️</button>
+      <button class="icon-btn" id="fullscreenToggleBtn" title="Toggle Fullscreen (F)">⛶</button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBarFill"></div>
+  </div>
+
+  <!-- Main Stage Split View (Left: Slide Image, Right: Synchronized Technical Details) -->
+  <main id="mainStage">
+    <!-- Left Column: High-Resolution Slide Image Panel -->
+    <section class="image-panel">
+      <button class="img-nav-arrow img-nav-prev" id="imgPrevBtn" title="Previous Slide (←)">‹</button>
+      <button class="img-nav-arrow img-nav-next" id="imgNextBtn" title="Next Slide (→)">›</button>
+
+      <div class="image-container-card" id="imageContainerCard" title="Click to view full-resolution lightbox zoom">
+        <div class="image-overlay-tools">
+          <span class="tool-badge">🔍 Click to Zoom (Z)</span>
+        </div>
+        <img src="01_agent_architecture_title.jpg" alt="Agent Architecture Slide" class="slide-img" id="slideImage" />
+      </div>
+    </section>
+
+    <!-- Right Column: Rich Synchronized Technical Content & Speaker Talking Points -->
+    <section class="content-panel" id="contentPanel">
+      <div class="slide-badge-row">
+        <span class="section-pill" id="sectionPill">Overview</span>
+        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 8</span>
+      </div>
+
+      <h1 class="slide-title" id="slideTitle">Loading Slide...</h1>
+      <p class="slide-subtitle" id="slideSubtitle">Loading subtitle...</p>
+
+      <!-- Key Takeaway Banner -->
+      <div class="takeaway-card">
+        <div class="takeaway-label">
+          <span>💡</span> Executive Takeaway
+        </div>
+        <p class="takeaway-text" id="takeawayText">Loading executive summary...</p>
+      </div>
+
+      <!-- Technical Architecture Breakdown -->
+      <div class="section-header">
+        <span>⚙️</span> Architectural Pillars & Core Execution
+      </div>
+      <div class="pillars-grid" id="pillarsGrid">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <!-- Speaker Notes & Talking Points -->
+      <div class="notes-card">
+        <div class="notes-header">
+          <span>🎙️</span> Presenter Notes & Speaking Guidance
+        </div>
+        <p class="notes-content" id="speakerNotesText">Loading presenter notes...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <footer>
+    <div class="keyboard-guide">
+      <span>Keys:</span>
+      <span class="key-cap">←</span>
+      <span class="key-cap">→</span>
+      <span>to navigate</span>
+      <span class="key-cap" style="margin-left: 8px;">T</span>
+      <span>theme</span>
+      <span class="key-cap" style="margin-left: 8px;">F</span>
+      <span>fullscreen</span>
+    </div>
+
+    <!-- Interactive Dot Indicators -->
+    <div class="slide-dots" id="slideDotsContainer">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-controls">
+      <button class="btn-nav" id="prevSlideBtn">
+        <span>←</span> Previous
+      </button>
+      <button class="btn-nav primary" id="nextSlideBtn">
+        Next <span>→</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Lightbox Modal for High-Resolution Zoom -->
+  <div class="lightbox-modal" id="lightboxModal" title="Click anywhere to close">
+    <img src="" alt="Enlarged Slide View" class="lightbox-img" id="lightboxImg" />
+  </div>
+
+  <!-- JavaScript Application Controller -->
+  <script>
+    const SLIDES = [
+      {
+        id: 1,
+        section: "System Overview",
+        title: "Enterprise Multi-Agent Architecture & Agent Engine Ecosystem",
+        subtitle: "Scalable, Intent-Driven Multi-Agent Framework on Vertex AI & Google Cloud Platform",
+        image: "01_agent_architecture_title.jpg",
+        takeaway: "The platform moves beyond single monolithic prompts by decomposing complex retail workflows into 6 specialized, governed agent pipelines running natively on Vertex AI Agent Runtime.",
+        pillars: [
+          {
+            title: "Decoupled Micro-Agent Pipelines",
+            desc: "Independent specialized agents for Data Analytics, Assortment Recommendations, A2UI Personalization, Strategy, and Copywriting."
+          },
+          {
+            title: "Native Vertex AI Agent Runtime Hosting",
+            desc: "ADK agents deployed as containerized Reasoning Engines with seamless mTLS security and Gemini 3.6 Flash inference."
+          },
+          {
+            title: "Grounded Enterprise Data Ground Truth",
+            desc: "Zero mock data; all customer analytics query 5 live Google BigQuery retail tables with schema-aware SQL generation."
+          },
+          {
+            title: "Enterprise Guardrails & Model Armor Ingress",
+            desc: "GCP Agent Gateway provides governed CLIENT_TO_AGENT routing with real-time prompt shielding and jailbreak defense."
+          }
+        ],
+        notes: "Welcome the audience and introduce the core challenge: enterprise marketing requires complex data queries, assortment curation, UI banners, and multi-channel copywriting. Rather than relying on fragile single prompts, our architecture organizes 6 distinct agent pipelines under a supervisor orchestrator on Vertex AI."
+      },
+      {
+        id: 2,
+        section: "Orchestration",
+        title: "Intelligent Orchestration & A2A Routing Supervisor",
+        subtitle: "Dynamic Intent Classification & Agent-to-Agent (A2A) Protocol Delegation",
+        image: "02_orchestration_a2a_routing.jpg",
+        takeaway: "The marketing_orchestrator acts as the master A2A supervisor, classifying prompts into 5 targeted execution paths and delegating tasks via standardized JSON-RPC protocols.",
+        pillars: [
+          {
+            title: "Selective Intent Routing Paths",
+            desc: "Classifies user intent into ANALYTICS_ONLY, RECOMMENDATIONS_ONLY, A2UI_COMPONENT_ONLY, STRATEGY_ONLY, or FULL_CAMPAIGN."
+          },
+          {
+            title: "Cost & Latency Optimization",
+            desc: "Suppresses downstream agents when unnecessary (e.g. data queries execute Analytics only, skipping Strategy and Copywriting)."
+          },
+          {
+            title: "Standardized Agent-to-Agent (A2A) Protocol",
+            desc: "Emits structured JSON-RPC messages and publishes agent capabilities at /.well-known/agent-card.json."
+          },
+          {
+            title: "Live A2A Message Tracing",
+            desc: "Frontend protocol explorer visualizes inter-agent message handoffs, skill invocations, and supervisor routing in real time."
+          }
+        ],
+        notes: "Explain the supervisor pattern. Show how intent classification eliminates LLM hallucinations and excessive compute by routing user prompts directly to the minimal necessary sub-agent pipelines."
+      },
+      {
+        id: 3,
+        section: "Data Analytics",
+        title: "Customer Analytics Agent & BigQuery NL2SQL Tool",
+        subtitle: "Zero-Mock Data Analysis across 5 Core Retail Tables in Google BigQuery",
+        image: "03_analytics_bigquery_nl2sql.jpg",
+        takeaway: "The Analytics Agent dynamically binds the query_customer_data tool to translate natural language into BigQuery Standard SQL with multi-table joins and schema awareness.",
+        pillars: [
+          {
+            title: "5 Production BigQuery Tables",
+            desc: "Queries customer_rfm_summary, customer_demographics_360, customer_transactions, product_catalog, and customer_events."
+          },
+          {
+            title: "Schema-Aware NL2SQL Reasoning",
+            desc: "Joins lifetime customer spend with churn risk scores, loyalty points, purchase channels, and behavioral telemetry."
+          },
+          {
+            title: "Multi-Tenant Currency & Metrics",
+            desc: "Seamlessly switches between Crazy Fashion (EUR) and ICA Sverige (SEK / Stammis loyalty points)."
+          },
+          {
+            title: "Transparent SQL Accordion",
+            desc: "Executed SQL queries and query execution metrics render cleanly in collapsible UI containers for complete auditability."
+          }
+        ],
+        notes: "Highlight our zero-mock architecture. Emphasize that all numbers shown in the platform come directly from executed BigQuery queries, ensuring high confidence for marketing executives."
+      },
+      {
+        id: 4,
+        section: "Assortment Engine",
+        title: "Product Recommendation Pipeline & Merchandising Skill",
+        subtitle: "SequentialAgent Pipeline Curating Data-Driven 5-Item Assortments",
+        image: "04_recommendation_pipeline.jpg",
+        takeaway: "The Recommendation Pipeline combines customer cohort affinity with catalog metadata to curate exactly 5 products validated against ProductRecommendationSchema.",
+        pillars: [
+          {
+            title: "SequentialAgent Two-Stage Pipeline",
+            desc: "Stage 1 (recommendation_reasoner) evaluates cohort traits; Stage 2 (recommendation_formatter) guarantees structured JSON."
+          },
+          {
+            title: "Cohort Attribute Alignment",
+            desc: "Matches customer churn risk, price sensitivity, and eco-preferences with catalog sustainability certifications."
+          },
+          {
+            title: "Strategic Merchandising Heuristics",
+            desc: "Generates overarching merchandising strategies, cross-sell bundles, and projected basket size uplifts."
+          },
+          {
+            title: "Deterministic Pydantic Schema",
+            desc: "Guarantees 100% reliable schema adherence for instant frontend product card rendering with badges and pricing."
+          }
+        ],
+        notes: "Explain the two-stage SequentialAgent design. Stage 1 focuses purely on domain reasoning and customer cohort matching, while Stage 2 formats and validates the output against a Pydantic schema."
+      },
+      {
+        id: 5,
+        section: "Retail A2UI",
+        title: "A2UI Personalization & Interactive Deal Engine",
+        subtitle: "Agent-to-User Interface (A2UI) Dynamic UI Component Generation",
+        image: "05_a2ui_personalization_engine.jpg",
+        takeaway: "The dedicated A2UI Pipeline generates rich, client-tailored UI components (ICA Swedish Stammis grocery banners with recipes & Crazy Fashion luxury drop cards).",
+        pillars: [
+          {
+            title: "Dual-Client Component Styling",
+            desc: "Swedish grocery Stammis deal banner (ICA) vs H&M-inspired luxury high-contrast editorial drop card (Crazy Fashion)."
+          },
+          {
+            title: "Interactive Swedish Recipe Integration (ICA Recept)",
+            desc: "Expandable meal pairing drawer with cooking time, portions, budget price per portion, and interactive ingredient checklist."
+          },
+          {
+            title: "Multi-Deal Bundle Tabs & Batch Actions",
+            desc: "Tabbed bundle navigation with single-click master 'Ladda alla 3 erbjudanden till kortet' loyalty card activation."
+          },
+          {
+            title: "Automated Grocery Emoji Resolution",
+            desc: "Smart keyword mapper resolves product types into Swedish food emojis (tomatoes, milk, meat, fish, oils, bakery)."
+          }
+        ],
+        notes: "Demonstrate A2UI. Instead of returning plain text paragraphs, the agent outputs rich, interactive UI components that customers can interact with directly—checking off ingredients, switching sizes, and activating loyalty deals."
+      },
+      {
+        id: 6,
+        section: "Campaign & Content",
+        title: "Omnichannel Strategy & Brand Voice Content Pipelines",
+        subtitle: "Strategic Frameworks & Channel-Selective Creative Copywriting",
+        image: "06_strategy_and_content_pipelines.jpg",
+        takeaway: "Two linked SequentialAgent pipelines formulate complete marketing strategies and generate channel-scoped creative copy.",
+        pillars: [
+          {
+            title: "Strategy Pipeline (SequentialAgent)",
+            desc: "Formulates 3 strategic pillars, 100% channel mix weightings, A/B testing hypotheses, and revenue recovery targets."
+          },
+          {
+            title: "Channel-Selective Copy Generation",
+            desc: "Scopes copy strictly to requested channels (Email templates, Instagram social posts with hashtags, and SMS under 160 chars)."
+          },
+          {
+            title: "Brand Voice Alignment",
+            desc: "Enforces distinct Scandinavian high-fashion editorial tone or warm, welcoming Swedish grocery messaging."
+          },
+          {
+            title: "Strict Pydantic Validation",
+            desc: "Outputs validated JSON via StrategySchema and ContentSchema, rendering dedicated UI cards for each channel."
+          }
+        ],
+        notes: "Showcase our channel-selective copywriting. If a user only asks for an SMS, the agent generates only SMS copy respecting 160-character limits, without generating unnecessary emails or social posts."
+      },
+      {
+        id: 7,
+        section: "Skills & Registry",
+        title: "Enterprise Skills Architecture & Agent Registry",
+        subtitle: "Modular Domain Knowledge & Centralized Skill Store on Google Cloud",
+        image: "07_skills_and_agent_registry.jpg",
+        takeaway: "Skills are modular directories with SKILL.md instruction files and domain schemas dynamically loaded by ADK agents and published to Agent Registry.",
+        pillars: [
+          {
+            title: "Modular Skill Standard",
+            desc: "Structured folders containing SKILL.md rules: bigquery-customer-analytics, product-recommender, a2ui-personalization, campaign-framework, brand-voice-craft."
+          },
+          {
+            title: "Dynamic Runtime Binding",
+            desc: "ADK agents attach skills dynamically at runtime without requiring binary recompilation or redeployment."
+          },
+          {
+            title: "Google Cloud Agent Registry",
+            desc: "Centralized Google Cloud catalog (agentregistry.googleapis.com) for skill discovery and fleet governance."
+          },
+          {
+            title: "Developer Skill Hygiene",
+            desc: "Developer CLI skills (google-agents-cli-*) are automatically filtered from customer-facing business registries."
+          }
+        ],
+        notes: "Highlight the power of the Skill Standard. Marketing teams can update copywriting rules, retail calculation logic, or schema mappings in markdown without touching the underlying Python runtime code."
+      },
+      {
+        id: 8,
+        section: "Security & Ops",
+        title: "Governed Gateway, Model Armor & Telemetry Observability",
+        subtitle: "Enterprise Ingress Security, Prompt Shielding & Distributed Tracing",
+        image: "08_gateway_security_observability.jpg",
+        takeaway: "The entire platform is protected by GCP Agent Gateway and Model Armor, with full observability in OpenTelemetry Cloud Trace and Cloud Logging.",
+        pillars: [
+          {
+            title: "GCP Agent Gateway Ingress",
+            desc: "Enforces CLIENT_TO_AGENT governed access paths, mTLS encryption, and policy-driven routing."
+          },
+          {
+            title: "Model Armor Prompt Shielding",
+            desc: "Real-time inspection sanitizing user prompts and screening model responses for PII, hate speech, and jailbreak attempts."
+          },
+          {
+            title: "OpenTelemetry Distributed Cloud Trace",
+            desc: "Hierarchical span tree capturing invoke_workflow, call_llm, and execute_tool latencies and token usage."
+          },
+          {
+            title: "Prompt-Response Logging in GCS",
+            desc: "Full JSONL completion files captured to gs://agent-demo-09-agent-platform-logs for audit compliance and evaluation."
+          }
+        ],
+        notes: "Conclude with enterprise governance. Point out that all agent actions are logged to Cloud Trace and GCS, while Model Armor prevents prompt injection and data exfiltration in real time."
+      }
+    ];
+
+    let currentSlideIndex = 0;
+
+    // DOM Elements
+    const slideImage = document.getElementById('slideImage');
+    const imageContainerCard = document.getElementById('imageContainerCard');
+    const sectionPill = document.getElementById('sectionPill');
+    const slideNumberBadge = document.getElementById('slideNumberBadge');
+    const slideTitle = document.getElementById('slideTitle');
+    const slideSubtitle = document.getElementById('slideSubtitle');
+    const takeawayText = document.getElementById('takeawayText');
+    const pillarsGrid = document.getElementById('pillarsGrid');
+    const speakerNotesText = document.getElementById('speakerNotesText');
+    const prevSlideBtn = document.getElementById('prevSlideBtn');
+    const nextSlideBtn = document.getElementById('nextSlideBtn');
+    const imgPrevBtn = document.getElementById('imgPrevBtn');
+    const imgNextBtn = document.getElementById('imgNextBtn');
+    const slideDotsContainer = document.getElementById('slideDotsContainer');
+    const slideJumpSelect = document.getElementById('slideJumpSelect');
+    const slideCounterDisplay = document.getElementById('slideCounterDisplay');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const fullscreenToggleBtn = document.getElementById('fullscreenToggleBtn');
+    const lightboxModal = document.getElementById('lightboxModal');
+    const lightboxImg = document.getElementById('lightboxImg');
+
+    // Initialize Jump Selector & Dot Indicators
+    function initNavigation() {
+      slideJumpSelect.innerHTML = '';
+      slideDotsContainer.innerHTML = '';
+
+      SLIDES.forEach((slide, index) => {
+        // Option in dropdown
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = `Slide ${index + 1}: ${slide.title}`;
+        slideJumpSelect.appendChild(opt);
+
+        // Dot button
+        const dot = document.createElement('button');
+        dot.className = `dot-btn ${index === 0 ? 'active' : ''}`;
+        dot.setAttribute('aria-label', `Go to Slide ${index + 1}`);
+        dot.addEventListener('click', () => goToSlide(index));
+        slideDotsContainer.appendChild(dot);
+      });
+    }
+
+    // Render Slide Content
+    function renderSlide(index) {
+      const slide = SLIDES[index];
+      currentSlideIndex = index;
+
+      // Update Image
+      slideImage.style.opacity = '0.3';
+      setTimeout(() => {
+        slideImage.src = slide.image;
+        slideImage.alt = slide.title;
+        slideImage.style.opacity = '1';
+      }, 120);
+
+      // Update Text Headers
+      sectionPill.textContent = slide.section;
+      slideNumberBadge.textContent = `Slide ${index + 1} of ${SLIDES.length}`;
+      slideTitle.textContent = slide.title;
+      slideSubtitle.textContent = slide.subtitle;
+      takeawayText.textContent = slide.takeaway;
+      speakerNotesText.textContent = slide.notes;
+
+      // Render Pillars Grid
+      pillarsGrid.innerHTML = '';
+      slide.pillars.forEach(pillar => {
+        const card = document.createElement('div');
+        card.className = 'pillar-card';
+        card.innerHTML = `
+          <div class="pillar-title">
+            <span class="pillar-bullet"></span>
+            <span>${pillar.title}</span>
+          </div>
+          <p class="pillar-desc">${pillar.desc}</p>
+        `;
+        pillarsGrid.appendChild(card);
+      });
+
+      // Update Header Dropdown & Counter
+      slideJumpSelect.value = index;
+      slideCounterDisplay.textContent = `${index + 1} / ${SLIDES.length}`;
+
+      // Update Progress Bar
+      const pct = ((index + 1) / SLIDES.length) * 100;
+      progressBarFill.style.width = `${pct}%`;
+
+      // Update Navigation Buttons State
+      prevSlideBtn.disabled = index === 0;
+      nextSlideBtn.disabled = index === SLIDES.length - 1;
+      imgPrevBtn.style.display = index === 0 ? 'none' : 'flex';
+      imgNextBtn.style.display = index === SLIDES.length - 1 ? 'none' : 'flex';
+
+      // Update Active Dot
+      document.querySelectorAll('.dot-btn').forEach((dot, dIdx) => {
+        dot.classList.toggle('active', dIdx === index);
+      });
+
+      // Reset Content Scroll to Top
+      document.getElementById('contentPanel').scrollTop = 0;
+    }
+
+    function nextSlide() {
+      if (currentSlideIndex < SLIDES.length - 1) {
+        goToSlide(currentSlideIndex + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlideIndex > 0) {
+        goToSlide(currentSlideIndex - 1);
+      }
+    }
+
+    function goToSlide(index) {
+      if (index >= 0 && index < SLIDES.length) {
+        renderSlide(index);
+      }
+    }
+
+    // Lightbox Modal Handlers
+    function openLightbox() {
+      lightboxImg.src = SLIDES[currentSlideIndex].image;
+      lightboxModal.classList.add('active');
+    }
+
+    function closeLightbox() {
+      lightboxModal.classList.remove('active');
+    }
+
+    // Theme Switcher
+    function toggleTheme() {
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+      localStorage.setItem('deck_theme', isDark ? 'light' : 'dark');
+    }
+
+    // Fullscreen Toggle
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        document.exitFullscreen().catch(err => console.log(err));
+      }
+    }
+
+    // Event Listeners
+    nextSlideBtn.addEventListener('click', nextSlide);
+    prevSlideBtn.addEventListener('click', prevSlide);
+    imgNextBtn.addEventListener('click', nextSlide);
+    imgPrevBtn.addEventListener('click', prevSlide);
+    slideJumpSelect.addEventListener('change', (e) => goToSlide(parseInt(e.target.value, 10)));
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    fullscreenToggleBtn.addEventListener('click', toggleFullscreen);
+    imageContainerCard.addEventListener('click', openLightbox);
+    lightboxModal.addEventListener('click', closeLightbox);
+
+    // Keyboard Navigation Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goToSlide(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goToSlide(SLIDES.length - 1);
+      } else if (e.key.toLowerCase() === 't') {
+        toggleTheme();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === 'z') {
+        if (lightboxModal.classList.contains('active')) closeLightbox();
+        else openLightbox();
+      } else if (e.key === 'Escape') {
+        closeLightbox();
+      }
+    });
+
+    // Initialize on Load
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('deck_theme') || 'light';
+      document.body.setAttribute('data-theme', savedTheme);
+      themeToggleBtn.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+      initNavigation();
+      renderSlide(0);
+    });
+  </script>
+</body>
+</html>
