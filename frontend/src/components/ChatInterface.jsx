@@ -802,13 +802,17 @@ export default function ChatInterface({
             <div style={{
               maxWidth: isExpanded ? '85%' : '92%',
               width: msg.role === 'user' ? 'auto' : '100%',
-              background: msg.role === 'user' ? 'linear-gradient(135deg, var(--color-primary), #2b6cb0)' : 'var(--panel-bg)',
+              background: msg.role === 'user'
+                ? (activeClient?.primary_color || (activeClientId === 'ica_sweden' ? '#e01e26' : '#4f46e5'))
+                : 'var(--panel-bg)',
               border: msg.role === 'user' ? 'none' : '1px solid var(--border-color)',
               padding: '1rem 1.2rem',
               borderRadius: '14px',
               fontSize: '0.88rem',
               lineHeight: '1.6',
-              boxShadow: msg.role === 'user' ? '0 4px 15px rgba(66,133,244,0.3)' : 'none'
+              boxShadow: msg.role === 'user'
+                ? `0 4px 14px ${(activeClient?.primary_color || '#4f46e5')}40`
+                : 'none'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 <span style={{ fontWeight: 700, color: msg.role === 'user' ? '#ffffff' : 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
