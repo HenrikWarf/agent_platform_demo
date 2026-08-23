@@ -826,14 +826,13 @@ export default function ChatInterface({
               </div>
 
               {/* A2UI Dynamic Offer Banner (ICA Sweden Retail Personalization) */}
-              {msg.role === 'assistant' && (
+              {msg.role === 'assistant' && i > 0 && (
                 msg.data?.a2ui ||
                 (msg.content && (
-                  msg.content.toLowerCase().includes('ica') ||
-                  msg.content.toLowerCase().includes('stammis') ||
                   msg.content.toLowerCase().includes('a2ui') ||
                   msg.content.toLowerCase().includes('ladda till kortet') ||
-                  msg.content.toLowerCase().includes('personligt erbjudande')
+                  msg.content.toLowerCase().includes('erbjudandebanner') ||
+                  (msg.content.toLowerCase().includes('stammis') && msg.content.toLowerCase().includes('erbjudande'))
                 ))
               ) && (
                 <A2UIOfferBanner data={msg.data?.a2ui || {}} />
