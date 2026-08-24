@@ -10,7 +10,7 @@ The **Multi-Agent Evaluation & Quality Flywheel Presentation Deck** is a standal
 It provides an enterprise-ready visual presenter interface for engineering leaders, AI architects, and stakeholders to understand the continuous quality assurance, LLM-as-judge evaluation, synthetic user simulation, and CI/CD deployment gates powering the **Crazy Fashion Multi-Agent Marketing Platform** on Google Cloud.
 
 ```
-specs/evalution_presentation/
+specs/evaluation_presentation/
 ├── index.html                                # Complete self-contained presentation web app
 ├── PRESENTATION_SPEC.md                      # This specification and operational guide
 ├── 01_title_starter_slide.jpg                # Slide 1: Cover & Evaluation Scope
@@ -172,10 +172,10 @@ To view the interactive presentation deck locally:
 
 ```bash
 # Option 1: Run the dedicated start script (serves on port 8085 and auto-opens in browser)
-./specs/evalution_presentation/start_presentation.sh
+./specs/evaluation_presentation/start_presentation.sh
 
 # Option 2: Open static file directly in browser
-open specs/evalution_presentation/index.html
+open specs/evaluation_presentation/index.html
 
 # Option 3: Manual Python server command
 python3 -m http.server 8085 --directory specs/evalution_presentation
