@@ -17,64 +17,94 @@ import {
 } from 'lucide-react';
 
 /* ── Swedish Grocery Icon & Emoji Resolver ──────────────────────────────────── */
-const GROCERY_ICON_MAP = {
-  'milk': '🥛',
-  'mejeri': '🥛',
-  'dairy': '🥛',
-  'egg': '🥚',
-  'ägg': '🥚',
-  'apple': '🍎',
-  'frukt': '🍎',
-  'grönt': '🥦',
-  'gront': '🥦',
-  'tomato': '🥫',
-  'tomater': '🥫',
-  'krossade': '🥫',
-  'skafferi': '🥫',
-  'konserv': '🥫',
-  'meat': '🥩',
-  'kött': '🥩',
-  'kott': '🥩',
-  'färs': '🥩',
-  'nötfärs': '🥩',
-  'chark': '🥓',
-  'fish': '🐟',
-  'fisk': '🐟',
-  'lax': '🐟',
-  'fjällröding': '🐟',
-  'seafood': '🦐',
-  'räkor': '🦐',
-  'bread': '🍞',
-  'bröd': '🍞',
-  'bageri': '🥐',
-  'coffee': '☕',
-  'kaffe': '☕',
-  'oil': '🌻',
-  'olja': '🌻',
-  'rapsolja': '🌻',
-  'cheese': '🧀',
-  'ost': '🧀',
-  'prästost': '🧀',
-  'pasta': '🍝',
-  'spaghetti': '🍝',
-  'shopping-bag': '🛍️',
-  'shopping_bag': '🛍️',
-  'bag': '🛍️',
-  'cart': '🛒',
-  'grocery': '🛒'
-};
+const GROCERY_ICON_MAP = [
+  // Vegetables & Greens
+  { keys: ['gurka', 'cucumber', 'squash', 'zucchini'], emoji: '🥒' },
+  { keys: ['morot', 'morötter', 'carrot'], emoji: '🥕' },
+  { keys: ['potatis', 'potato'], emoji: '🥔' },
+  { keys: ['lök', 'vitlök', 'rödlök', 'onion', 'garlic'], emoji: '🧅' },
+  { keys: ['avokado', 'avocado'], emoji: '🥑' },
+  { keys: ['paprika', 'pepper'], emoji: '🫑' },
+  { keys: ['broccoli', 'sallad', 'spenat', 'kål', 'grönt', 'gront'], emoji: '🥦' },
+  { keys: ['majs', 'corn'], emoji: '🌽' },
+  { keys: ['svamp', 'kantarell', 'champinjon', 'mushroom'], emoji: '🍄' },
+  { keys: ['krossade tomater', 'passerade tomater', 'konserv', 'burk', 'skafferi', 'bönor', 'kikärtor'], emoji: '🥫' },
+  { keys: ['tomat', 'tomater', 'tomato'], emoji: '🍅' },
 
-function resolveGroceryIcon(iconStr, productName = '', category = '') {
+  // Fruits & Berries
+  { keys: ['äpple', 'apple'], emoji: '🍎' },
+  { keys: ['banan', 'banana'], emoji: '🍌' },
+  { keys: ['citron', 'lime', 'lemon'], emoji: '🍋' },
+  { keys: ['apelsin', 'mandarin', 'clementin', 'orange'], emoji: '🍊' },
+  { keys: ['jordgubb', 'jordgubbar', 'hallon', 'blåbär', 'lingon', 'bär', 'strawberry', 'berry'], emoji: '🍓' },
+  { keys: ['druvor', 'vindruvor', 'grapes'], emoji: '🍇' },
+  { keys: ['vattenmelon', 'melon'], emoji: '🍉' },
+  { keys: ['frukt', 'frukter', 'fruit'], emoji: '🍎' },
+
+  // Dairy & Eggs
+  { keys: ['ägg', 'lantägg', 'egg'], emoji: '🥚' },
+  { keys: ['mjölk', 'mellanmjölk', 'standardmjölk', 'fil', 'yoghurt', 'mejeri', 'grädde', 'dairy', 'milk'], emoji: '🥛' },
+  { keys: ['ost', 'prästost', 'herrgård', 'grevé', 'västerbotten', 'mozzarella', 'parmesan', 'cheese'], emoji: '🧀' },
+  { keys: ['smör', 'bregott', 'butter', 'margarin'], emoji: '🧈' },
+
+  // Meat, Poultry, Fish & Seafood
+  { keys: ['nötfärs', 'blandfärs', 'färs', 'biff', 'oxfilé', 'fläskkotlett', 'kött', 'kott', 'meat', 'chark'], emoji: '🥩' },
+  { keys: ['kyckling', 'kycklingfilé', 'fågel', 'chicken'], emoji: '🍗' },
+  { keys: ['korv', 'falukorv', 'prinskorv', 'bacon', 'skinka', 'prosciutto'], emoji: '🥓' },
+  { keys: ['lax', 'fjällröding', 'torsk', 'sill', 'fisk', 'fish'], emoji: '🐟' },
+  { keys: ['räkor', 'kräftor', 'skaldjur', 'hummer', 'seafood', 'shrimp'], emoji: '🦐' },
+
+  // Bakery & Grains
+  { keys: ['bröd', 'limpa', 'fralla', 'surdegsbröd', 'toast', 'knäckebröd', 'bread'], emoji: '🍞' },
+  { keys: ['croissant', 'bulle', 'kanelbulle', 'bageri', 'bakverk', 'pastry'], emoji: '🥐' },
+  { keys: ['pasta', 'spaghetti', 'penne', 'lasagne', 'tagliatelle'], emoji: '🍝' },
+  { keys: ['ris', 'basmatiris', 'jasminris', 'rice'], emoji: '🍚' },
+  { keys: ['havre', 'havregryn', 'gryn', 'müsli', 'mjöl', 'flour'], emoji: '🌾' },
+
+  // Pantry, Oils, Drinks & Snacks
+  { keys: ['olja', 'rapsolja', 'olivolja', 'solrosolja', 'oil'], emoji: '🌻' },
+  { keys: ['kaffe', 'kaffebönor', 'bryggkaffe', 'espresso', 'coffee'], emoji: '☕' },
+  { keys: ['te', 'tea'], emoji: '🫖' },
+  { keys: ['juice', 'must', 'saft'], emoji: '🧃' },
+  { keys: ['vatten', 'läsk', 'bubbelvatten', 'dryck', 'soda'], emoji: '🥤' },
+  { keys: ['choklad', 'godis', 'chips', 'snacks', 'chocolate'], emoji: '🍫' }
+];
+
+function resolveGroceryIcon(iconStr = '', productName = '', category = '') {
+  // 1. If explicit Unicode Emoji was provided directly (e.g. 🥒, 🥚, 🥛), use it
   if (iconStr && /\p{Extended_Pictographic}/u.test(iconStr)) {
     return iconStr;
   }
-  const combined = `${iconStr || ''} ${productName} ${category}`.toLowerCase();
-  for (const [key, emoji] of Object.entries(GROCERY_ICON_MAP)) {
-    if (combined.includes(key)) {
-      return emoji;
+
+  const pName = (productName || '').toLowerCase();
+  const cat = (category || '').toLowerCase();
+  const rawIcon = (iconStr || '').toLowerCase().trim();
+
+  // 2. High Priority: Inspect actual Product Name first for precise semantic match
+  for (const entry of GROCERY_ICON_MAP) {
+    if (entry.keys.some(k => pName.includes(k))) {
+      return entry.emoji;
     }
   }
-  return '🛒';
+
+  // 3. Medium Priority: Inspect Category
+  for (const entry of GROCERY_ICON_MAP) {
+    if (entry.keys.some(k => cat.includes(k))) {
+      return entry.emoji;
+    }
+  }
+
+  // 4. Low Priority: Check icon string if not generic
+  if (rawIcon && rawIcon !== 'tomato' && rawIcon !== 'shopping-bag' && rawIcon !== 'grocery' && rawIcon !== 'bag') {
+    for (const entry of GROCERY_ICON_MAP) {
+      if (entry.keys.some(k => rawIcon.includes(k))) {
+        return entry.emoji;
+      }
+    }
+  }
+
+  // 5. Safe, Neutral Universal Fallback (Shopping Bag / Basket)
+  return '🛍️';
 }
 
 /* ── Pre-configured Swedish Persona Archetypes for ICA Testing ─────────────── */

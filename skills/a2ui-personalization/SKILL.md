@@ -33,6 +33,7 @@ This skill guides the **A2UI Pipeline** (`a2ui_reasoner` ➔ `a2ui_formatter`) i
 - `store_format`: 'ICA Maxi Stormarknad' | 'ICA Kvantum' | 'ICA Supermarket' | 'ICA Nära'
 - `store_name`: Specific local store, e.g. 'ICA Maxi Lindhagen, Stockholm'
 - `badge_type`: 'Stammispris' | 'Personligt Stammispris' | 'HelgKlipp!'
+- `icon`: Provide an accurate matching Unicode emoji (e.g. `🥒` for cucumber/gurka, `🥚` for eggs/ägg, `🥛` for dairy/milk, `🍎` for apples, `🥩` for beef/meat, `🍞` for bread, `🧀` for cheese, `☕` for coffee, `🍗` for chicken, `🥕` for carrots, `🥑` for avocado) or a standard semantic keyword. If no specific grocery icon fits, default to `'shopping-bag'` (`🛍️`). NEVER default to `'tomato'` unless the item is specifically tomatoes.
 - `personalization_reason`: Swedish rationale based on customer purchase history.
 - `pricing`: Major digits (`24`), minor digits (`90`), unit (`kr/st`), savings (`Spara 10:00 (29% rabatt)`), comparison price (`Jfr-pris 16:60/l`).
 - `recipe_suggestion`: Swedish culinary meal inspiration featuring the hero ingredient (prep time, servings, cost/serving, ingredient list with measurements, brief instructions).

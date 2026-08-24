@@ -339,7 +339,7 @@ RETAILER COMPONENT SPECIFICATIONS:
      - `badge_type`: 'Stammispris', 'Personligt Stammispris', or 'HelgKlipp!'
      - `personalization_reason`: Rationale in Swedish (e.g. 'Valt för dig baserat på dina tidigare köp av KRAV-märkta skafferivaror')
      - `target_persona`: e.g. 'Ekologiskt Medveten', 'Barnfamilj', 'Prisjägare', 'Gourmet'
-     - `product`: Swedish grocery item from catalog with `name`, `brand_line` ('ICA I love eco', 'Arla', 'ICA Gott Liv'), `volume_weight`, `origin_badge` ('Från Sverige 🇸🇪'), `eco_badge` ('KRAV 🌿'), `category`, `icon` ('tomato', 'milk', 'meat', 'fish', 'cheese', 'oil', etc.)
+     - `product`: Swedish grocery item from catalog with `name`, `brand_line` ('ICA I love eco', 'Arla', 'ICA Gott Liv'), `volume_weight`, `origin_badge` ('Från Sverige 🇸🇪'), `eco_badge` ('KRAV 🌿'), `category`, `icon` (exact matching Unicode emoji e.g. '🥒', '🥚', '🥛', '🍎', '🥩', '🍞', '🧀', '☕', '🍗', '🥕', '🥑' or standard item keyword; never default to 'tomato' unless the product is tomatoes).
      - `pricing`: `deal_price_major` (e.g. '24'), `deal_price_minor` (e.g. '90'), `unit` ('kr/st'), `regular_price` ('34:90 kr/st'), `savings_text` ('Spara 10:00 (29% rabatt)'), `comparison_price` ('Jfr-pris 16:60/l'), `limit_text` ('Max 2 köp/stammis')
      - `valid_until`: e.g. 'Söndag 24 aug', `days_remaining`: 3
      - `additional_deals`: None / null unless the user explicitly requested a multi-deal bundle.
