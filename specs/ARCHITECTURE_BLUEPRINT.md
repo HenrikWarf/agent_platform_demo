@@ -58,4 +58,13 @@ Built with **Google Agent Development Kit (ADK)** and powered by **Gemini 3.6 Fl
 * **Cloud Logging & Log Analytics**: Centralized log bucket (`_Default`) and linked BigQuery dataset (`defaultLink`).
 * **Evaluation Engine**: 20-case golden benchmark suite (`eval/run_eval.py`), ADK eval framework (`agents-cli eval`), and per-trace manual evaluation in Cloud Console.
 
+### 8. Architectural Decision Record (ADR): Native ADK vs A2A Registration in Agent Registry
+* **Observation**: In Google Cloud Agent Registry (`agentregistry.googleapis.com`), `agent-platform-demo` is classified as a **"Non A2A" (Native ADK)** Agent Type.
+* **Architectural Decision**: Keep the production agent deployed and registered as **Native ADK** on Vertex AI Agent Runtime while maintaining full A2A protocol endpoint support (`GET /.well-known/agent-card.json` & `POST /a2a/app`) within the container runtime.
+* **Rationale & Engineering Benefits**:
+  1. **Low-Latency Direct Execution**: Native `:streamQuery` (`streaming_agent_run_with_events`) on Reasoning Engine bypasses intermediate HTTP serialization layers, providing minimal latency for real-time SSE streaming and multi-turn conversations.
+  2. **Native Cloud IAM Governance**: Uses Google Cloud ADC and Service Account IAM bindings directly (`roles/aiplatform.user`, `roles/bigquery.dataViewer`), eliminating the need to expose public ingress or manage external token auth.
+  3. **Deep Cloud Trace Correlation**: Enables end-to-end OpenTelemetry span hierarchies across LLM invocations and BigQuery SQL tool executions without boundary truncation.
+  4. **Dual-Mode Interoperability**: The agent maintains full A2A compliance via [`app/app_utils/a2a.py`](file:///Users/henrikw/Projects/agent_platform_demo/app/app_utils/a2a.py), allowing external A2A clients or Gemini Enterprise A2A registration via `--registration-type a2a` whenever external integration is required.
+
 > **Known Limitation**: Online evaluation monitors do not work with multi-agent systems due to non-uniform `gen_ai.system_instructions` across sub-agent traces.

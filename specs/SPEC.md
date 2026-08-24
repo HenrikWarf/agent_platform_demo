@@ -121,6 +121,8 @@ These routes are served by `app/fast_api_app.py` inside the Agent Runtime contai
 | `/a2a/{app_name}/.well-known/agent-card.json` | GET | A2A agent card discovery |
 | `/feedback` | POST | Structured feedback logging |
 
+> **Architectural Decision (ADR - Native ADK vs A2A)**: The deployed Agent Engine is registered in Google Cloud Agent Registry as **Native ADK (Non-A2A)** for high-performance direct `:streamQuery` binary RPC execution and seamless GCP IAM authentication, while concurrently serving the full A2A JSON-RPC protocol and Agent Card discovery endpoints for client interoperability.
+
 ### 1.4 System Health & Version Endpoints
 - **URL**: `GET /api/health` & `GET /health`
 ```json
