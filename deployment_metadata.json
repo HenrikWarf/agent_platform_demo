@@ -1,7 +1,14 @@
 {
-  "remote_agent_runtime_id": "projects/1047232371360/locations/us-central1/reasoningEngines/8710530676601913344",
+  "remote_agent_runtime_id": "projects/1047232371360/locations/us-central1/reasoningEngines/2050269777674371072",
   "deployment_target": "agent_runtime",
   "is_a2a": false,
   "agent_directory": "app",
-  "deployment_timestamp": "2026-08-24T11:24:14.723693+00:00"
+  "deployment_timestamp": "2026-08-24T12:59:11.151187+00:00",
+  "pending_operation": {
+    "operation_name": "projects/1047232371360/locations/us-central1/reasoningEngines/8710530676601913344/operations/4195082183649525760",
+    "project": "agent-demo-09",
+    "location": "us-central1",
+    "deployment_target": "agent_runtime",
+    "started_at": "2026-08-24T12:59:19.378283+00:00"
+  }
 }
