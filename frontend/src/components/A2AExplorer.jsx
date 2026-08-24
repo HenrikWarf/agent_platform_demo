@@ -422,43 +422,65 @@ export default function A2AExplorer({ activeClient }) {
           </div>
 
           {/* Hero Agent Identity Card */}
-          <div style={{ ...cardStyle, background: 'var(--bg-surface-subtle, var(--panel-bg))', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>{agentCard.name}</span>
-                  <div style={chipStyle(activeClient?.primary_color || 'var(--color-primary)')}>
-                    <ShieldCheck size={12} /> Verified Root Agent
-                  </div>
-                  <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', background: 'var(--code-bg)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-dim)', border: '1px solid var(--border-color)' }}>
-                    v{agentCard.version || '0.1.0'}
-                  </span>
+          <div style={{ ...cardStyle, background: 'var(--bg-surface-subtle, var(--panel-bg))', border: '1px solid var(--border-color)', padding: '1.4rem 1.6rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem' }}>
+                <span style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.3, letterSpacing: '-0.01em', wordBreak: 'break-word' }}>
+                  {agentCard.name}
+                </span>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.25rem 0.7rem',
+                  borderRadius: '999px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  background: `${activeClient?.primary_color || 'var(--color-primary)'}18`,
+                  color: activeClient?.primary_color || 'var(--color-primary)',
+                  border: `1px solid ${activeClient?.primary_color || 'var(--color-primary)'}35`,
+                  whiteSpace: 'nowrap'
+                }}>
+                  <ShieldCheck size={13} /> Verified Root Agent
                 </div>
-                <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', lineHeight: 1.55, maxWidth: '720px' }}>
-                  {agentCard.description}
-                </p>
+                <span style={{
+                  fontSize: '0.74rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 600,
+                  background: 'var(--code-bg)',
+                  padding: '0.25rem 0.6rem',
+                  borderRadius: '6px',
+                  color: 'var(--text-dim)',
+                  border: '1px solid var(--border-color)',
+                  whiteSpace: 'nowrap'
+                }}>
+                  v{agentCard.version || '0.1.0'}
+                </span>
               </div>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0, maxWidth: '100%' }}>
+                {agentCard.description}
+              </p>
             </div>
 
             {/* Metric Pills Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.8rem', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-              <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.8rem', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--bg-card)', padding: '0.75rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <div style={labelStyle}>Protocol Transport</div>
-                <div style={{ ...valueStyle, fontWeight: 700, color: 'var(--color-primary)' }}>JSON-RPC 2.0</div>
+                <div style={{ ...valueStyle, fontWeight: 700, color: 'var(--color-primary)', marginTop: '0.2rem' }}>JSON-RPC 2.0</div>
               </div>
-              <div>
+              <div style={{ background: 'var(--bg-card)', padding: '0.75rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <div style={labelStyle}>Supported A2A Versions</div>
-                <div style={{ ...valueStyle, fontWeight: 700 }}>v1.0 & v0.3 (Compat)</div>
+                <div style={{ ...valueStyle, fontWeight: 700, marginTop: '0.2rem' }}>v1.0 & v0.3 (Compat)</div>
               </div>
-              <div>
+              <div style={{ background: 'var(--bg-card)', padding: '0.75rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <div style={labelStyle}>Streaming Mode</div>
-                <div style={{ ...valueStyle, color: agentCard.capabilities?.streaming ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                <div style={{ ...valueStyle, fontWeight: 600, color: agentCard.capabilities?.streaming ? 'var(--color-success)' : 'var(--color-danger)', marginTop: '0.2rem' }}>
                   {agentCard.capabilities?.streaming ? '✅ Enabled (SSE)' : '❌ Disabled'}
                 </div>
               </div>
-              <div>
+              <div style={{ background: 'var(--bg-card)', padding: '0.75rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <div style={labelStyle}>Default Input Modes</div>
-                <div style={valueStyle}>{(agentCard.defaultInputModes || ['text/plain']).join(', ')}</div>
+                <div style={{ ...valueStyle, marginTop: '0.2rem' }}>{(agentCard.defaultInputModes || ['text/plain']).join(', ')}</div>
               </div>
             </div>
           </div>
