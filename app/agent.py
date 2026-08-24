@@ -61,22 +61,32 @@ MCP_SERVER_RESOURCE = os.environ.get(
 )
 
 
+def _bq_header_provider(context=None) -> dict[str, str]:
+    """Provide billing and user project header for BigQuery API calls."""
+    effective_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or project_id or "agent-demo-09"
+    return {
+        "x-goog-user-project": effective_project,
+    }
+
+
 def _init_mcp_toolset(max_retries: int = 3, base_delay: float = 2.0):
-    """Initialize the MCP toolset with retry logic."""
+    """Initialize the MCP toolset with retry logic and billing headers."""
     import logging
     import time
 
     logger = logging.getLogger(__name__)
     last_exc = None
+    effective_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or project_id or "agent-demo-09"
 
     for attempt in range(max_retries):
         try:
             reg = AgentRegistry(
-                project_id=project_id or "agent-demo-09",
+                project_id=effective_project,
                 location="global",
+                header_provider=_bq_header_provider,
             )
             toolset = reg.get_mcp_toolset(MCP_SERVER_RESOURCE)
-            logger.info("MCP BigQuery toolset initialized (attempt %d)", attempt + 1)
+            logger.info("MCP BigQuery toolset initialized with x-goog-user-project header (attempt %d)", attempt + 1)
             return toolset
         except Exception as exc:
             last_exc = exc
@@ -136,6 +146,7 @@ Company & Data Target:
    - `event_id` (STRING), `customer_id` (STRING), `event_type` (STRING), `event_date` (STRING/DATE), `product_id` (STRING), `channel` (STRING), `device` (STRING)
 
 ## Rules:
+- When calling `execute_sql_readonly` or `execute_sql`, ALWAYS pass `projectId="agent-demo-09"` and `query="SELECT ..."`.
 - Use the MCP BigQuery tools to execute SQL queries against `agent-demo-09.{active_context.bigquery_dataset}`.
 - Use fully qualified table names (e.g. `agent-demo-09.{active_context.bigquery_dataset}.customer_rfm_summary`).
 - Add LIMIT 20 for row-level listings.

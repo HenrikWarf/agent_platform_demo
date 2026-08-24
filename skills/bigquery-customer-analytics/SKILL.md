@@ -59,8 +59,9 @@ LIMIT 20
 ```
 
 ## Data Analytics & Insights Protocol
-1. **Cohort Metric Summary**: Extract customer count, recency, monetary spend, and revenue by segment.
-2. **Loyalty & Profile Analysis**: Analyze Stammis/Crazy Club membership tiers, preferred categories, and communication channels.
-3. **Product Performance**: Identify top-selling products, category revenue, and sustainability-certified product adoption.
-4. **Behavioral Events**: Track purchase funnels, cart abandonment rates, and app engagement.
-5. **SQL Transparency**: Return the executed SQL query for auditability and trace logs.
+1. **Tool Invocation**: When calling BigQuery tools (`execute_sql_readonly` or `execute_sql`), always pass `projectId: "agent-demo-09"` (or the active GCP project ID) along with the `query` string.
+2. **Cohort Metric Summary**: Extract customer count, recency, monetary spend, and revenue by segment.
+3. **Loyalty & Profile Analysis**: Analyze Stammis/Crazy Club membership tiers, preferred categories, and communication channels.
+4. **Product Performance**: Identify top-selling products, category revenue, and sustainability-certified product adoption.
+5. **Behavioral Events**: Track purchase funnels, cart abandonment rates, and app engagement.
+6. **SQL Transparency**: Return the executed SQL query for auditability and trace logs.
