@@ -1,5 +1,48 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, CheckCircle, Code, Layers, FileText, Zap, X } from 'lucide-react';
+import { 
+  BookOpen, 
+  CheckCircle, 
+  Code, 
+  Layers, 
+  FileText, 
+  Zap, 
+  X,
+  Cpu,
+  Database,
+  ShoppingBag,
+  Sparkles,
+  TrendingUp,
+  Palette
+} from 'lucide-react';
+
+function getAgentIcon(agentId) {
+  switch (agentId) {
+    case 'marketing_orchestrator': return <Cpu size={17} color="#4f46e5" />;
+    case 'analytics_agent': return <Database size={17} color="#0284c7" />;
+    case 'recommendation_pipeline': return <ShoppingBag size={17} color="#059669" />;
+    case 'a2ui_pipeline': return <Sparkles size={17} color="#ec4899" />;
+    case 'strategy_pipeline': return <TrendingUp size={17} color="#7c3aed" />;
+    case 'content_pipeline': return <Palette size={17} color="#d97706" />;
+    default: return <Layers size={17} color="var(--color-primary)" />;
+  }
+}
+
+function getAgentTypeBadge(type = 'specialist') {
+  if (type === 'orchestrator') {
+    return {
+      label: 'Root Orchestrator',
+      color: '#4f46e5',
+      bg: 'rgba(79, 70, 229, 0.12)',
+      border: 'rgba(79, 70, 229, 0.25)'
+    };
+  }
+  return {
+    label: 'Sequential Pipeline',
+    color: '#0284c7',
+    bg: 'rgba(2, 132, 199, 0.12)',
+    border: 'rgba(2, 132, 199, 0.25)'
+  };
+}
 
 export default function SkillsInspector({ activeClient = {} }) {
   const [skills, setSkills] = useState([]);
@@ -67,47 +110,121 @@ export default function SkillsInspector({ activeClient = {} }) {
           <Layers size={18} color="var(--color-purple)" />
           Active Agent Engine Standalone Instances ({agents.length})
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-          {agents.map((agent, i) => (
-            <div key={i} style={{
-              background: 'var(--panel-bg)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '12px',
-              padding: '1rem',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>{agent.name}</span>
-                <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.5rem', borderRadius: '6px', background: 'rgba(66, 133, 244, 0.15)', color: 'var(--color-primary)', border: '1px solid rgba(66, 133, 244, 0.3)' }}>
-                  {agent.agent_id}
-                </span>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.7rem', lineHeight: '1.4' }}>{agent.role}</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                {agent.skills && agent.skills.length > 0 ? (
-                  agent.skills.map((s, idx) => (
-                    <span key={idx} style={{
-                      fontSize: '0.7rem',
-                      fontWeight: 600,
-                      padding: '0.22rem 0.6rem',
-                      borderRadius: '12px',
-                      background: 'rgba(52, 168, 83, 0.15)',
-                      color: 'var(--color-success)',
-                      border: '1px solid rgba(52, 168, 83, 0.35)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem'
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+          {agents.map((agent, i) => {
+            const typeBadge = getAgentTypeBadge(agent.type);
+            return (
+              <div key={i} style={{
+                background: 'var(--panel-bg)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '1.1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+              }}>
+                {/* Top Badge Row */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '6px',
+                      background: typeBadge.bg,
+                      color: typeBadge.color,
+                      border: `1px solid ${typeBadge.border}`
                     }}>
-                      <CheckCircle size={11} /> {s}
+                      {typeBadge.label}
                     </span>
-                  ))
-                ) : (
-                  <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>A2A Supervisor Router</span>
-                )}
+                    <span style={{
+                      fontFamily: 'monospace',
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '6px',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-muted)',
+                      border: '1px solid var(--border-color)'
+                    }}>
+                      {agent.agent_id}
+                    </span>
+                  </div>
+
+                  {/* Agent Title with Icon */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                    <div style={{ marginTop: '0.15rem', flexShrink: 0 }}>
+                      {getAgentIcon(agent.agent_id)}
+                    </div>
+                    <h4 style={{
+                      fontSize: '0.92rem',
+                      fontWeight: 800,
+                      color: 'var(--text-main)',
+                      lineHeight: '1.35',
+                      margin: 0,
+                      wordBreak: 'break-word',
+                      flex: 1
+                    }}>
+                      {agent.name}
+                    </h4>
+                  </div>
+
+                  {/* Description */}
+                  <p style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-muted)',
+                    marginBottom: '0.9rem',
+                    lineHeight: '1.45'
+                  }}>
+                    {agent.description || agent.role || 'Standalone Reasoning Engine Agent Instance.'}
+                  </p>
+                </div>
+
+                {/* Bottom Footer: Bound Skills & Runtime Indicator */}
+                <div style={{
+                  borderTop: '1px solid var(--border-color)',
+                  paddingTop: '0.7rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {agent.skills && agent.skills.length > 0 ? (
+                      agent.skills.map((s, idx) => (
+                        <span key={idx} style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 600,
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '10px',
+                          background: 'rgba(52, 168, 83, 0.12)',
+                          color: 'var(--color-success)',
+                          border: '1px solid rgba(52, 168, 83, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}>
+                          <CheckCircle size={10} /> {s}
+                        </span>
+                      ))
+                    ) : (
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+                        A2A Multi-Agent Router
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.68rem', color: '#10b981', fontWeight: 600 }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+                    <span>Live Runtime</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
