@@ -27,11 +27,15 @@ This document outlines the end-to-end system architecture and GCP deployment top
 * **GCP Agent Gateway** (`networkservices.googleapis.com`): Governed ingress routing enforcing client-to-agent access policies.
 * **Model Armor** (`modelarmor.googleapis.com`): Enterprise security guardrails enforcing hate speech, harassment, PII masking, and jailbreak protection on both user inputs and agent responses.
 
-### 4. Agent Orchestration Engine (Agent Engine)
-Built with **Google Agent Development Kit (ADK)** and powered by **Gemini 3.6 Flash**:
+### 4. Agent Orchestration Engine (Vertex AI Agent Runtime)
+Built with **Google Agent Development Kit (ADK)** and powered by **Gemini 3.6 Flash**, deployed as two dedicated brand-grounded Reasoning Engine instances:
+* **Crazy Fashion Agent Runtime** (`projects/1047232371360/locations/us-central1/reasoningEngines/2050269777674371072`): Grounded in Nordic sustainable fashion, EUR currency, Crazy Club loyalty, and `marketing_analytics` BigQuery tables.
+* **ICA Sverige Agent Runtime** (`projects/1047232371360/locations/us-central1/reasoningEngines/8710530676601913344`): Grounded in Swedish food & health, SEK currency, ICA Stammis loyalty, ICA Recept meal pairings, and `marketing_analytics_ica` BigQuery tables.
+
+Each instance runs the full 6-agent hierarchy:
 * **Root Orchestrator Agent (`marketing_orchestrator`)**: LLM-driven delegation and routing to specialized sub-agents.
 * **Customer Insights & Analytics Agent (`analytics_agent`)**: Direct BigQuery Standard SQL generator and query executor using `skills/bigquery-customer-analytics`.
-* **Product Recommendation Pipeline (`recommendation_pipeline`)**: SequentialAgent curating tailored 5-product assortments from `product_catalog` with EUR/SEK pricing and merchandising rationale using `skills/product-recommender`.
+* **Product Recommendation Pipeline (`recommendation_pipeline`)**: SequentialAgent curating tailored 5-product assortments with merchandising rationale using `skills/product-recommender`.
 * **A2UI Personalization & Offer Banner Pipeline (`a2ui_pipeline`)**: SequentialAgent (`a2ui_reasoner → a2ui_formatter`) generating interactive Swedish grocery Stammis deal banners with recipe pairings and H&M-style fashion drop cards using `A2UIComponentSchema`.
 * **Omnichannel Strategy Pipeline (`strategy_pipeline`)**: SequentialAgent generating strategic pillars, 100% channel mix weightings, and ROI projections using `skills/campaign-framework`.
 * **Brand Voice Content Pipeline (`content_pipeline`)**: SequentialAgent crafting brand-aligned emails, social posts, and SMS using `skills/brand-voice-craft`.

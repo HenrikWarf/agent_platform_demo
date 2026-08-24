@@ -129,7 +129,8 @@ agents-cli publish gemini-enterprise --project agent-demo-09 --region us-central
 ### Deployed GCP Endpoints & CI/CD Pipeline
 - **Cloud Run Backend**: `https://agent-platform-backend-q5c3bhebga-uc.a.run.app`
 - **Cloud Run Frontend**: `https://agent-platform-frontend-1047232371360.us-central1.run.app`
-- **Agent Runtime**: `projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936`
+- **Crazy Fashion Agent Runtime**: `projects/1047232371360/locations/us-central1/reasoningEngines/2050269777674371072`
+- **ICA Sverige Agent Runtime**: `projects/1047232371360/locations/us-central1/reasoningEngines/8710530676601913344`
 - **Agent Gateway**: `projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway`
 - **GitHub Actions Workflow**: `.github/workflows/deploy-gcp.yml`
 
@@ -174,4 +175,5 @@ agents-cli publish gemini-enterprise --project agent-demo-09 --region us-central
     - **ICA Sverige**: Swedish grocery Stammis deal banner with red/white styling, deal price numerals (`24:90 kr/st`), comparison price (`16:60/l`), discount savings (`Spara 10:-`), Swedish origin/eco badges, and "Ladda till kortet" Stammis card button.
     - **Crazy Fashion**: H&M-style high-fashion editorial drop card with high contrast, editorial collection headline (`STUDIO COLLECTION // AUTUMN 2026`), member exclusive pill, sustainable materials tag (`100% Recycled Italian Wool 🌿`), interactive size selector (`XS`, `S`, `M`, `L`, `XL`), interactive color swatches, member pricing (`€59.99` vs `€79.99`), Crazy Club points (`+150 Club Points`), garment recycling voucher perk, and interactive bag CTA.
 36. **ADR: Native ADK Agent Registry Decision**: Retained **Native ADK (Non-A2A)** registration type in Google Cloud Agent Registry for deployed Reasoning Engine on Vertex AI Agent Runtime (`:streamQuery` binary RPC execution, zero HTTP proxy overhead, direct IAM ADC auth, and full Cloud Trace correlation), while maintaining complete in-runtime A2A protocol endpoint serving (`/.well-known/agent-card.json` and `/a2a/app`). Documented in `specs/ARCHITECTURE_BLUEPRINT.md` and `specs/SPEC.md`.
+37. **Dual-Instance Enterprise Deployment & Selective CI/CD Pipeline**: Parameterized ADK agent engine (`TENANT_ID`) and deployed two independent Reasoning Engine instances to Vertex AI Agent Runtime: `crazy-fashion-marketing-agent` (`reasoningEngines/2050269777674371072`) and `ica-sverige-marketing-agent` (`reasoningEngines/8710530676601913344`). Both published to Gemini Enterprise & Agent Registry. Upgraded `.github/workflows/deploy-gcp.yml` with granular path filtering to deploy each agent strictly when its respective code or shared components change.
 

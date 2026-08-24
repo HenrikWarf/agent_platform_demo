@@ -26,9 +26,12 @@ class Config:
     AGENT_RUNTIME_ID: str = os.getenv("AGENT_RUNTIME_ID", "")
     AGENT_RUNTIME_ID_CRAZY_FASHION: str = os.getenv(
         "AGENT_RUNTIME_ID_CRAZY_FASHION",
-        os.getenv("AGENT_RUNTIME_ID", "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936")
+        "projects/1047232371360/locations/us-central1/reasoningEngines/2050269777674371072"
     )
-    AGENT_RUNTIME_ID_ICA_SVERIGE: str = os.getenv("AGENT_RUNTIME_ID_ICA_SVERIGE", os.getenv("AGENT_RUNTIME_ID_ICA", ""))
+    AGENT_RUNTIME_ID_ICA_SVERIGE: str = os.getenv(
+        "AGENT_RUNTIME_ID_ICA_SVERIGE",
+        "projects/1047232371360/locations/us-central1/reasoningEngines/8710530676601913344"
+    )
     AGENT_GATEWAY_URL: str = os.getenv("AGENT_GATEWAY_URL", "projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway")
     GEMINI_ENTERPRISE_APP_ID: str = os.getenv("GEMINI_ENTERPRISE_APP_ID", "projects/ml-developer-project-fe07/locations/global/collections/default_collection/engines/crazy-furniture-app-dev_1770975798363")
 
