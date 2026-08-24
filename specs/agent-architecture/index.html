@@ -232,6 +232,29 @@
       position: relative;
       border-right: 1px solid var(--border-subtle);
       overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Full-Width Cover Slide Mode (Slide 1) */
+    body.cover-mode .image-panel {
+      flex: 1;
+      border-right: none;
+      padding: 28px 48px;
+      background: radial-gradient(circle at center, rgba(26, 115, 232, 0.08) 0%, rgba(11, 15, 25, 0.95) 100%), var(--bg-primary);
+    }
+
+    body.cover-mode .image-container-card {
+      max-width: 1360px;
+      width: 100%;
+      height: 100%;
+      max-height: calc(100vh - 58px - 3px - 62px - 56px);
+      aspect-ratio: 16 / 9;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--border-subtle);
+    }
+
+    body.cover-mode .content-panel {
+      display: none !important;
     }
 
     .image-container-card {
@@ -755,6 +778,7 @@
     const SLIDES = [
       {
         id: 1,
+        isCover: true,
         section: "Keynote Cover",
         title: "Enterprise Multi-Agent Architecture & Agent Engine Ecosystem",
         subtitle: "Orchestration, Skills, Tools, BigQuery Analytics, A2UI & Model Armor on Google Cloud",
@@ -1075,6 +1099,13 @@
     function renderSlide(index) {
       const slide = SLIDES[index];
       currentSlideIndex = index;
+
+      // Full-Width Cover Slide Mode for Slide 1
+      if (index === 0 || slide.isCover) {
+        document.body.classList.add('cover-mode');
+      } else {
+        document.body.classList.remove('cover-mode');
+      }
 
       // Update Image
       slideImage.style.opacity = '0.3';
