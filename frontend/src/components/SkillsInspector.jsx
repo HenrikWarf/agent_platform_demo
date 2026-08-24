@@ -1,27 +1,29 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, CheckCircle, Code, Layers, FileText, Zap, X } from 'lucide-react';
 
-export default function SkillsInspector() {
+export default function SkillsInspector({ activeClient = {} }) {
   const [skills, setSkills] = useState([]);
   const [agents, setAgents] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [skillContent, setSkillContent] = useState('');
 
+  const clientId = activeClient?.client_id || 'crazy_fashion';
+
   useEffect(() => {
-    fetch('/api/skills')
+    fetch(`/api/skills?client_id=${clientId}`)
       .then(res => res.json())
       .then(data => setSkills(data.skills || []))
       .catch(err => console.error(err));
 
-    fetch('/api/agents')
+    fetch(`/api/agents?client_id=${clientId}`)
       .then(res => res.json())
       .then(data => setAgents(data.agents || []))
       .catch(err => console.error(err));
-  }, []);
+  }, [clientId]);
 
   const inspectSkill = (skillId) => {
     setSelectedSkill(skillId);
-    fetch(`/api/skills/${skillId}`)
+    fetch(`/api/skills/${skillId}?client_id=${clientId}`)
       .then(res => res.json())
       .then(data => setSkillContent(data.content || 'No content found'))
       .catch(() => setSkillContent('Error loading skill content'));
@@ -29,14 +31,34 @@ export default function SkillsInspector() {
 
   return (
     <div style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '1.4rem', height: '100%', overflowY: 'auto', width: '100%' }}>
-      <div>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>
-          <BookOpen size={22} color="var(--color-primary)" />
-          Agent Registry & Dynamic Skills Store
-        </h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          Skills are modular domain instructions registered in Agent Registry and dynamically bound to agents in Vertex AI Agent Engine.
-        </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.8rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>
+            <BookOpen size={22} color="var(--color-primary)" />
+            Agent Registry & Dynamic Skills Store
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Skills are modular domain instructions registered in Agent Registry and dynamically bound to agents in Vertex AI Agent Engine.
+          </p>
+        </div>
+
+        {activeClient?.client_name && (
+          <div style={{
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            color: activeClient.primary_color || 'var(--color-primary)',
+            background: 'var(--bg-secondary)',
+            border: `1px solid ${activeClient.primary_color || 'var(--border-color)'}40`,
+            padding: '0.35rem 0.8rem',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem'
+          }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeClient.primary_color || 'var(--color-primary)' }}></span>
+            <span>Active Tenant: <strong>{activeClient.client_name}</strong></span>
+          </div>
+        )}
       </div>
 
       {/* Agents List with Bound Skills */}

@@ -842,59 +842,64 @@ class AgentRuntimeClient:
         """Check if Agent Runtime is configured."""
         return bool(self.runtime_id)
 
-    def get_agent_metadata(self) -> list:
-        """Return static agent metadata for the /api/agents endpoint."""
+    def get_agent_metadata(self, client_id: str | None = None) -> list:
+        """Return static agent metadata for the /api/agents endpoint tailored to active client."""
+        is_ica = (client_id == "ica_sweden")
+        client_name = "ICA Sverige" if is_ica else "Crazy Fashion"
+        dataset = "agent-demo-09.marketing_analytics_ica" if is_ica else "agent-demo-09.marketing_analytics"
+        curr = "SEK (kr)" if is_ica else "EUR (€)"
+
         return [
             {
                 "agent_id": "marketing_orchestrator",
-                "name": "Marketing Campaign Orchestrator",
+                "name": f"Marketing Campaign Orchestrator ({client_name})",
                 "type": "orchestrator",
-                "description": "Routes objectives to Analytics, Recommendations, Strategy, and Content agents.",
+                "description": f"Enterprise Marketing Campaign Supervisor for {client_name} — routes objectives to Analytics, Recommendations, A2UI, Strategy, and Content agents.",
                 "skills": [],
                 "sub_agents": ["analytics_agent", "recommendation_pipeline", "a2ui_pipeline", "strategy_pipeline", "content_pipeline"],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
             {
                 "agent_id": "analytics_agent",
-                "name": "Customer Insights & Analytics Agent",
+                "name": f"Customer Insights & Analytics Agent ({client_name})",
                 "type": "specialist",
-                "description": "Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation.",
+                "description": f"Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation on `{dataset}`.",
                 "skills": ["bigquery-customer-analytics"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
             {
                 "agent_id": "recommendation_pipeline",
-                "name": "Product Recommendation Pipeline",
+                "name": f"Product Recommendation Pipeline ({client_name})",
                 "type": "specialist",
-                "description": "Curates tailored 5-product assortments and merchandising strategies for customer cohorts.",
+                "description": f"Curates tailored 5-product assortments and merchandising strategies for {client_name} customer cohorts.",
                 "skills": ["product-recommender"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
             {
                 "agent_id": "a2ui_pipeline",
-                "name": "A2UI Component & Personalization Designer",
+                "name": f"A2UI Component & Personalization Designer ({client_name})",
                 "type": "specialist",
-                "description": "Designs personalized interactive retail UI components, Stammis grocery deal cards, and H&M-style fashion drop cards.",
+                "description": "Designs personalized Swedish Grocery App Stammis offer banners with recipe pairings." if is_ica else "Designs H&M-style high-fashion editorial drop cards with member exclusive pricing and size selectors.",
                 "skills": ["a2ui-personalization"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
             {
                 "agent_id": "strategy_pipeline",
-                "name": "Omnichannel Strategy Pipeline",
+                "name": f"Omnichannel Strategy Pipeline ({client_name})",
                 "type": "specialist",
-                "description": "Designs campaign frameworks, channel mix, and ROI projections.",
+                "description": f"Designs campaign frameworks, channel mix, and ROI projections in {curr} for {client_name}.",
                 "skills": ["campaign-framework"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
             {
                 "agent_id": "content_pipeline",
-                "name": "Brand Voice Content Pipeline",
+                "name": f"Brand Voice Content Pipeline ({client_name})",
                 "type": "specialist",
-                "description": "Drafts email templates, social media posts, SMS, and ad copy.",
+                "description": "Drafts warm, food-inspiring Swedish marketing copy (email, social, SMS) with Stammis loyalty integration." if is_ica else "Drafts contemporary Nordic fashion copy (email, social, SMS) with Crazy Club loyalty integration.",
                 "skills": ["brand-voice-craft"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",

@@ -276,10 +276,11 @@ def get_version_info():
     }
 
 @app.get("/api/agents")
-def list_agents():
-    """Lists registered agents in the platform and their active bound skills."""
+def list_agents(client_id: str | None = None):
+    """Lists registered agents in the platform and their active bound skills tailored to client."""
+    target_client = client_id or _active_client_id
     return {
-        "agents": runtime_client.get_agent_metadata()
+        "agents": runtime_client.get_agent_metadata(client_id=target_client)
     }
 
 @app.get("/api/agent_engine/manifest")
@@ -298,14 +299,15 @@ def get_agent_engine_manifest():
     }
 
 @app.get("/api/skills")
-def list_skills():
-    """Lists skills registered in the Agent Registry."""
+def list_skills(client_id: str | None = None):
+    """Lists skills registered in the Agent Registry tailored to active client."""
+    target_client = client_id or _active_client_id
     return {
-        "skills": skill_registry.list_registered_skills()
+        "skills": skill_registry.list_registered_skills(client_id=target_client)
     }
 
 @app.get("/api/skills/{skill_id}")
-def get_skill_detail(skill_id: str):
+def get_skill_detail(skill_id: str, client_id: str | None = None):
     """Returns content for a specific skill in the registry."""
     return skill_registry.get_skill_content(skill_id)
 
