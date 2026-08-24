@@ -38,9 +38,9 @@ Routing:
     name: 'Analytics Agent',
     role: 'BigQuery Customer SQL',
     model: 'gemini-3.6-flash',
-    color: '#0284c7',
+    color: 'var(--color-primary)',
     icon: Database,
-    skill: 'marketing_analytics',
+    skill: 'bigquery_analytics',
     description: 'Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation across 200 aligned customer records.',
     capabilities: [
       'Generates BigQuery Standard SQL from natural language',
@@ -73,9 +73,9 @@ Rules:
     name: 'Strategy Agent',
     role: 'SequentialAgent Pipeline',
     model: 'gemini-3.6-flash',
-    color: 'var(--color-purple)',
+    color: 'var(--color-primary)',
     icon: FileText,
-    skill: 'omnichannel_strategy',
+    skill: 'campaign_framework',
     description: 'SequentialAgent pipeline: a reasoning agent generates the strategy from analytics context, then a formatter agent structures the output as validated JSON via output_schema.',
     capabilities: [
       'Creates campaign frameworks with 3 strategic pillars',
@@ -104,9 +104,9 @@ Do NOT use any tools. Generate the strategy using your own reasoning.`,
     name: 'Content Agent',
     role: 'SequentialAgent Pipeline',
     model: 'gemini-3.6-flash',
-    color: 'var(--color-warning)',
+    color: 'var(--color-primary)',
     icon: Sparkles,
-    skill: 'brand_voice',
+    skill: 'brand_voice_craft',
     description: 'SequentialAgent pipeline: a reasoning agent generates creative assets from strategy context, then a formatter agent structures the output as validated JSON via output_schema.',
     capabilities: [
       'Drafts email templates with subject, preview text, body, and CTA',
@@ -133,7 +133,7 @@ Do NOT use any tools. Generate the content using your own creativity.`,
     name: 'Recommendation Agent',
     role: 'SequentialAgent Pipeline',
     model: 'gemini-3.6-flash',
-    color: '#10b981',
+    color: 'var(--color-primary)',
     icon: ShoppingBag,
     skill: 'product_recommender',
     description: 'SequentialAgent pipeline: curates 5 tailored product recommendations from the BigQuery catalog based on customer segment attributes and purchase patterns.',
@@ -163,9 +163,9 @@ Adhere to ProductRecommendationSchema.`,
     name: 'A2UI Banner Agent',
     role: 'SequentialAgent Pipeline',
     model: 'gemini-3.6-flash',
-    color: '#f97316',
+    color: 'var(--color-primary)',
     icon: Sparkles,
-    skill: 'a2ui-personalization',
+    skill: 'a2ui_personalization',
     description: 'SequentialAgent pipeline: designs interactive, personalized retail offer banners, Stammis grocery deal cards with recipe pairings, and H&M-style fashion drop cards.',
     capabilities: [
       'Generates personalized Swedish Stammis grocery offer cards (ICA) & high-fashion drop cards (Crazy Fashion)',
@@ -573,13 +573,13 @@ export default function AgentGraphVisualizer({ a2aTrace, modelArmor }) {
         </span>
       </div>
 
-      {/* Agent Nodes 2x2 Grid — Clickable */}
+      {/* Agent Nodes 2x3 Grid — Clickable */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '0.8rem',
+        gap: '0.75rem',
         background: 'var(--panel-bg)',
-        padding: '0.9rem',
+        padding: '0.85rem',
         borderRadius: '12px',
         border: '1px solid var(--border-color)'
       }}>
@@ -590,26 +590,42 @@ export default function AgentGraphVisualizer({ a2aTrace, modelArmor }) {
               key={agent.key}
               onClick={() => setSelectedAgent(agent.key)}
               style={{
-                ...nodeStyle(agent.color),
+                ...nodeStyle(),
                 cursor: 'pointer',
                 userSelect: 'none',
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = `0 4px 16px ${agent.color}20`;
+                e.currentTarget.style.borderColor = 'var(--border-highlight)';
+                e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.06)';
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.02)';
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Icon size={16} color={agent.color} />
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>{agent.name.replace('Marketing ', '').replace(' Agent', '')}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '6px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Icon size={13} color="var(--color-primary)" />
+                </div>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {agent.name.replace('Marketing ', '').replace(' Agent', '')}
+                </span>
               </div>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{agent.role}</span>
-              <span style={skillPill(agent.color)}>
-                <Zap size={10} /> {agent.skill}
+              <span style={skillPill()}>
+                <Zap size={10} color="var(--color-primary)" /> {agent.skill}
               </span>
             </div>
           );
@@ -699,27 +715,28 @@ export default function AgentGraphVisualizer({ a2aTrace, modelArmor }) {
 
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
 
-function nodeStyle(color) {
+function nodeStyle() {
   return {
     background: 'var(--bg-card)',
-    border: `1px solid ${color}`,
+    border: '1px solid var(--border-color)',
     borderRadius: '10px',
     padding: '0.75rem 0.85rem',
     display: 'flex',
     flexDirection: 'column',
     gap: '0.25rem',
-    transition: 'all 0.2s ease'
+    transition: 'all 0.18s ease',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
   };
 }
 
-function skillPill(color) {
+function skillPill() {
   return {
     fontSize: '0.66rem',
     fontWeight: 600,
-    color: color,
-    background: 'rgba(66, 133, 244, 0.12)',
-    border: `1px solid ${color}`,
-    borderRadius: '12px',
+    color: 'var(--text-muted)',
+    background: 'var(--bg-secondary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '6px',
     padding: '0.15rem 0.45rem',
     display: 'inline-flex',
     alignItems: 'center',
@@ -729,17 +746,8 @@ function skillPill(color) {
   };
 }
 
-function getSenderColor(sender) {
-  if (!sender) return 'var(--text-muted)';
-  const s = sender.toLowerCase();
-  if (s.includes('orchestrator')) return '#4f46e5';
-  if (s.includes('analytics') || s.includes('bigquery') || s.includes('sql')) return '#0284c7';
-  if (s.includes('recommendation') || s.includes('recommender') || s.includes('catalog')) return '#059669';
-  if (s.includes('a2ui') || s.includes('banner')) return '#f97316';
-  if (s.includes('strategy')) return '#7c3aed';
-  if (s.includes('content') || s.includes('creative')) return '#d97706';
-  if (s.includes('gateway') || s.includes('armor') || s.includes('security')) return '#e11d48';
-  return 'var(--text-muted)';
+function getSenderColor() {
+  return 'var(--color-primary)';
 }
 
 function formatAgentName(name) {
