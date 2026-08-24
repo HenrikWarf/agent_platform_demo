@@ -64,12 +64,17 @@ export default function SkillsInspector({ activeClient = {} }) {
       .catch(err => console.error(err));
   }, [clientId]);
 
+  useEffect(() => {
+    if (selectedSkill) {
+      fetch(`/api/skills/${selectedSkill}?client_id=${clientId}`)
+        .then(res => res.json())
+        .then(data => setSkillContent(data.content || 'No content found'))
+        .catch(() => setSkillContent('Error loading skill content'));
+    }
+  }, [selectedSkill, clientId]);
+
   const inspectSkill = (skillId) => {
     setSelectedSkill(skillId);
-    fetch(`/api/skills/${skillId}?client_id=${clientId}`)
-      .then(res => res.json())
-      .then(data => setSkillContent(data.content || 'No content found'))
-      .catch(() => setSkillContent('Error loading skill content'));
   };
 
   return (

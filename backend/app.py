@@ -309,7 +309,8 @@ def list_skills(client_id: str | None = None):
 @app.get("/api/skills/{skill_id}")
 def get_skill_detail(skill_id: str, client_id: str | None = None):
     """Returns content for a specific skill in the registry."""
-    return skill_registry.get_skill_content(skill_id)
+    target_client = client_id or _active_client_id
+    return skill_registry.get_skill_content(skill_id, client_id=target_client)
 
 @app.get("/api/bigquery/tables")
 def list_bigquery_tables():
