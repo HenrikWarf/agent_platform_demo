@@ -112,11 +112,13 @@ analytics_skill = load_skill_from_dir(skills_dir / "bigquery-customer-analytics"
 strategy_skill = load_skill_from_dir(skills_dir / "campaign-framework")
 content_skill = load_skill_from_dir(skills_dir / "brand-voice-craft")
 product_recommender_skill = load_skill_from_dir(skills_dir / "product-recommender")
+a2ui_skill = load_skill_from_dir(skills_dir / "a2ui-personalization")
 
 analytics_skillset = SkillToolset(skills=[analytics_skill])
 strategy_skillset = SkillToolset(skills=[strategy_skill])
 content_skillset = SkillToolset(skills=[content_skill])
 product_recommender_skillset = SkillToolset(skills=[product_recommender_skill])
+a2ui_skillset = SkillToolset(skills=[a2ui_skill])
 
 # ─── Analytics Agent (uses managed MCP BigQuery server) ───────────────────────
 
@@ -311,7 +313,23 @@ a2ui_reasoner = Agent(
 
 {active_context.company_prompt}
 
-Your role is to design tailored, interactive digital offer banners and UI components specifically formatted for {active_context.client_name}:
+Your role is to design tailored, interactive digital offer banners and UI components specifically formatted for {active_context.client_name}.
+
+================================================================================
+CRITICAL QUANTITY & SCOPE RULES (FOLLOW STRICTLY):
+================================================================================
+1. **Single Product Request (Default)**:
+   - If the user asks for "one product", "single banner", "only generate one product app banner", "1 offer", or does NOT explicitly ask for multiple products / bundle / basket:
+     - Generate EXACTLY 1 hero product deal.
+     - You MUST set `additional_deals` to None (null) for ICA Sverige. DO NOT include extra deal items.
+     - You MUST set `additional_look_items` to None (null) for Crazy Fashion. DO NOT include extra outfit items.
+2. **Multi-Deal Bundle / Basket Request (Explicitly Requested Only)**:
+   - ONLY when the user EXPLICITLY asks for "multiple deals", "bundle", "weekly basket", "dinner package", or "complete the look with matching pieces", include 1-3 complementary items in `additional_deals` (ICA) or `additional_look_items` (Crazy Fashion).
+3. **Strict User Alignment**: NEVER generate 3 products when the user asked for 1 product. Always respect the exact quantity requested.
+
+================================================================================
+RETAILER COMPONENT SPECIFICATIONS:
+================================================================================
 
 1. **If ICA Sverige**:
    - Design an interactive Swedish Grocery App Stammis Offer Banner with appetizing recipe integration:
@@ -324,6 +342,7 @@ Your role is to design tailored, interactive digital offer banners and UI compon
      - `product`: Swedish grocery item from catalog with `name`, `brand_line` ('ICA I love eco', 'Arla', 'ICA Gott Liv'), `volume_weight`, `origin_badge` ('Från Sverige 🇸🇪'), `eco_badge` ('KRAV 🌿'), `category`, `icon` ('tomato', 'milk', 'meat', 'fish', 'cheese', 'oil', etc.)
      - `pricing`: `deal_price_major` (e.g. '24'), `deal_price_minor` (e.g. '90'), `unit` ('kr/st'), `regular_price` ('34:90 kr/st'), `savings_text` ('Spara 10:00 (29% rabatt)'), `comparison_price` ('Jfr-pris 16:60/l'), `limit_text` ('Max 2 köp/stammis')
      - `valid_until`: e.g. 'Söndag 24 aug', `days_remaining`: 3
+     - `additional_deals`: None / null unless the user explicitly requested a multi-deal bundle.
      - **Recipe Integration (Crucial for ICA)**: ALWAYS generate an inspiring Swedish meal pairing (`recipe_suggestion`) matching the featured ingredient:
        - `title`: e.g. 'Klassisk Bolognese med Ekologiska Tomater & Basilika'
        - `prep_time`: '25 min'
@@ -332,7 +351,6 @@ Your role is to design tailored, interactive digital offer banners and UI compon
        - `cost_per_serving`: e.g. 'ca 24 kr/port'
        - `ingredients`: 4-6 ingredients with measurements (e.g. ['400g Ekologiska Krossade Tomater', '500g Svensk Nötfärs 12%', '1 gul lök', '2 klyftor vitlök', 'Spaghetti'])
        - `instructions_summary`: Short 1-2 sentence culinary tip
-     - **Multi-Deal Bundles**: If the user asks for multiple deals, dinner bundles, or a weekly basket, include 1-3 complementary items in `additional_deals` (e.g. Nötfärs + Krossade Tomater + Rapsolja).
 
 2. **If Crazy Fashion (H&M-Style Editorial Drop Card)**:
    - Design an H&M-inspired high-contrast fashion editorial drop card:
@@ -346,13 +364,13 @@ Your role is to design tailored, interactive digital offer banners and UI compon
      - `color_options`: 3 tasteful color names (e.g. ['Oatmeal Heather', 'Midnight Black', 'Sage Green'])
      - `size_options`: ['XS', 'S', 'M', 'L', 'XL']
      - `pricing`: `regular_price` ('€79.99'), `member_price` ('€59.99'), `discount_pct` ('-25% MEMBER OFFER'), `crazy_club_points` ('+150 Club Points'), `garment_recycling_bonus` ('Extra -15% with garment recycling voucher')
-     - `additional_look_items`: Optional 1-2 pieces to complete the outfit
+     - `additional_look_items`: None / null unless the user explicitly requested matching outfit pieces.
      - `personalization_reason`: English rationale explaining why this was curated for the customer cohort
      - `target_persona`: e.g. 'VIP Fashionista', 'Eco Trendsetter'
      - `cta_text`: 'Claim Member Deal & Shop Now'
      - `valid_until`: 'Sunday Midnight'
 """,
-    tools=[mcp_toolset],
+    tools=[mcp_toolset, a2ui_skillset],
     output_key="a2ui_reasoning",
 )
 
@@ -363,7 +381,9 @@ a2ui_formatter = Agent(
     instruction="""Convert the interactive component design from the conversation into the required JSON structure adhering to A2UIComponentSchema.
 Depending on the active client in the conversation:
 - If ICA Sverige: Set `client_type` to 'ica_sweden' and populate `ica_offer_banner` with all fields. Leave `fashion_drop_card` as null.
+  - If the user requested only 1 single product or no multi-deal bundle was generated, set `additional_deals` to null.
 - If Crazy Fashion: Set `client_type` to 'crazy_fashion' and populate `fashion_drop_card` with all fields. Leave `ica_offer_banner` as null.
+  - If the user requested only 1 single product or no outfit pieces were generated, set `additional_look_items` to null.
 """,
     output_schema=A2UIComponentSchema,
     output_key="a2ui_result",

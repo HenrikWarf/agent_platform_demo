@@ -56,6 +56,24 @@ SKILLS = [
             "social media posts, and targeted ad copy."
         ),
     },
+    {
+        "dir": "product-recommender",
+        "skill_id": "product-recommender",
+        "display_name": "Product Recommendations & Merchandising",
+        "description": (
+            "Analyzes customer segment traits and curates data-driven "
+            "product assortments from the BigQuery product catalog."
+        ),
+    },
+    {
+        "dir": "a2ui-personalization",
+        "skill_id": "a2ui-personalization",
+        "display_name": "A2UI Personalization & Offer Banners",
+        "description": (
+            "Designs personalized interactive retail UI components, Stammis "
+            "grocery app offer banners with recipe pairings, and fashion drop cards."
+        ),
+    },
 ]
 
 
