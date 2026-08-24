@@ -230,6 +230,11 @@ Brand Guidelines for {active_context.client_name}:
 - Loyalty Program: Reference {active_context.loyalty_program_name}.
 - SMS copy must be STRICTLY under 160 characters (including links and codes).
 
+Formatting & Presentation Guidelines:
+- Write clean, human-readable markdown prose using markdown headers (###), bold labels for `Subject:`, `Preview Text:`, `Body:`, and `CTA Button:`.
+- Do NOT wrap email copy or proposals inside triple-backtick (```) code fences. Code blocks are reserved strictly for technical code/SQL.
+- When multiple proposals or variations are requested, format each clearly with its own heading (e.g. `### Proposal 1: [Concept/Theme]`, `### Proposal 2: [Concept/Theme]`).
+
 Do NOT use any tools. Generate the content using your own creativity.
 Refer to the brand-voice-craft skill for brand voice guidelines and examples.""",
     tools=[content_skillset],

@@ -826,6 +826,9 @@ export default function ChatInterface({
               borderRadius: '14px',
               fontSize: '0.88rem',
               lineHeight: '1.6',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              boxSizing: 'border-box',
               boxShadow: msg.role === 'user'
                 ? `0 4px 14px ${(activeClient?.primary_color || '#4f46e5')}40`
                 : 'none'
@@ -1829,13 +1832,16 @@ function MarkdownRenderer({ content, isUser }) {
           const codeStr = String(children).replace(/\n$/, '');
           if (inline) {
             return (
-              <code style={{ background: 'var(--chip-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.84rem', color: 'var(--color-primary)' }}>{codeStr}</code>
+              <code style={{ background: 'var(--chip-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.84rem', color: 'var(--color-primary)', wordBreak: 'break-word' }}>{codeStr}</code>
             );
           }
-          const lang = (className || '').replace('language-', '');
-          const isSql = lang === 'sql' || codeStr.toUpperCase().includes('SELECT');
-          // Only SQL gets the collapsible accordion
-          if (isSql) {
+          const lang = (className || '').replace('language-', '').toLowerCase();
+          const trimmedUpper = codeStr.trim().toUpperCase();
+          const isRealSql = lang === 'sql' ||
+            ((trimmedUpper.startsWith('SELECT ') || trimmedUpper.startsWith('WITH ')) && (trimmedUpper.includes(' FROM ') || trimmedUpper.includes('\nFROM ')));
+
+          // Only actual BigQuery SQL gets the collapsible accordion
+          if (isRealSql) {
             const cleanCode = dedentCode(codeStr);
             return (
               <details style={{
@@ -1874,9 +1880,33 @@ function MarkdownRenderer({ content, isUser }) {
               </details>
             );
           }
-          // Non-SQL code: render as simple styled inline code
+
+          // Non-SQL multiline code/text blocks: render as a clean, wrapped, styled block box
           return (
-            <code style={{ background: 'var(--chip-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.84rem', color: 'var(--color-primary)' }}>{codeStr}</code>
+            <div style={{
+              background: 'var(--code-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              margin: '0.6rem 0',
+              padding: '0.8rem 1rem',
+              overflowX: 'auto',
+              maxWidth: '100%',
+              boxSizing: 'border-box'
+            }}>
+              <pre style={{
+                margin: 0,
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.82rem',
+                color: 'var(--text-main)',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                textAlign: 'left',
+                lineHeight: '1.55'
+              }}>
+                <code>{codeStr}</code>
+              </pre>
+            </div>
           );
         },
         table: ({ children }) => (
