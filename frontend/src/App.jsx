@@ -208,9 +208,22 @@ export default function App() {
             <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
 
-          <div className="status-badge" style={{ borderColor: `${activeClient.primary_color}40` }}>
-            <div className="pulse-dot" style={{ background: activeClient.primary_color }}></div>
-            <span>Agent Gateway Active</span>
+          <div 
+            className="status-badge" 
+            style={{ 
+              borderColor: `${activeClient.primary_color}35`,
+              background: activeClient.badge_color || 'var(--bg-secondary)',
+              color: 'var(--text-main)'
+            }}
+          >
+            <div 
+              className="pulse-dot" 
+              style={{ 
+                background: activeClient.primary_color,
+                boxShadow: `0 0 8px ${activeClient.primary_color}80`
+              }}
+            ></div>
+            <span style={{ fontWeight: 600 }}>Agent Gateway Active</span>
           </div>
         </div>
       </header>
