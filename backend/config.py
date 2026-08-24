@@ -22,8 +22,13 @@ class Config:
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
     GEMINI_LOCATION: str = os.getenv("GEMINI_LOCATION", "global")
 
-    # Agent Engine & Agent Gateway
+    # Agent Engine & Agent Gateway Multi-Tenant Configuration
     AGENT_RUNTIME_ID: str = os.getenv("AGENT_RUNTIME_ID", "")
+    AGENT_RUNTIME_ID_CRAZY_FASHION: str = os.getenv(
+        "AGENT_RUNTIME_ID_CRAZY_FASHION",
+        os.getenv("AGENT_RUNTIME_ID", "projects/1047232371360/locations/us-central1/reasoningEngines/3829020106671783936")
+    )
+    AGENT_RUNTIME_ID_ICA_SVERIGE: str = os.getenv("AGENT_RUNTIME_ID_ICA_SVERIGE", os.getenv("AGENT_RUNTIME_ID_ICA", ""))
     AGENT_GATEWAY_URL: str = os.getenv("AGENT_GATEWAY_URL", "projects/agent-demo-09/locations/us-central1/agentGateways/marketing-agent-gateway")
     GEMINI_ENTERPRISE_APP_ID: str = os.getenv("GEMINI_ENTERPRISE_APP_ID", "projects/ml-developer-project-fe07/locations/global/collections/default_collection/engines/crazy-furniture-app-dev_1770975798363")
 

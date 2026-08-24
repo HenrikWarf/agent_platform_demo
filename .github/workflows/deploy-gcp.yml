@@ -15,7 +15,9 @@ on:
           - all
           - backend_only
           - frontend_only
-          - agents_only
+          - agents_all
+          - agents_crazy_fashion_only
+          - agents_ica_sverige_only
           - skills_only
           - infra_only
 
@@ -40,7 +42,8 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'backend_only')) }}
       frontend: ${{ steps.filter.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'frontend_only')) }}
-      agents: ${{ steps.filter.outputs.agents == 'true' || steps.filter.outputs.eval == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }}
+      agents_crazy_fashion: ${{ steps.filter.outputs.agents_common == 'true' || steps.filter.outputs.agents_crazy_fashion == 'true' || steps.filter.outputs.eval == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_all' || github.event.inputs.service == 'agents_crazy_fashion_only')) }}
+      agents_ica_sverige: ${{ steps.filter.outputs.agents_common == 'true' || steps.filter.outputs.agents_ica_sverige == 'true' || steps.filter.outputs.eval == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_all' || github.event.inputs.service == 'agents_ica_sverige_only')) }}
       skills: ${{ steps.filter.outputs.skills == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'skills_only')) }}
       infra: ${{ steps.filter.outputs.infra == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'infra_only')) }}
       any_deploy: ${{ steps.summarize.outputs.any_deploy }}
@@ -55,12 +58,22 @@ jobs:
               - 'deploy/Dockerfile.backend'
             frontend:
               - 'frontend/**'
-            agents:
-              - 'app/**'
-              - 'fast_api_app.py'
+            agents_common:
+              - 'app/agent.py'
+              - 'app/fast_api_app.py'
+              - 'app/schemas.py'
+              - 'app/company_context.py'
+              - 'app/contexts/base.py'
+              - 'app/contexts/registry.py'
+              - 'app/app_utils/**'
+              - 'skills/**'
               - 'requirements.txt'
               - 'pyproject.toml'
               - 'Dockerfile'
+            agents_crazy_fashion:
+              - 'app/contexts/crazy_fashion.py'
+            agents_ica_sverige:
+              - 'app/contexts/ica_sweden.py'
             skills:
               - 'skills/**'
               - 'deploy/register_skills.py'
@@ -77,14 +90,17 @@ jobs:
           echo "|-----------|---------|-------------|" >> $GITHUB_STEP_SUMMARY
           echo "| Backend   | ${{ steps.filter.outputs.backend }} | ${{ steps.filter.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'backend_only')) }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend  | ${{ steps.filter.outputs.frontend }} | ${{ steps.filter.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'frontend_only')) }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Agents    | ${{ steps.filter.outputs.agents }} | ${{ steps.filter.outputs.agents == 'true' || steps.filter.outputs.eval == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_only')) }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Crazy Fashion Agent | ${{ steps.filter.outputs.agents_common == 'true' || steps.filter.outputs.agents_crazy_fashion == 'true' }} | ${{ steps.filter.outputs.agents_common == 'true' || steps.filter.outputs.agents_crazy_fashion == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_all' || github.event.inputs.service == 'agents_crazy_fashion_only')) }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ICA Sverige Agent   | ${{ steps.filter.outputs.agents_common == 'true' || steps.filter.outputs.agents_ica_sverige == 'true' }} | ${{ steps.filter.outputs.agents_common == 'true' || steps.filter.outputs.agents_ica_sverige == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'agents_all' || github.event.inputs.service == 'agents_ica_sverige_only')) }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Skills    | ${{ steps.filter.outputs.skills }} | ${{ steps.filter.outputs.skills == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'skills_only')) }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Infra     | ${{ steps.filter.outputs.infra }} | ${{ steps.filter.outputs.infra == 'true' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'infra_only')) }} |" >> $GITHUB_STEP_SUMMARY
 
           # Determine if any deployment is needed
           if [[ "${{ steps.filter.outputs.backend }}" == "true" ]] || \
              [[ "${{ steps.filter.outputs.frontend }}" == "true" ]] || \
-             [[ "${{ steps.filter.outputs.agents }}" == "true" ]] || \
+             [[ "${{ steps.filter.outputs.agents_common }}" == "true" ]] || \
+             [[ "${{ steps.filter.outputs.agents_crazy_fashion }}" == "true" ]] || \
+             [[ "${{ steps.filter.outputs.agents_ica_sverige }}" == "true" ]] || \
              [[ "${{ steps.filter.outputs.skills }}" == "true" ]] || \
              [[ "${{ steps.filter.outputs.infra }}" == "true" ]] || \
              [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
@@ -101,7 +117,7 @@ jobs:
   pre-deploy-eval:
     name: Pre-Deployment ADK Multi-Agent Evaluation Gate
     needs: [changes]
-    if: needs.changes.outputs.agents == 'true' || needs.changes.outputs.skills == 'true'
+    if: needs.changes.outputs.agents_crazy_fashion == 'true' || needs.changes.outputs.agents_ica_sverige == 'true' || needs.changes.outputs.skills == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -290,34 +306,62 @@ jobs:
             echo "⚠️ Model Armor template not found or misconfigured. Create it in Cloud Console → Model Armor."
           fi
 
-      # --- 4. ADK Agent Runtime Deployment ---
+      # --- 4a. Deploy Crazy Fashion Agent Runtime ---
       - name: Install uv (required by agents-cli)
-        if: needs.changes.outputs.agents == 'true'
+        if: needs.changes.outputs.agents_crazy_fashion == 'true' || needs.changes.outputs.agents_ica_sverige == 'true'
         uses: astral-sh/setup-uv@v6
 
-      - name: Deploy ADK Agent to Agent Runtime
-        if: needs.changes.outputs.agents == 'true'
+      - name: Deploy Crazy Fashion Agent to Agent Runtime
+        if: needs.changes.outputs.agents_crazy_fashion == 'true'
         run: |
-          echo "🚀 Deploying ADK Agent to Agent Runtime..."
+          echo "🚀 Deploying Crazy Fashion ADK Agent to Agent Runtime..."
           uv tool install google-agents-cli
           agents-cli deploy \
             --project ${{ env.GCP_PROJECT_ID }} \
             --region ${{ env.GCP_REGION }} \
+            --service-name crazy-fashion-marketing-agent \
+            --update-env-vars "TENANT_ID=crazy_fashion,LOGS_BUCKET_NAME=agent-demo-09-agent-platform-logs,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT" \
             --no-confirm-project
 
-      # --- 5. Publish Agent to Gemini Enterprise ---
-      - name: Publish Agent to Gemini Enterprise
-        if: needs.changes.outputs.agents == 'true'
+      # --- 4b. Deploy ICA Sverige Agent Runtime ---
+      - name: Deploy ICA Sverige Agent to Agent Runtime
+        if: needs.changes.outputs.agents_ica_sverige == 'true'
+        run: |
+          echo "🚀 Deploying ICA Sverige ADK Agent to Agent Runtime..."
+          uv tool install google-agents-cli
+          agents-cli deploy \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --region ${{ env.GCP_REGION }} \
+            --service-name ica-sverige-marketing-agent \
+            --update-env-vars "TENANT_ID=ica_sweden,LOGS_BUCKET_NAME=agent-demo-09-agent-platform-logs,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT" \
+            --no-confirm-project
+
+      # --- 5a. Publish Crazy Fashion Agent to Gemini Enterprise ---
+      - name: Publish Crazy Fashion Agent to Gemini Enterprise
+        if: needs.changes.outputs.agents_crazy_fashion == 'true'
         continue-on-error: true
         env:
           GEMINI_ENTERPRISE_APP_ID: projects/ml-developer-project-fe07/locations/global/collections/default_collection/engines/crazy-furniture-app-dev_1770975798363
         run: |
-          echo "🚀 Publishing Agent to Gemini Enterprise..."
-          echo "ℹ️  Note: Gemini Enterprise app must exist first. Create in Cloud Console → Gemini Enterprise → Apps."
+          echo "🚀 Publishing Crazy Fashion Agent to Gemini Enterprise..."
           agents-cli publish gemini-enterprise \
             --gemini-enterprise-app-id "$GEMINI_ENTERPRISE_APP_ID" \
-            --display-name "Marketing Campaign Orchestrator" \
-            --description "Multi-agent marketing platform: BigQuery analytics, omnichannel strategy, and creative content generation" \
+            --display-name "Crazy Fashion Marketing Agent" \
+            --description "Crazy Fashion multi-agent retail marketing platform: BigQuery analytics, fashion recommendations, omnichannel strategy, and creative copy" \
+            --registration-type adk
+
+      # --- 5b. Publish ICA Sverige Agent to Gemini Enterprise ---
+      - name: Publish ICA Sverige Agent to Gemini Enterprise
+        if: needs.changes.outputs.agents_ica_sverige == 'true'
+        continue-on-error: true
+        env:
+          GEMINI_ENTERPRISE_APP_ID: projects/ml-developer-project-fe07/locations/global/collections/default_collection/engines/crazy-furniture-app-dev_1770975798363
+        run: |
+          echo "🚀 Publishing ICA Sverige Agent to Gemini Enterprise..."
+          agents-cli publish gemini-enterprise \
+            --gemini-enterprise-app-id "$GEMINI_ENTERPRISE_APP_ID" \
+            --display-name "ICA Sverige Marketing Agent" \
+            --description "ICA Sverige multi-agent grocery marketing platform: BigQuery Stammis analytics, recipe deal banners, and omnichannel campaigns" \
             --registration-type adk
 
       # --- 6. Register Skills in Agent Registry (Preview) ---
@@ -337,7 +381,8 @@ jobs:
           echo "|---------|----------|" >> $GITHUB_STEP_SUMMARY
           echo "| Backend (Cloud Run) | ${{ needs.changes.outputs.backend }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend (Cloud Run) | ${{ needs.changes.outputs.frontend }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ADK Agent (Agent Runtime) | ${{ needs.changes.outputs.agents }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Crazy Fashion Agent | ${{ needs.changes.outputs.agents_crazy_fashion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ICA Sverige Agent   | ${{ needs.changes.outputs.agents_ica_sverige }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Skills (Agent Registry) | ${{ needs.changes.outputs.skills }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Infra (Gateway/Observability) | ${{ needs.changes.outputs.infra }} |" >> $GITHUB_STEP_SUMMARY
 
@@ -347,7 +392,7 @@ jobs:
   post-deploy-smoke-test:
     name: Post-Deploy Live Smoke Test
     needs: [changes, deploy-to-gcp]
-    if: needs.changes.outputs.agents == 'true'
+    if: needs.changes.outputs.agents_crazy_fashion == 'true' || needs.changes.outputs.agents_ica_sverige == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

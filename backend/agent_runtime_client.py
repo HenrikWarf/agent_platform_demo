@@ -48,8 +48,8 @@ class AgentRuntimeClient:
         if not self.runtime_id:
             self.runtime_id = self._read_deployment_metadata()
 
-        # Build URLs: _base_url for /api passthrough, _governed_url for :streamQuery
-        self._base_url = self._build_passthrough_url()
+        # Pre-cache URLs for default runtime
+        self._governed_url, self._base_url = self._build_urls_for_runtime(self.runtime_id)
 
     def _read_deployment_metadata(self) -> str | None:
         """Read runtime ID from deployment_metadata.json if it exists."""
@@ -68,27 +68,28 @@ class AgentRuntimeClient:
                 logger.warning(f"Failed to read deployment_metadata.json: {e}")
         return None
 
-    def _build_passthrough_url(self) -> str | None:
-        """Build the Agent Engine base URLs from the runtime resource ID.
+    def _resolve_runtime_id(self, client_id: str | None = None) -> str | None:
+        """Resolve the target Agent Runtime ID based on the active client context."""
+        client = (client_id or "").lower()
+        if "ica" in client:
+            return Config.AGENT_RUNTIME_ID_ICA_SVERIGE or self.runtime_id
+        return Config.AGENT_RUNTIME_ID_CRAZY_FASHION or self.runtime_id
 
-        Two URL patterns are used:
-        - _base_url: :streamQuery / :query governed endpoints (Agent Gateway + Model Armor)
-        - _passthrough_url: /api passthrough for session management (not governed)
+    def _build_urls_for_runtime(self, runtime_id: str | None) -> tuple[str | None, str | None]:
+        """Build (governed_url, passthrough_url) from a runtime resource ID.
 
-        Agent Gateway only screens query/streamQuery methods, so session
-        management uses the /api passthrough while actual prompts use :streamQuery.
+        - governed_url: :streamQuery / :query governed endpoints (Agent Gateway + Model Armor)
+        - passthrough_url: /api passthrough for session management (not governed)
         """
-        if not self.runtime_id:
-            return None
-        # runtime_id format: projects/{number}/locations/{location}/reasoningEngines/{id}
-        parts = self.runtime_id.split("/")
+        if not runtime_id:
+            return None, None
+        parts = runtime_id.split("/")
         if len(parts) >= 6:
             location = parts[3]  # e.g. "us-central1"
-            # Governed endpoint for :streamQuery
-            self._governed_url = f"https://{location}-aiplatform.googleapis.com/v1beta1/{self.runtime_id}"
-            # /api passthrough for session management
-            return f"https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/{self.runtime_id}/api"
-        return None
+            governed_url = f"https://{location}-aiplatform.googleapis.com/v1beta1/{runtime_id}"
+            passthrough_url = f"https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/{runtime_id}/api"
+            return governed_url, passthrough_url
+        return None, None
 
     def _get_auth_headers(self) -> dict[str, str]:
         """Get authenticated headers using Google Cloud default credentials."""
@@ -102,13 +103,14 @@ class AgentRuntimeClient:
             "Content-Type": "application/json",
         }
 
-    def _create_session(self, user_id: str, session_id: str | None = None) -> str:
+    def _create_session(self, user_id: str, session_id: str | None = None, base_url: str | None = None) -> str:
         """Create a new ADK session via the /api passthrough.
 
         Session management doesn't need Agent Gateway governance —
         only actual prompts need Model Armor screening.
         """
-        url = f"{self._base_url}/apps/app/users/{user_id}/sessions"
+        target_base_url = base_url or self._base_url
+        url = f"{target_base_url}/apps/app/users/{user_id}/sessions"
         payload = {"id": session_id} if session_id else {}
         resp = requests.post(url, headers=self._get_auth_headers(), json=payload, timeout=30)
         if resp.status_code in (200, 201):
@@ -124,41 +126,42 @@ class AgentRuntimeClient:
         return created_id
 
     def get_or_create_session(
-        self, user_id: str | None = None, session_id: str | None = None
+        self, user_id: str | None = None, session_id: str | None = None, client_id: str | None = None
     ) -> tuple[str, str, bool]:
-        """Ensure an active ADK session exists on the Agent Runtime.
+        """Ensure an active ADK session exists on the target Agent Runtime for the client.
 
         Returns (user_id, session_id, is_new_session).
-        If session_id is provided and verified in memory or on the ADK server,
-        it is reused (is_new_session = False).
-        If session_id is not provided or unverified, a session is created/registered (is_new_session = True).
         """
         user_id = user_id or f"user-{uuid.uuid4().hex[:8]}"
+        target_runtime_id = self._resolve_runtime_id(client_id)
+        _, target_base_url = self._build_urls_for_runtime(target_runtime_id)
 
-        if session_id and (user_id, session_id) in self._active_sessions:
+        session_key = (f"{client_id or 'default'}:{user_id}", session_id or "")
+
+        if session_id and session_key in self._active_sessions:
             return (user_id, session_id, False)
 
-        if not self._base_url:
+        if not target_base_url:
             sid = session_id or f"session-{uuid.uuid4().hex[:8]}"
-            self._active_sessions.add((user_id, sid))
+            self._active_sessions.add((f"{client_id or 'default'}:{user_id}", sid))
             return (user_id, sid, not bool(session_id))
 
         if session_id:
             try:
-                sid = self._create_session(user_id, session_id=session_id)
-                self._active_sessions.add((user_id, sid))
+                sid = self._create_session(user_id, session_id=session_id, base_url=target_base_url)
+                self._active_sessions.add((f"{client_id or 'default'}:{user_id}", sid))
                 return (user_id, sid, True)
             except Exception as e:
                 logger.warning(f"Failed to register custom session {session_id}: {e}. Falling back.")
 
         try:
-            created_sid = self._create_session(user_id)
-            self._active_sessions.add((user_id, created_sid))
+            created_sid = self._create_session(user_id, base_url=target_base_url)
+            self._active_sessions.add((f"{client_id or 'default'}:{user_id}", created_sid))
             return (user_id, created_sid, True)
         except Exception as e:
             logger.error(f"Failed to create session on Agent Runtime: {e}")
             fallback_sid = session_id or f"session-{uuid.uuid4().hex[:8]}"
-            self._active_sessions.add((user_id, fallback_sid))
+            self._active_sessions.add((f"{client_id or 'default'}:{user_id}", fallback_sid))
             return (user_id, fallback_sid, True)
 
     def query_stream(
@@ -210,9 +213,13 @@ class AgentRuntimeClient:
                 f"USER QUESTION:\n{prompt}"
             )
 
+        # Resolve target runtime and URLs
+        target_runtime_id = self._resolve_runtime_id(client_id)
+        governed_url, _ = self._build_urls_for_runtime(target_runtime_id)
+
         # Resolve persistent session
         user_id, session_id, is_new_session = self.get_or_create_session(
-            user_id=user_id, session_id=session_id
+            user_id=user_id, session_id=session_id, client_id=client_id
         )
 
         # Step 1: Orchestrator A2A Supervisor Step
@@ -238,8 +245,8 @@ class AgentRuntimeClient:
         recorded_steps.append(step_orch)
         yield {"type": "step", "step": step_orch}
 
-        if not self._governed_url:
-            err_msg = "Agent Runtime is not configured. Deploy the agent first with 'agents-cli deploy'."
+        if not governed_url:
+            err_msg = f"Agent Runtime for {client_ctx.client_name} is not configured. Deploy the agent first with 'agents-cli deploy'."
             step_err = {
                 "id": f"step_err_{uuid.uuid4().hex[:6]}",
                 "timestamp": now_str(),
@@ -277,7 +284,7 @@ class AgentRuntimeClient:
         seen_tools = set()
 
         try:
-            stream_url = f"{self._governed_url}:streamQuery"
+            stream_url = f"{governed_url}:streamQuery"
             resp = requests.post(
                 stream_url,
                 headers=self._get_auth_headers(),
