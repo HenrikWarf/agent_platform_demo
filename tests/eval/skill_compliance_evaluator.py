@@ -41,7 +41,11 @@ def evaluate(instance):
     prompt_text = _extract_text(instance.get("prompt", ""))
     response_text = _extract_text(instance.get("response", ""))
 
-    eval_prompt = f"""You are the Multi-Agent Skill Compliance Officer for Crazy Fashion.
+    tenant = os.environ.get("TENANT_ID", "crazy_fashion")
+    client_name = "ICA Sverige" if tenant == "ica_sweden" else "Crazy Fashion"
+    currency = "SEK (kr)" if tenant == "ica_sweden" else "EUR (€)"
+
+    eval_prompt = f"""You are the Multi-Agent Skill Compliance Officer for {client_name}.
 Evaluate whether the agent's response strictly adheres to the relevant skill specifications:
 
 Skill Rules:
@@ -49,20 +53,20 @@ Skill Rules:
    - Exactly 3 campaign pillars with name, description, and channel assignments.
    - Exactly 4 channel mix entries with percentage weights summing to 100%.
    - Exactly 3 testable A/B testing hypotheses.
-   - Projected revenue recovery in EUR (€).
-2. `brand-voice-craft` (for copywriting tasks):
+   - Projected revenue recovery in {currency}.
+2. `brand-voice` (for copywriting tasks):
    - Scopes output strictly to the requested channel(s) (Email, Social, or SMS). For multi-channel requests, outputs all three.
-   - Email template (when requested): subject line (max 10 words), preview text (1 sentence), body (3-4 sentences), CTA button (max 5 words).
+   - Email template (when requested): subject line, preview text, body, CTA button.
    - Social media posts (when requested): platform name and copy.
    - SMS copy (when requested): strictly max 160 characters.
-   - Brand voice: confident, inclusive, sustainability-aware, and EUR (€) pricing.
-3. `bigquery-customer-analytics` (for data tasks):
+   - Brand voice: aligned with {client_name} and pricing in {currency}.
+3. `customer-analytics` (for data tasks):
    - Data summaries are fact-grounded in BigQuery query results without fabricated numbers.
-   - Monetary values in EUR (€).
+   - Monetary values in {currency}.
 4. `product-recommender` (for merchandise recommendation tasks):
-   - Curates exactly 5 products from catalog with valid product_id, product_name, category, price_eur, and sustainability status.
+   - Curates exactly 5 products from catalog with valid product_id, product_name, category, price, and sustainability status.
    - Provides clear 2-3 sentence data-driven reasoning for each recommended item linked to segment attributes.
-   - Outlines an overarching merchandising strategy for the segment.
+   - Outlines an overarching merchandising strategy for the segment in {currency}.
 5. Direct Q&A / Safety:
    - For direct questions or adversarial requests, skill rules that do not apply should be marked compliant.
 

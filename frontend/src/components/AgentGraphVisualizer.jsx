@@ -535,17 +535,19 @@ function sectionHeader() {
 
 /* ── Main Visualizer Component ─────────────────────────────────────────────── */
 
-export default function AgentGraphVisualizer({ a2aTrace, modelArmor }) {
+export default function AgentGraphVisualizer({ a2aTrace, modelArmor, activeClient }) {
   const isArmorPassed = modelArmor?.passed !== false;
   const [selectedAgent, setSelectedAgent] = useState(null);
+  const isIca = activeClient?.client_id === 'ica_sweden';
+  const prefix = isIca ? 'ica-' : 'crazy-fashion-';
 
   const agents = [
     { key: 'orchestrator', ...AGENT_META.orchestrator },
-    { key: 'analytics', ...AGENT_META.analytics },
-    { key: 'recommendation', ...AGENT_META.recommendation },
-    { key: 'a2ui', ...AGENT_META.a2ui },
-    { key: 'strategy', ...AGENT_META.strategy },
-    { key: 'content', ...AGENT_META.content },
+    { key: 'analytics', ...AGENT_META.analytics, skill: `${prefix}customer-analytics` },
+    { key: 'recommendation', ...AGENT_META.recommendation, skill: `${prefix}product-recommender` },
+    { key: 'a2ui', ...AGENT_META.a2ui, skill: `${prefix}a2ui-personalization` },
+    { key: 'strategy', ...AGENT_META.strategy, skill: `${prefix}campaign-framework` },
+    { key: 'content', ...AGENT_META.content, skill: `${prefix}brand-voice` },
   ];
 
   return (

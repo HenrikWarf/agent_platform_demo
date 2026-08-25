@@ -1750,7 +1750,7 @@ export default function ChatInterface({
 
       {/* Right Column: Live A2A Visualizer */}
       <div className="glass-panel" style={{ overflow: 'hidden', minHeight: 0 }}>
-        <AgentGraphVisualizer a2aTrace={currentTrace} modelArmor={currentArmor} />
+        <AgentGraphVisualizer activeClient={activeClient} a2aTrace={currentTrace} modelArmor={currentArmor} />
       </div>
     </div>
   );

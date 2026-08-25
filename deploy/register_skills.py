@@ -28,50 +28,96 @@ LOCATION = os.getenv("AGENT_REGISTRY_LOCATION", "global")
 
 # Skills to register: maps skill directory name -> registry metadata
 SKILLS = [
+    # ─── Crazy Fashion Skills ────────────────────────────────────────────────
     {
-        "dir": "bigquery-customer-analytics",
-        "skill_id": "bigquery-customer-analytics",
-        "display_name": "BigQuery Customer Analytics",
+        "dir": "crazy-fashion-customer-analytics",
+        "skill_id": "crazy-fashion-customer-analytics",
+        "display_name": "Crazy Fashion — BigQuery Customer Analytics",
         "description": (
-            "Executes BigQuery SQL queries on customer datasets "
-            "(RFM summary, Demographics 360, Transactions) to extract "
-            "cohort metrics, customer counts, and revenue-at-risk."
+            "Executes BigQuery SQL queries on Crazy Fashion customer datasets "
+            "(`marketing_analytics`) with EUR revenue analysis and cohort metrics."
         ),
     },
     {
-        "dir": "campaign-framework",
-        "skill_id": "campaign-framework",
-        "display_name": "Omnichannel Strategy Framework",
+        "dir": "crazy-fashion-campaign-framework",
+        "skill_id": "crazy-fashion-campaign-framework",
+        "display_name": "Crazy Fashion — Campaign Strategy Framework",
         "description": (
-            "Generates multi-channel marketing strategies, campaign "
-            "frameworks, channel allocation, and ROI projections."
+            "Formulates omnichannel marketing strategies, seasonal drop plans, "
+            "garment recycling drives, and EUR ROI projections for Crazy Fashion."
         ),
     },
     {
-        "dir": "brand-voice-craft",
-        "skill_id": "brand-voice-craft",
-        "display_name": "Brand Voice & Creative Copy",
+        "dir": "crazy-fashion-brand-voice",
+        "skill_id": "crazy-fashion-brand-voice",
+        "display_name": "Crazy Fashion — Brand Voice & Creative Copy",
         "description": (
-            "Drafts brand-aligned subject lines, email templates, "
-            "social media posts, and targeted ad copy."
+            "Drafts editorial emails, Instagram/TikTok captions, and SMS "
+            "aligned with Crazy Fashion Nordic aesthetic and Crazy Club loyalty."
         ),
     },
     {
-        "dir": "product-recommender",
-        "skill_id": "product-recommender",
-        "display_name": "Product Recommendations & Merchandising",
+        "dir": "crazy-fashion-product-recommender",
+        "skill_id": "crazy-fashion-product-recommender",
+        "display_name": "Crazy Fashion — Product Merchandising",
         "description": (
-            "Analyzes customer segment traits and curates data-driven "
-            "product assortments from the BigQuery product catalog."
+            "Curates high-affinity fashion assortments from the Crazy Fashion "
+            "product catalog with EUR pricing and segment heuristics."
         ),
     },
     {
-        "dir": "a2ui-personalization",
-        "skill_id": "a2ui-personalization",
-        "display_name": "A2UI Personalization & Offer Banners",
+        "dir": "crazy-fashion-a2ui-personalization",
+        "skill_id": "crazy-fashion-a2ui-personalization",
+        "display_name": "Crazy Fashion — A2UI Drop Card Personalization",
         "description": (
-            "Designs personalized interactive retail UI components, Stammis "
-            "grocery app offer banners with recipe pairings, and fashion drop cards."
+            "Designs interactive H&M-style editorial fashion drop card UI "
+            "components for Crazy Fashion (Studio Collection, member pricing)."
+        ),
+    },
+    # ─── ICA Sverige Skills ──────────────────────────────────────────────────
+    {
+        "dir": "ica-customer-analytics",
+        "skill_id": "ica-customer-analytics",
+        "display_name": "ICA Sverige — BigQuery Stammis Analytics",
+        "description": (
+            "Executes BigQuery SQL queries on ICA Sverige Swedish grocery "
+            "datasets (`marketing_analytics_ica`) with SEK revenue analysis."
+        ),
+    },
+    {
+        "dir": "ica-campaign-framework",
+        "skill_id": "ica-campaign-framework",
+        "display_name": "ICA Sverige — Campaign Strategy Framework",
+        "description": (
+            "Formulates Swedish grocery omnichannel marketing strategies, Stammis "
+            "weekly campaigns, meal inspiration themes, and SEK ROI projections."
+        ),
+    },
+    {
+        "dir": "ica-brand-voice",
+        "skill_id": "ica-brand-voice",
+        "display_name": "ICA Sverige — Brand Voice & Creative Copy",
+        "description": (
+            "Drafts warm Swedish grocery newsletters, recipe reels, and Stammis "
+            "SMS with 'Ladda till kortet' loyalty integration for ICA Sverige."
+        ),
+    },
+    {
+        "dir": "ica-product-recommender",
+        "skill_id": "ica-product-recommender",
+        "display_name": "ICA Sverige — Product Merchandising & Recipe Pairing",
+        "description": (
+            "Curates Swedish grocery assortments and meal pairings from the ICA "
+            "product catalog based on customer segments and dietary preferences."
+        ),
+    },
+    {
+        "dir": "ica-a2ui-personalization",
+        "skill_id": "ica-a2ui-personalization",
+        "display_name": "ICA Sverige — A2UI Stammis Offer Banner",
+        "description": (
+            "Designs interactive Swedish Stammis grocery offer banner UI "
+            "components for ICA Sverige (deal pricing 24:90 kr/st, recipe pairings)."
         ),
     },
 ]

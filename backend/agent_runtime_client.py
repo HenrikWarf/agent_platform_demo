@@ -845,6 +845,7 @@ class AgentRuntimeClient:
     def get_agent_metadata(self, client_id: str | None = None) -> list:
         """Return static agent metadata for the /api/agents endpoint tailored to active client."""
         is_ica = (client_id == "ica_sweden")
+        prefix = "ica-" if is_ica else "crazy-fashion-"
         client_name = "ICA Sverige" if is_ica else "Crazy Fashion"
         dataset = "agent-demo-09.marketing_analytics_ica" if is_ica else "agent-demo-09.marketing_analytics"
         curr = "SEK (kr)" if is_ica else "EUR (€)"
@@ -864,7 +865,7 @@ class AgentRuntimeClient:
                 "name": f"Customer Insights & Analytics Agent ({client_name})",
                 "type": "specialist",
                 "description": f"Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation on `{dataset}`.",
-                "skills": ["bigquery-customer-analytics"],
+                "skills": [f"{prefix}customer-analytics"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
@@ -873,7 +874,7 @@ class AgentRuntimeClient:
                 "name": f"Product Recommendation Pipeline ({client_name})",
                 "type": "specialist",
                 "description": f"Curates tailored 5-product assortments and merchandising strategies for {client_name} customer cohorts.",
-                "skills": ["product-recommender"],
+                "skills": [f"{prefix}product-recommender"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
@@ -882,7 +883,7 @@ class AgentRuntimeClient:
                 "name": f"A2UI Component & Personalization Designer ({client_name})",
                 "type": "specialist",
                 "description": "Designs personalized Swedish Grocery App Stammis offer banners with recipe pairings." if is_ica else "Designs H&M-style high-fashion editorial drop cards with member exclusive pricing and size selectors.",
-                "skills": ["a2ui-personalization"],
+                "skills": [f"{prefix}a2ui-personalization"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
@@ -891,7 +892,7 @@ class AgentRuntimeClient:
                 "name": f"Omnichannel Strategy Pipeline ({client_name})",
                 "type": "specialist",
                 "description": f"Designs campaign frameworks, channel mix, and ROI projections in {curr} for {client_name}.",
-                "skills": ["campaign-framework"],
+                "skills": [f"{prefix}campaign-framework"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },
@@ -900,7 +901,7 @@ class AgentRuntimeClient:
                 "name": f"Brand Voice Content Pipeline ({client_name})",
                 "type": "specialist",
                 "description": "Drafts warm, food-inspiring Swedish marketing copy (email, social, SMS) with Stammis loyalty integration." if is_ica else "Drafts contemporary Nordic fashion copy (email, social, SMS) with Crazy Club loyalty integration.",
-                "skills": ["brand-voice-craft"],
+                "skills": [f"{prefix}brand-voice"],
                 "sub_agents": [],
                 "runtime": "agent_runtime" if self.is_configured else "not_deployed",
             },

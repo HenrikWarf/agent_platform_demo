@@ -104,15 +104,16 @@ def _init_mcp_toolset(max_retries: int = 3, base_delay: float = 2.0):
 
 mcp_toolset = _init_mcp_toolset()
 
-# ─── Load Skills from local skill directories ─────────────────────────────────
+# ─── Load Skills from tenant-specific skill directories ───────────────────────
 
 skills_dir = pathlib.Path(__file__).parent.parent / "skills"
+prefix = "ica" if active_context.client_id == "ica_sweden" else "crazy-fashion"
 
-analytics_skill = load_skill_from_dir(skills_dir / "bigquery-customer-analytics")
-strategy_skill = load_skill_from_dir(skills_dir / "campaign-framework")
-content_skill = load_skill_from_dir(skills_dir / "brand-voice-craft")
-product_recommender_skill = load_skill_from_dir(skills_dir / "product-recommender")
-a2ui_skill = load_skill_from_dir(skills_dir / "a2ui-personalization")
+analytics_skill = load_skill_from_dir(skills_dir / f"{prefix}-customer-analytics")
+strategy_skill = load_skill_from_dir(skills_dir / f"{prefix}-campaign-framework")
+content_skill = load_skill_from_dir(skills_dir / f"{prefix}-brand-voice")
+product_recommender_skill = load_skill_from_dir(skills_dir / f"{prefix}-product-recommender")
+a2ui_skill = load_skill_from_dir(skills_dir / f"{prefix}-a2ui-personalization")
 
 analytics_skillset = SkillToolset(skills=[analytics_skill])
 strategy_skillset = SkillToolset(skills=[strategy_skill])
