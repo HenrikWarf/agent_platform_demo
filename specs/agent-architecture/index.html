@@ -707,7 +707,7 @@
     <section class="content-panel" id="contentPanel">
       <div class="slide-badge-row">
         <span class="section-pill" id="sectionPill">Cover</span>
-        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 10</span>
+        <span class="slide-number-badge" id="slideNumberBadge">Slide 1 of 11</span>
       </div>
 
       <h1 class="slide-title" id="slideTitle">Loading Slide...</h1>
@@ -995,10 +995,37 @@
       },
       {
         id: 9,
+        section: "Multi-File Skills",
+        title: "Enterprise Multi-File Skill Architecture & Progressive Disclosure",
+        subtitle: "Modular Packages: SKILL.md, Deterministic Python Scripts, Compliance References & Golden Examples",
+        image: "08_multifile_skill_architecture.jpg",
+        takeaway: "Upgrades flat markdown instructions into modular multi-file packages (scripts, references, examples), maximizing context-window efficiency and guaranteeing deterministic mathematical and legal accuracy.",
+        pillars: [
+          {
+            title: "Progressive Disclosure (SKILL.md)",
+            desc: "Lean manifest (< 1,200 tokens) defining triggering keywords, input/output schemas, and high-level execution trees without context bloat."
+          },
+          {
+            title: "Deterministic Executable Helpers (scripts/)",
+            desc: "Python utilities for exact mathematical operations: calculate_campaign_roi.py, basket_optimizer.py, and validate_sql_query.py."
+          },
+          {
+            title: "Regulatory & Compliance Guardrails (references/)",
+            desc: "Deep reference manuals: Swedish advertising laws (30-dagarsregeln, Jämförpris), EU Green Claims directives, and 5-table BigQuery data dictionaries."
+          },
+          {
+            title: "Golden Few-Shot Deliverables (examples/)",
+            desc: "Strictly verified golden JSON briefs, A2UI payloads, and high-converting copy examples ensuring zero schema drift."
+          }
+        ],
+        notes: "Deep-dive into the enterprise skill standard. Explain why monolithic prompts fail in production: by decomposing domain knowledge into modular references and executable Python scripts, the agent achieves 100% mathematical precision and strict legal compliance."
+      },
+      {
+        id: 10,
         section: "Security & Ops",
         title: "Governed Gateway, Model Armor & Telemetry Observability",
         subtitle: "Enterprise Ingress Security, Prompt Shielding & Distributed Tracing",
-        image: "08_gateway_security_observability.jpg",
+        image: "09_gateway_security_observability.jpg",
         takeaway: "The entire platform is protected by GCP Agent Gateway and Model Armor, with full observability in OpenTelemetry Cloud Trace and Cloud Logging.",
         pillars: [
           {
@@ -1021,11 +1048,11 @@
         notes: "Conclude with enterprise governance. Point out that all agent actions are logged to Cloud Trace and GCS, while Model Armor prevents prompt injection and data exfiltration in real time."
       },
       {
-        id: 10,
+        id: 11,
         section: "Summary & Impact",
         title: "Key Architectural Takeaways & Enterprise Summary",
         subtitle: "Accelerating Governed, Scalable Multi-Agent AI on Google Cloud",
-        image: "09_summary_conclusion.jpg",
+        image: "10_summary_conclusion.jpg",
         takeaway: "Google Cloud provides the premier end-to-end foundation for building, deploying, governing, and observing multi-agent AI ecosystems in the enterprise.",
         pillars: [
           {

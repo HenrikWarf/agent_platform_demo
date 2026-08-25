@@ -15,8 +15,9 @@
 | **06** | `05_a2ui_personalization_engine.jpg` | **A2UI Personalization Engine** | Dual-client Swedish Stammis banner with recipes & fashion drop cards |
 | **07** | `06_strategy_and_content_pipelines.jpg` | **Strategy & Content Pipelines** | 3 strategic pillars, 100% channel mix & channel-selective copy |
 | **08** | `07_skills_and_agent_registry.jpg` | **Skills Architecture & Registry** | Modular skill standard (`SKILL.md`) & Google Cloud Agent Registry |
-| **09** | `08_gateway_security_observability.jpg` | **Security & Observability** | Agent Gateway, Model Armor prompt shield & Cloud Trace telemetry |
-| **10** | `09_summary_conclusion.jpg` | **Executive Summary & Takeaways** | 4-pillar architectural summary & closing conclusion |
+| **09** | `08_multifile_skill_architecture.jpg` | **Enterprise Multi-File Skills** | Progressive disclosure, Python scripts, compliance references & golden examples |
+| **10** | `09_gateway_security_observability.jpg` | **Security & Observability** | Agent Gateway, Model Armor prompt shield & Cloud Trace telemetry |
+| **11** | `10_summary_conclusion.jpg` | **Executive Summary & Takeaways** | 4-pillar architectural summary & closing conclusion |
 
 ---
 
@@ -30,7 +31,7 @@ The slide deck viewer is packaged as a standalone web application ([`index.html`
   - `→` / `Space` / `PageDown`: Next Slide
   - `←` / `PageUp`: Previous Slide
   - `Home`: First Slide (Slide 1)
-  - `End`: Last Slide (Slide 10)
+  - `End`: Last Slide (Slide 11)
   - `T`: Toggle Theme (Light/Dark)
   - `F`: Fullscreen Presentation Mode
   - `Z`: Zoom / Lightbox Image Modal
@@ -44,3 +45,4 @@ To launch the presentation locally on port `8087`:
 ```bash
 ./specs/agent-architecture/start_presentation.sh
 ```
+

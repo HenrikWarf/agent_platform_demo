@@ -21,14 +21,17 @@ Rather than relying on a single monolithic LLM prompt, the platform decomposes c
 ├─────────┬─────────────────────────────────────────────────┬────────────────────────────┤
 │ Slide # │ Title                                           │ Focus Area                 │
 ├─────────┼─────────────────────────────────────────────────┼────────────────────────────┤
-│ Slide 1 │ Enterprise Multi-Agent Architecture Ecosystem   │ System Overview & Topology │
-│ Slide 2 │ Root Orchestration & A2A Routing Supervisor     │ Intent Routing & Protocols │
-│ Slide 3 │ Analytics Agent & BigQuery NL2SQL Tool          │ Live Data Analytics & SQL  │
-│ Slide 4 │ Product Recommendation Pipeline                 │ 5-Item Assortment Engine   │
-│ Slide 5 │ A2UI Personalization & Offer Banner Engine      │ Stammis & Drop Card UI     │
-│ Slide 6 │ Omnichannel Strategy & Content Pipelines        │ Frameworks & Creative Copy │
-│ Slide 7 │ Skills Architecture & Agent Registry            │ Dynamic Skill Bindings     │
-│ Slide 8 │ Agent Gateway, Model Armor & Observability      │ Security & Cloud Trace     │
+│ Slide 1 │ Executive Keynote Title Cover                   │ Introduction on GCP        │
+│ Slide 2 │ Enterprise Multi-Agent Architecture Ecosystem   │ System Overview & Topology │
+│ Slide 3 │ Root Orchestration & A2A Routing Supervisor     │ Intent Routing & Protocols │
+│ Slide 4 │ Analytics Agent & BigQuery NL2SQL Tool          │ Live Data Analytics & SQL  │
+│ Slide 5 │ Product Recommendation Pipeline                 │ 5-Item Assortment Engine   │
+│ Slide 6 │ A2UI Personalization & Offer Banner Engine      │ Stammis & Drop Card UI     │
+│ Slide 7 │ Omnichannel Strategy & Content Pipelines        │ Frameworks & Creative Copy │
+│ Slide 8 │ Skills Architecture & Agent Registry Overview   │ Dynamic Skill Bindings     │
+│ Slide 9 │ Enterprise Multi-File Skill Architecture        │ Scripts, Refs & Examples   │
+│ Slide 10│ Agent Gateway, Model Armor & Observability      │ Security & Cloud Trace     │
+│ Slide 11│ Key Architectural Takeaways & Enterprise Summary│ Summary & Conclusion       │
 └─────────┴─────────────────────────────────────────────────┴────────────────────────────┘
 ```
 
@@ -106,7 +109,7 @@ Rather than relying on a single monolithic LLM prompt, the platform decomposes c
 
 ---
 
-### ── Slide 7: Skills Architecture & Agent Registry ──
+### ── Slide 8: Skills Architecture & Agent Registry Overview ──
 * **Headline**: Enterprise Skills Architecture & Agent Registry
 * **Subhead**: Modular Domain Knowledge & Declarative Skill Standards
 * **Core Concepts**:
@@ -118,10 +121,26 @@ Rather than relying on a single monolithic LLM prompt, the platform decomposes c
     4. `campaign-framework`: Omnichannel budgeting and 3-pillar methodologies.
     5. `brand-voice-craft`: Editorial style guides, tone guidelines, and channel constraints.
   * **Agent Registry (`agentregistry.googleapis.com`)**: Managed Google Cloud registry for cataloging and discovering agent skills.
+  * **Developer Skill Hygiene**: Automatic filtering of developer CLI skills (`google-agents-cli-*`) from customer-facing business registries.
 
 ---
 
-### ── Slide 8: Agent Gateway, Model Armor & Observability ──
+### ── Slide 9: Enterprise Multi-File Skill Architecture ──
+* **Headline**: Enterprise Multi-File Skill Architecture & Progressive Disclosure
+* **Subhead**: Modular Packages: SKILL.md, Deterministic Python Scripts, Compliance References & Golden Examples
+* **Core Concepts**:
+  * **Progressive Disclosure Principle**: `SKILL.md` acts as a lean trigger manifest (< 1,200 tokens), preventing prompt bloat while loading deep guides on demand.
+  * **Deterministic Scripts (`scripts/`)**:
+    * `calculate_campaign_roi.py`: Deterministic financial calculations for revenue uplift, gross profit, and CAC.
+    * `basket_optimizer.py` / `capsule_optimizer.py`: 5-item completeness scoring, recipe balancing, and loyalty point multipliers.
+    * `validate_sql_query.py`: Read-only safety guard preventing destructive DDL/DML.
+  * **Regulatory References (`references/`)**: Swedish advertising laws (*Prisinformationslagen*, *30-dagarsregeln*, *Jämförpris*), EU Green Claims directives, and 5-table BigQuery data dictionaries.
+  * **Golden Few-Shot Examples (`examples/`)**: Pre-validated JSON blueprints ensuring zero schema drift.
+  * **Agent Registry Versioning**: Automatic packaging into ZIP payloads with content-hashed revisions (`rev-xxxx`) deployed as default active revisions.
+
+---
+
+### ── Slide 10: Agent Gateway, Model Armor & Observability ──
 * **Headline**: Governed Gateway, Model Armor & Telemetry Observability
 * **Subhead**: Production Security Ingress, Prompt Shielding & Distributed Tracing
 * **Core Concepts**:
@@ -129,3 +148,14 @@ Rather than relying on a single monolithic LLM prompt, the platform decomposes c
   * **Model Armor**: Real-time prompt shielding sanitizing user inputs and screening LLM responses for PII, hate speech, and jailbreaks.
   * **OpenTelemetry Distributed Tracing**: Hierarchical span visualization in Google Cloud Trace (`invoke_workflow` ➔ `call_llm` ➔ `execute_tool`).
   * **Prompt-Response Logging**: Complete JSONL telemetry stored in Cloud Storage (`gs://agent-demo-09-agent-platform-logs`) and Cloud Logging.
+
+---
+
+### ── Slide 11: Key Architectural Takeaways & Enterprise Summary ──
+* **Headline**: Key Architectural Takeaways & Enterprise Summary
+* **Subhead**: Accelerating Governed, Scalable Multi-Agent AI on Google Cloud
+* **Core Concepts**:
+  * **Intent-Driven Orchestration**: A2A Supervisor routes prompts selectively, minimizing token overhead and latency.
+  * **Grounded Retail Telemetry**: Live BigQuery Standard SQL analytics across 5 tables with zero mock data.
+  * **Specialized Multi-Pipelines**: Two-stage SequentialAgents delivering assortments, A2UI deal banners with recipes, and channel copy.
+  * **Governed Security & Observability**: Production-ready protection via Agent Gateway, Model Armor, Cloud Trace, and GCS completion logging.
