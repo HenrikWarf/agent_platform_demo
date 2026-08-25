@@ -1121,7 +1121,9 @@ export default function ChatInterface({
                               alignItems: 'flex-start',
                               gap: '0.65rem',
                               background: theme.bg,
-                              border: `1px solid ${theme.border}`,
+                              borderTop: `1px solid ${theme.border}`,
+                              borderRight: `1px solid ${theme.border}`,
+                              borderBottom: `1px solid ${theme.border}`,
                               borderLeft: `4px solid ${theme.borderLeft}`,
                               borderRadius: '7px',
                               padding: '0.5rem 0.75rem',
@@ -1287,7 +1289,9 @@ export default function ChatInterface({
                     padding: '0.6rem 0.8rem',
                     background: isLatest ? theme.activeBg : theme.bg,
                     borderRadius: '8px',
-                    border: `1px solid ${isLatest ? theme.activeBorder : theme.border}`,
+                    borderTop: `1px solid ${isLatest ? theme.activeBorder : theme.border}`,
+                    borderRight: `1px solid ${isLatest ? theme.activeBorder : theme.border}`,
+                    borderBottom: `1px solid ${isLatest ? theme.activeBorder : theme.border}`,
                     borderLeft: `4px solid ${theme.borderLeft}`,
                     boxShadow: isLatest ? `0 2px 12px ${theme.glow}` : 'none',
                     transition: 'all 0.25s ease',
@@ -1557,7 +1561,9 @@ export default function ChatInterface({
             background: 'var(--bg-secondary)',
             padding: '0.5rem 0.8rem',
             borderRadius: '8px',
-            border: '1px solid var(--border-color)',
+            borderTop: '1px solid var(--border-color)',
+            borderRight: '1px solid var(--border-color)',
+            borderBottom: '1px solid var(--border-color)',
             borderLeft: `3px solid ${currentCategoryObj?.color || activeClient?.primary_color || 'var(--color-primary)'}`,
             lineHeight: '1.4',
             display: 'flex',
@@ -1817,8 +1823,9 @@ function MarkdownRenderer({ content, isUser }) {
           <h5 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0.5rem 0 0.2rem', color: isUser ? '#fff' : 'var(--color-primary)' }}>{children}</h5>
         ),
         p: ({ children }) => (
-          <p style={{ margin: '0.3rem 0', lineHeight: '1.65' }}>{children}</p>
+          <div style={{ margin: '0.3rem 0', lineHeight: '1.65' }}>{children}</div>
         ),
+        pre: ({ children }) => <>{children}</>,
         ul: ({ children }) => (
           <ul style={{ margin: '0.3rem 0', paddingLeft: '1.4rem', listStyleType: 'disc' }}>{children}</ul>
         ),

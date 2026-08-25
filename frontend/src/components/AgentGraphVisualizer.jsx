@@ -657,8 +657,10 @@ export default function AgentGraphVisualizer({ a2aTrace, modelArmor, activeClien
                 background: 'var(--chip-bg)',
                 padding: '0.7rem 0.85rem',
                 borderRadius: '8px',
+                borderTop: '1px solid var(--border-color)',
+                borderRight: '1px solid var(--border-color)',
+                borderBottom: '1px solid var(--border-color)',
                 borderLeft: `3px solid ${getSenderColor(msg.sender_id)}`,
-                border: '1px solid var(--border-color)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.35rem'

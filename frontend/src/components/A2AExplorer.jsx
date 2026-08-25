@@ -603,7 +603,9 @@ export default function A2AExplorer({ activeClient }) {
                     key={i}
                     style={{
                       background: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
+                      borderTop: '1px solid var(--border-color)',
+                      borderRight: '1px solid var(--border-color)',
+                      borderBottom: '1px solid var(--border-color)',
                       borderLeft: `4px solid ${skill.meta.color}`,
                       borderRadius: '10px',
                       padding: '0.9rem 1rem',
