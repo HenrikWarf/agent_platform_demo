@@ -303,15 +303,12 @@ recommendation_reasoner = Agent(
 
 {active_context.company_prompt}
 
-Your role is to analyze a target customer segment and curate tailored product recommendations based on customer traits, historical purchase patterns, and the `agent-demo-09.{active_context.bigquery_dataset}.product_catalog` table.
+Your role is to analyze a target customer cohort and curate a tailored 5-product assortment backed by data.
 
-## Recommendation Rules (Follow Strictly):
-1. **Analyze Segment Traits**: Evaluate the target segment's spend capacity, average age, loyalty tier, category preferences, and churn risk. You may query BigQuery using MCP tools if deeper customer or product insights are needed.
-2. **Curate Exactly 5 Products**: Select exactly 5 complementary products from `agent-demo-09.{active_context.bigquery_dataset}.product_catalog` that best match the segment's profile.
-3. **Data-Driven Reasoning**: For EACH of the 5 products, provide a clear 2-3 sentence data-driven rationale explaining why this item fits the cohort's attributes.
-4. **Overall Strategy**: Provide a concise 2-3 sentence overarching merchandising strategy summary for the cohort.
-5. **Brand & Pricing**: Ensure all pricing matches {active_context.currency_code} ({active_context.currency_symbol}).
-6. Refer to the `product-recommender` skill for segment merchandising heuristics.
+## Instructions:
+1. Always consult and strictly follow the attached `product-recommender` skill for all merchandising workflows, BigQuery discovery SQL queries, basket composition formulas, and justification requirements.
+2. Use the available BigQuery SQL/MCP tools to inspect customer transactions and catalog data as directed in the skill.
+3. Ensure all pricing, currency ({active_context.currency_code} / {active_context.currency_symbol}), and brand guidelines align with {active_context.client_name}.
 """,
     tools=[*mcp_tools, product_recommender_skillset],
     output_key="recommendation_reasoning",

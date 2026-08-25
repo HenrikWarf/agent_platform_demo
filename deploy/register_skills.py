@@ -201,8 +201,12 @@ def register_skill(skill_id: str, display_name: str, description: str, payload_p
             logger.error(f"  ❌ Create failed: {result.stderr.strip()}")
             return False
 
-    # Step 2: Create a revision with the ZIP payload
-    revision_name = "rev-1"
+    # Step 2: Create a revision with the ZIP payload (keyed by content hash)
+    import hashlib
+    with open(payload_path, "rb") as pf:
+        content_hash = hashlib.sha256(pf.read()).hexdigest()[:8]
+    revision_name = f"rev-{content_hash}"
+
     logger.info(f"  Step 2: Creating revision '{revision_name}' with payload...")
     revision_cmd = [
         "gcloud", "alpha", "agent-registry", "skills", "revisions", "create", revision_name,
