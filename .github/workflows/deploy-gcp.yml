@@ -161,7 +161,7 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Run ADK Evaluation Suite (15 Golden Scenarios & 6 Metrics)
+      - name: Run ADK Evaluation Suite (Crazy Fashion & ICA Sverige)
         if: env.AUTH_MODE != 'none'
         env:
           GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
@@ -169,11 +169,24 @@ jobs:
           GCP_REGION: ${{ env.GCP_REGION }}
           GEMINI_LOCATION: global
         run: |
-          echo "🧪 Running Pre-Deployment ADK Evaluation Suite..."
+          echo "🧪 Running Pre-Deployment ADK Multi-Agent Evaluation Suite..."
           uv tool install google-agents-cli
-          agents-cli eval run \
-            --dataset tests/eval/datasets/crazy_fashion_eval.json \
-            --config tests/eval/eval_config.yaml
+
+          # Evaluate Crazy Fashion Agent if changed
+          if [ "${{ needs.changes.outputs.agents_crazy_fashion }}" = "true" ]; then
+            echo "🧪 [1/2] Evaluating Crazy Fashion Agent (20 Operational Scenarios)..."
+            TENANT_ID=crazy_fashion agents-cli eval run \
+              --dataset tests/eval/datasets/crazy_fashion_eval.json \
+              --config tests/eval/eval_config.yaml
+          fi
+
+          # Evaluate ICA Sverige Agent if changed
+          if [ "${{ needs.changes.outputs.agents_ica_sverige }}" = "true" ]; then
+            echo "🧪 [2/2] Evaluating ICA Sverige Agent (20 Operational Scenarios)..."
+            TENANT_ID=ica_sweden agents-cli eval run \
+              --dataset tests/eval/datasets/ica_sverige_eval.json \
+              --config tests/eval/eval_config.yaml
+          fi
 
       - name: Upload Evaluation Artifacts
         if: always() && env.AUTH_MODE != 'none'
@@ -189,7 +202,7 @@ jobs:
         if: always()
         run: |
           echo "## 🧪 Pre-Deployment Evaluation Gate Complete" >> $GITHUB_STEP_SUMMARY
-          echo "Evaluated 15 golden operational scenarios against 6 custom domain judges." >> $GITHUB_STEP_SUMMARY
+          echo "Evaluated operational scenarios across active retailer instances against 6 custom domain judges." >> $GITHUB_STEP_SUMMARY
           echo "Full visual HTML report and scorecards are available in run artifacts." >> $GITHUB_STEP_SUMMARY
 
   # ============================================================
@@ -260,7 +273,7 @@ jobs:
             --platform managed \
             --port 8080 \
             --allow-unauthenticated \
-            --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }},BIGQUERY_DATASET=${{ env.BIGQUERY_DATASET }},GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace,OTEL_METRICS_EXPORTER=google_cloud_monitoring,OTEL_LOGS_EXPORTER=google_cloud_logging,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT
+            --set-env-vars ENVIRONMENT=gcp_cloud,USE_GCP_CLOUD=true,GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }},BIGQUERY_DATASET=${{ env.BIGQUERY_DATASET }},GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_TRACES_EXPORTER=google_cloud_trace,OTEL_METRICS_EXPORTER=google_cloud_monitoring,OTEL_LOGS_EXPORTER=google_cloud_logging,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT,AGENT_RUNTIME_ID_CRAZY_FASHION=projects/1047232371360/locations/us-central1/reasoningEngines/2050269777674371072,AGENT_RUNTIME_ID_ICA_SVERIGE=projects/1047232371360/locations/us-central1/reasoningEngines/8710530676601913344
 
       # --- 2. React Frontend Deployment (Cloud Run) ---
       - name: Build & Deploy Frontend (Cloud Run)
@@ -345,6 +358,7 @@ jobs:
         run: |
           echo "🚀 Publishing Crazy Fashion Agent to Gemini Enterprise..."
           agents-cli publish gemini-enterprise \
+            --agent-runtime-id "projects/1047232371360/locations/us-central1/reasoningEngines/2050269777674371072" \
             --gemini-enterprise-app-id "$GEMINI_ENTERPRISE_APP_ID" \
             --display-name "Crazy Fashion Marketing Agent" \
             --description "Crazy Fashion multi-agent retail marketing platform: BigQuery analytics, fashion recommendations, omnichannel strategy, and creative copy" \
@@ -359,6 +373,7 @@ jobs:
         run: |
           echo "🚀 Publishing ICA Sverige Agent to Gemini Enterprise..."
           agents-cli publish gemini-enterprise \
+            --agent-runtime-id "projects/1047232371360/locations/us-central1/reasoningEngines/8710530676601913344" \
             --gemini-enterprise-app-id "$GEMINI_ENTERPRISE_APP_ID" \
             --display-name "ICA Sverige Marketing Agent" \
             --description "ICA Sverige multi-agent grocery marketing platform: BigQuery Stammis analytics, recipe deal banners, and omnichannel campaigns" \
@@ -432,30 +447,51 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Live Governed Endpoint Smoke Test
+      - name: Live Governed Endpoint Smoke Test (Crazy Fashion & ICA Sverige)
         run: |
-          echo "🔍 Smoke testing live Reasoning Engine endpoint with Model Armor screening..."
-          RE_ID=$(cat deployment_metadata.json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('resource_name',''))" 2>/dev/null || echo "")
-          if [ -z "$RE_ID" ]; then
-            echo "⚠️ No deployment_metadata.json found. Skipping smoke test."
-            exit 0
+          echo "🔍 Smoke testing live Reasoning Engine endpoints with Model Armor screening..."
+          AUTH_TOKEN=$(gcloud auth print-access-token)
+
+          # Test Crazy Fashion Agent Runtime if deployed
+          if [ "${{ needs.changes.outputs.agents_crazy_fashion }}" = "true" ]; then
+            RE_CF="projects/1047232371360/locations/us-central1/reasoningEngines/2050269777674371072"
+            echo "Testing Crazy Fashion Endpoint: $RE_CF"
+            RESP_CF=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer $AUTH_TOKEN" \
+              -H "Content-Type: application/json" \
+              "https://${{ env.GCP_REGION }}-aiplatform.googleapis.com/v1beta1/${RE_CF}:streamQuery" \
+              -d '{"class_method":"stream_query","input":{"app_name":"app","user_id":"ci-smoke-test","new_message":{"role":"user","parts":[{"text":"health check"}]}}}' \
+              --max-time 30 || echo "000")
+            echo "Crazy Fashion response code: $RESP_CF"
+            if [ "$RESP_CF" = "200" ] || [ "$RESP_CF" = "403" ]; then
+              echo "✅ Crazy Fashion Agent Runtime is responsive (200=Success, 403=Model Armor Active)"
+            else
+              echo "❌ Unexpected response from Crazy Fashion endpoint: $RESP_CF"
+              exit 1
+            fi
           fi
-          RESP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-            -H "Content-Type: application/json" \
-            "https://${{ env.GCP_REGION }}-aiplatform.googleapis.com/v1beta1/${RE_ID}:streamQuery" \
-            -d '{"class_method":"stream_query","input":{"app_name":"app","user_id":"ci-smoke-test","new_message":{"role":"user","parts":[{"text":"health check"}]}}}' \
-            --max-time 30 || echo "000")
-          echo "Governed endpoint response code: $RESP"
-          if [ "$RESP" = "200" ] || [ "$RESP" = "403" ]; then
-            echo "✅ Live Agent Runtime is responsive (403 = Model Armor active, 200 = Success)"
-          else
-            echo "❌ Unexpected response code from live endpoint: $RESP"
-            exit 1
+
+          # Test ICA Sverige Agent Runtime if deployed
+          if [ "${{ needs.changes.outputs.agents_ica_sverige }}" = "true" ]; then
+            RE_ICA="projects/1047232371360/locations/us-central1/reasoningEngines/8710530676601913344"
+            echo "Testing ICA Sverige Endpoint: $RE_ICA"
+            RESP_ICA=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer $AUTH_TOKEN" \
+              -H "Content-Type: application/json" \
+              "https://${{ env.GCP_REGION }}-aiplatform.googleapis.com/v1beta1/${RE_ICA}:streamQuery" \
+              -d '{"class_method":"stream_query","input":{"app_name":"app","user_id":"ci-smoke-test","new_message":{"role":"user","parts":[{"text":"health check"}]}}}' \
+              --max-time 30 || echo "000")
+            echo "ICA Sverige response code: $RESP_ICA"
+            if [ "$RESP_ICA" = "200" ] || [ "$RESP_ICA" = "403" ]; then
+              echo "✅ ICA Sverige Agent Runtime is responsive (200=Success, 403=Model Armor Active)"
+            else
+              echo "❌ Unexpected response from ICA Sverige endpoint: $RESP_ICA"
+              exit 1
+            fi
           fi
 
       - name: Smoke Test Summary
         if: always()
         run: |
           echo "## 🔍 Live Smoke Test" >> $GITHUB_STEP_SUMMARY
-          echo "Live Agent Runtime endpoint verified responsive via governed path." >> $GITHUB_STEP_SUMMARY
+          echo "Live Agent Runtime endpoints verified responsive via governed path." >> $GITHUB_STEP_SUMMARY
