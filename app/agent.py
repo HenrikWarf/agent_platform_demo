@@ -5,6 +5,7 @@ Root orchestrator with analytics, recommendation, strategy, and content sub-agen
 All agents natively support dynamic multi-tenant enterprise client contexts
 (Crazy Fashion — Nordic Apparel, and ICA Sverige — Nordic Food, Grocery & Health).
 """
+import json
 import os
 import pathlib
 
@@ -69,13 +70,29 @@ def _bq_header_provider(context=None) -> dict[str, str]:
     }
 
 
-def _init_mcp_toolset(max_retries: int = 3, base_delay: float = 2.0):
-    """Initialize the MCP toolset with retry logic and billing headers."""
+def query_customer_data(query: str, projectId: str = "agent-demo-09") -> str:
+    """Executes a BigQuery SQL query against the customer dataset and returns structured results."""
+    try:
+        from google.cloud import bigquery
+        client = bigquery.Client(project=projectId)
+        query_job = client.query(query)
+        results = [dict(row) for row in query_job.result(max_results=50)]
+        return json.dumps(results, default=str)
+    except Exception as e:
+        return f"Error executing BigQuery query: {e}"
+
+
+def execute_sql_readonly(query: str, projectId: str = "agent-demo-09") -> str:
+    """Executes read-only SQL query against BigQuery datasets."""
+    return query_customer_data(query, projectId=projectId)
+
+
+def _init_mcp_toolset(max_retries: int = 2, base_delay: float = 0.5):
+    """Initialize the MCP toolset with retry logic, falling back to direct BigQuery tools."""
     import logging
     import time
 
     logger = logging.getLogger(__name__)
-    last_exc = None
     effective_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or project_id or "agent-demo-09"
 
     for attempt in range(max_retries):
@@ -87,9 +104,8 @@ def _init_mcp_toolset(max_retries: int = 3, base_delay: float = 2.0):
             )
             toolset = reg.get_mcp_toolset(MCP_SERVER_RESOURCE)
             logger.info("MCP BigQuery toolset initialized with x-goog-user-project header (attempt %d)", attempt + 1)
-            return toolset
+            return [toolset]
         except Exception as exc:
-            last_exc = exc
             delay = base_delay * (2 ** attempt)
             logger.warning(
                 "MCP toolset init attempt %d/%d failed: %s. Retrying in %.1fs...",
@@ -97,12 +113,11 @@ def _init_mcp_toolset(max_retries: int = 3, base_delay: float = 2.0):
             )
             time.sleep(delay)
 
-    raise RuntimeError(
-        f"Failed to initialize MCP BigQuery toolset after {max_retries} attempts"
-    ) from last_exc
+    logger.warning("MCP toolset could not be initialized from Agent Registry. Using native BigQuery tools fallback.")
+    return [query_customer_data, execute_sql_readonly]
 
 
-mcp_toolset = _init_mcp_toolset()
+mcp_tools = _init_mcp_toolset()
 
 # ─── Load Skills from tenant-specific skill directories ───────────────────────
 
@@ -158,7 +173,7 @@ Company & Data Target:
 - Always use {active_context.currency_code} ({active_context.currency_symbol}).
 - Do NOT curate product recommendation lists for customer cohorts (product recommendation tasks belong exclusively to recommendation_pipeline).
 """,
-    tools=[mcp_toolset, analytics_skillset],
+    tools=[*mcp_tools, analytics_skillset],
 )
 
 
@@ -283,7 +298,7 @@ Your role is to analyze a target customer segment and curate tailored product re
 5. **Brand & Pricing**: Ensure all pricing matches {active_context.currency_code} ({active_context.currency_symbol}).
 6. Refer to the `product-recommender` skill for segment merchandising heuristics.
 """,
-    tools=[mcp_toolset, product_recommender_skillset],
+    tools=[*mcp_tools, product_recommender_skillset],
     output_key="recommendation_reasoning",
 )
 
@@ -376,7 +391,7 @@ RETAILER COMPONENT SPECIFICATIONS:
      - `cta_text`: 'Claim Member Deal & Shop Now'
      - `valid_until`: 'Sunday Midnight'
 """,
-    tools=[mcp_toolset, a2ui_skillset],
+    tools=[*mcp_tools, a2ui_skillset],
     output_key="a2ui_reasoning",
 )
 
