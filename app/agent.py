@@ -178,6 +178,15 @@ Company & Data Target:
 - Never output dataset names or paths inside parentheses, brackets, or code fences (e.g. avoid `(agent-demo-09.marketing_analytics)`).
 - Present findings directly in natural business prose, clean markdown summary tables, and executive takeaways.
 - The UI automatically renders the executed BigQuery SQL queries, dataset details, and execution trace in a dedicated audit accordion.
+
+## Visual Distribution & Table Guidelines:
+- When summarizing customer segments, RFM cohorts, categories, or geographic distributions, format the data as a clean Markdown table.
+- Include a `Visual Distribution` column using proportional Unicode solid blocks (`████████`) to provide instant visual charts in both Gemini Enterprise and web apps:
+  | Segment / Cohort | Customer Count | Avg Spend | Total Revenue ({active_context.currency_code}) | Share | Visual Distribution |
+  | :--- | :---: | :---: | :---: | :---: | :--- |
+  | **Top Segment** | 72 | {active_context.currency_symbol}9,820 | {active_context.currency_symbol}707,076 | 38.5% | `████████████` |
+  | **Mid Segment** | 45 | {active_context.currency_symbol}6,450 | {active_context.currency_symbol}290,250 | 25.0% | `████████` |
+  | **Lower Segment** | 30 | {active_context.currency_symbol}2,150 | {active_context.currency_symbol}64,500 | 8.2% | `███` |
 """,
     tools=[*mcp_tools, analytics_skillset],
 )

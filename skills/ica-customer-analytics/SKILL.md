@@ -33,7 +33,13 @@ Provide analytical procedures and SQL query patterns for querying ICA Sverige cu
 - Do NOT output raw dataset names (e.g. `agent-demo-09.marketing_analytics_ica`) or raw SQL in your conversational opening or closing text. The UI automatically displays the BigQuery data source and query audit in a dedicated collapsible panel.
 - Focus conversational text entirely on business insights, trends, and executive takeaways.
 
-## A2UI Visual Chart Guidelines
-- When analyzing customer segments, product categories, or Stammis RFM distributions, structure table results with explicit columns:
-  `| RFM Segment | Customer Count | Avg. Recency (Days) | Avg. Order Frequency | Avg. Spend per Customer (SEK) | Total Segment Revenue (SEK) |`
+## A2UI Visual Chart & Distribution Guidelines
+- When analyzing customer segments, product categories, or Stammis RFM distributions, structure table results with explicit columns including a `Visual Distribution` column using proportional Unicode blocks (`████████`):
+  | RFM Segment | Customer Count | Avg. Spend (SEK) | Total Revenue (SEK) | Share | Visual Distribution |
+  | :--- | :---: | :---: | :---: | :---: | :--- |
+  | **Barnfamiljer Storhandlare** | 72 | 9,820 kr | 707,076 kr | 38.5% | `████████████` |
+  | **Gourmet Matälskare** | 45 | 12,450 kr | 560,250 kr | 30.5% | `█████████` |
+  | **Ekologiskt Medvetna** | 58 | 6,340 kr | 367,720 kr | 20.0% | `██████` |
+  | **Prisjägare & Studenter** | 65 | 2,150 kr | 139,750 kr | 7.6% | `██` |
+  | **Inaktiva Stammiskunder** | 60 | 1,420 kr | 85,200 kr | 3.4% | `█` |
 - Provide 2-3 concise strategic takeaways to power executive A2UI chart dashboards.

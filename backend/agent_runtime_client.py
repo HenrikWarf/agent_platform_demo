@@ -825,6 +825,8 @@ class AgentRuntimeClient:
             rev_val = None
 
             for i, c in enumerate(cols[1:], 1):
+                if any(char in c for char in ("█", "░", "▒", "■", "□")):
+                    continue
                 cleaned = re.sub(r"[^\d.,]", "", c).replace(",", "")
                 try:
                     num = float(cleaned)

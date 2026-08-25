@@ -33,7 +33,13 @@ Provide analytical procedures and SQL query patterns for querying Crazy Fashion 
 - Do NOT output raw dataset names (e.g. `agent-demo-09.marketing_analytics`) or raw SQL in your conversational opening or closing text. The UI automatically displays the BigQuery data source and query audit in a dedicated collapsible panel.
 - Focus conversational text entirely on business insights, trends, and executive takeaways.
 
-## A2UI Visual Chart Guidelines
-- When analyzing customer segments, product categories, or RFM distributions, structure table results with explicit columns:
-  `| Segment | Customer Count | Avg Recency (Days) | Avg Order Frequency | Avg Spend (EUR) | Total Segment Revenue (EUR) |`
+## A2UI Visual Chart & Distribution Guidelines
+- When analyzing customer segments, product categories, or RFM distributions, structure table results with explicit columns including a `Visual Distribution` column using proportional Unicode blocks (`████████`):
+  | Segment | Customer Count | Avg Spend (EUR) | Total Revenue (EUR) | Share | Visual Distribution |
+  | :--- | :---: | :---: | :---: | :---: | :--- |
+  | **VIP Fashionistas** | 45 | €1,200 | €54,000 | 42.5% | `████████████` |
+  | **Loyal Regulars** | 80 | €450 | €36,000 | 28.3% | `████████` |
+  | **Seasonal Shoppers** | 95 | €220 | €20,900 | 16.5% | `█████` |
+  | **New Explorers** | 50 | €180 | €9,000 | 7.1% | `██` |
+  | **Dormant At-Risk** | 30 | €240 | €7,200 | 5.6% | `██` |
 - Provide 2-3 concise strategic takeaways to power executive A2UI chart dashboards.
