@@ -346,7 +346,7 @@ class AgentRuntimeClient:
                     seen_tools.add(tool_name)
                     sql_snippet = ""
                     if isinstance(fc_args, dict):
-                        sql_snippet = fc_args.get("sql_query") or fc_args.get("query") or ""
+                        sql_snippet = fc_args.get("sql_query") or fc_args.get("query") or fc_args.get("sql") or ""
                     step_tool = {
                         "id": f"step_tool_{uuid.uuid4().hex[:6]}",
                         "timestamp": now_str(),
@@ -357,6 +357,8 @@ class AgentRuntimeClient:
                         "detail": f"Executing SQL in BigQuery: {sql_snippet[:90]}..." if sql_snippet else f"Executing query tool '{tool_name}' on BigQuery dataset '{client_ctx.bigquery_dataset}'",
                         "tool": tool_name,
                         "skill": "bigquery-customer-analytics",
+                        "sql": sql_snippet,
+                        "tool_args": fc_args or {},
                         "status": "running",
                         "icon": "terminal",
                     }
@@ -676,6 +678,13 @@ class AgentRuntimeClient:
                 # Keep as summary text (orchestrator speaks last)
                 last_text = text
 
+            # Extract tool call arguments (SQL query executed)
+            fc_args = self._extract_tool_call_args(event_content)
+            if fc_args and isinstance(fc_args, dict):
+                q = fc_args.get("query") or fc_args.get("sql_query") or fc_args.get("sql")
+                if q:
+                    sql_executed = q
+
             # Extract tool results (analytics from query_customer_data)
             tool_results = self._extract_tool_results(event_content)
             if tool_results:
@@ -711,6 +720,20 @@ class AgentRuntimeClient:
                             recommendation = parsed
                         elif not a2ui and ("client_type" in parsed or "ica_offer_banner" in parsed or "fashion_drop_card" in parsed or "deal_price_major" in parsed or "collection_title" in parsed or "analytics_chart" in parsed):
                             a2ui = parsed
+
+        # If sql_executed not yet found, check for SQL blocks or queries in last_text
+        if not sql_executed and last_text:
+            sql_match = re.search(r"```(?:sql)?\s*(SELECT[\s\S]*?FROM[\s\S]*?)```", last_text, re.IGNORECASE)
+            if sql_match:
+                sql_executed = sql_match.group(1).strip()
+            else:
+                raw_sql_match = re.search(r"(SELECT\s+[\s\S]+?\s+FROM\s+[\s\S]+?)(?:;|\n\n|$)", last_text, re.IGNORECASE)
+                if raw_sql_match:
+                    sql_executed = raw_sql_match.group(1).strip()
+
+        # Attach sql_executed to analytics
+        if sql_executed and isinstance(analytics, dict):
+            analytics["sql_executed"] = sql_executed
 
         # Synthesize A2UI Analytics Chart from markdown table if analytics data present
         if not analytics.get("a2ui_chart") and last_text:

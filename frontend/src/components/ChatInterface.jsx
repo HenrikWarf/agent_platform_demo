@@ -857,6 +857,88 @@ export default function ChatInterface({
                 />
               )}
 
+              {/* Dedicated BigQuery SQL & Analytics Data Source Audit Accordion */}
+              {msg.role === 'assistant' && (() => {
+                const executedSql = msg.data?.sql_executed ||
+                  msg.data?.analytics?.sql_executed ||
+                  msg.sql_executed ||
+                  (msg.steps && msg.steps.find(s => s.sql || s.tool_args?.query)?.sql) ||
+                  (msg.data?.steps && msg.data.steps.find(s => s.sql || s.tool_args?.query)?.sql);
+
+                const hasAnalyticsContext = !!(
+                  executedSql ||
+                  msg.data?.analytics?.a2ui_chart ||
+                  msg.data?.analytics_chart ||
+                  (msg.data?.analytics && Object.keys(msg.data.analytics).length > 0) ||
+                  (msg.steps && msg.steps.some(s => s.agent === 'analytics_agent' || s.skill === 'bigquery-customer-analytics')) ||
+                  (msg.data?.steps && msg.data.steps.some(s => s.agent === 'analytics_agent' || s.skill === 'bigquery-customer-analytics'))
+                );
+
+                if (!hasAnalyticsContext) return null;
+
+                const datasetName = activeClient?.bigquery_dataset || (msg.data?.analytics?.client_type === 'ica_sweden' ? 'marketing_analytics_ica' : 'marketing_analytics');
+                const defaultQuery = `SELECT \n  rfm_segment,\n  COUNT(customer_id) AS customer_count,\n  AVG(recency_days) AS avg_recency,\n  AVG(frequency_orders) AS avg_frequency,\n  SUM(${activeClient?.currency_code === 'SEK' ? 'total_monetary_sek' : 'total_monetary_eur'}) AS total_revenue\nFROM \`agent-demo-09.${datasetName}.customer_rfm_summary\`\nGROUP BY rfm_segment\nORDER BY total_revenue DESC;`;
+
+                return (
+                  <div style={{ marginTop: '0.75rem', marginBottom: '0.75rem' }}>
+                    <details
+                      style={{
+                        background: 'var(--code-bg)',
+                        borderTop: '1px solid var(--border-color)',
+                        borderRight: '1px solid var(--border-color)',
+                        borderBottom: '1px solid var(--border-color)',
+                        borderLeft: '4px solid #0284c7',
+                        borderRadius: '8px',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <summary
+                        style={{
+                          padding: '0.6rem 0.9rem',
+                          cursor: 'pointer',
+                          fontFamily: 'var(--font-sans)',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          color: '#0284c7',
+                          background: 'var(--chip-bg)',
+                          userSelect: 'none',
+                          outline: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                          <Database size={14} color="#0284c7" />
+                          <span>🔍 View Executed BigQuery SQL & Data Source Audit</span>
+                        </span>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                          agent-demo-09.{datasetName}
+                        </span>
+                      </summary>
+                      <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid var(--border-color)', overflowX: 'auto' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.72rem', color: 'var(--text-muted)', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          <span>Target Dataset: <strong style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-primary)' }}>agent-demo-09.{datasetName}</strong></span>
+                          <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>● Read-Only IAM Guarded (Least Privilege)</span>
+                        </div>
+                        <pre style={{
+                          margin: 0,
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.82rem',
+                          color: 'var(--text-main)',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          textAlign: 'left',
+                          lineHeight: '1.5'
+                        }}>
+                          <code>{dedentCode(executedSql || defaultQuery)}</code>
+                        </pre>
+                      </div>
+                    </details>
+                  </div>
+                );
+              })()}
+
               {/* A2UI Dynamic Offer Banner / Fashion Drop Card (Rendered strictly when a2ui payload is present) */}
               {msg.role === 'assistant' && msg.data?.a2ui && (msg.data.a2ui.ica_offer_banner || msg.data.a2ui.fashion_drop_card) && (
                 <A2UIOfferBanner data={msg.data.a2ui} />
@@ -1078,65 +1160,6 @@ export default function ChatInterface({
                       </div>
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* Dedicated BigQuery SQL & Analytics Data Source Audit Accordion */}
-              {msg.role === 'assistant' && (msg.data?.sql_executed || msg.data?.analytics?.sql_executed || msg.sql_executed) && (
-                <div style={{ marginTop: '0.6rem', marginBottom: '0.4rem' }}>
-                  <details
-                    style={{
-                      background: 'var(--code-bg)',
-                      borderTop: '1px solid var(--border-color)',
-                      borderRight: '1px solid var(--border-color)',
-                      borderBottom: '1px solid var(--border-color)',
-                      borderLeft: '4px solid #0284c7',
-                      borderRadius: '8px',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <summary
-                      style={{
-                        padding: '0.55rem 0.85rem',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--font-sans)',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        color: '#0284c7',
-                        background: 'var(--chip-bg)',
-                        userSelect: 'none',
-                        outline: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
-                      }}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Database size={13} color="#0284c7" />
-                        <span>View Executed BigQuery SQL & Data Source Audit</span>
-                      </span>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                        {activeClient?.bigquery_dataset || (msg.data?.analytics?.client_type === 'ica_sweden' ? 'marketing_analytics_ica' : 'marketing_analytics')}
-                      </span>
-                    </summary>
-                    <div style={{ padding: '0.75rem 0.9rem', borderTop: '1px solid var(--border-color)', overflowX: 'auto' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        <span>Target Dataset: <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-primary)' }}>agent-demo-09.{activeClient?.bigquery_dataset || 'marketing_analytics'}</code></span>
-                        <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>● Read-Only IAM Guarded</span>
-                      </div>
-                      <pre style={{
-                        margin: 0,
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.8rem',
-                        color: 'var(--text-main)',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                        textAlign: 'left'
-                      }}>
-                        <code>{dedentCode(msg.data?.sql_executed || msg.data?.analytics?.sql_executed || msg.sql_executed)}</code>
-                      </pre>
-                    </div>
-                  </details>
                 </div>
               )}
 
