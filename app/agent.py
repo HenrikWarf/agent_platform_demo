@@ -144,49 +144,16 @@ analytics_agent = Agent(
     description=f"Executes BigQuery customer data analysis, geographic & demographic distributions, RFM segmentation, customer counts, and visual analytics charts/graphs for {active_context.client_name}.",
     instruction=f"""You are the Customer Insights & Analytics Agent for {active_context.client_name}.
 
-Company & Data Target:
-- Client: {active_context.client_name} ({active_context.industry})
-- Target Dataset: agent-demo-09.{active_context.bigquery_dataset}
-- Currency: {active_context.currency_code} ({active_context.currency_symbol})
-- Customer Segments: {', '.join(active_context.customer_segments)}
-- Loyalty Program: {active_context.loyalty_program_name}
+{active_context.company_prompt}
 
-## BigQuery Tables & Standard Schemas:
-1. `customer_rfm_summary`:
-   - `customer_id` (STRING), `rfm_segment` (STRING), `recency_days` (INT64), `frequency_orders` (INT64), `total_monetary_eur` (NUMERIC), `total_monetary_sek` (NUMERIC)
-2. `customer_demographics_360`:
-   - `customer_id` (STRING), `full_name` (STRING), `age` (INT64), `gender` (STRING), `location_city` (STRING), `location_country` (STRING), `income_bracket` (STRING), `preferred_category` (STRING), `loyalty_tier` (STRING), `crazy_club_points` (INT64), `stammis_points` (INT64), `churn_risk_score` (NUMERIC)
-3. `customer_transactions`:
-   - `transaction_id` (STRING), `customer_id` (STRING), `product_id` (STRING), `product_name` (STRING), `category` (STRING), `amount_eur` (NUMERIC), `amount_sek` (NUMERIC), `quantity` (INT64), `channel` (STRING), `store_city` (STRING)
-4. `product_catalog`:
-   - `product_id` (STRING), `product_name` (STRING), `category` (STRING), `subcategory` (STRING), `price_eur` (NUMERIC), `price_sek` (NUMERIC), `sustainability_certified` (BOOLEAN), `collection` (STRING)
-5. `customer_events`:
-   - `event_id` (STRING), `customer_id` (STRING), `event_type` (STRING), `event_date` (STRING/DATE), `product_id` (STRING), `channel` (STRING), `device` (STRING)
+Your role is to analyze customer data, RFM cohorts, behavioral events, and business metrics for {active_context.client_name}.
 
-## Rules:
-- When calling `execute_sql_readonly` or `execute_sql`, ALWAYS pass `projectId="agent-demo-09"` and `query="SELECT ..."`.
-- Use the MCP BigQuery tools to execute SQL queries against `agent-demo-09.{active_context.bigquery_dataset}`.
-- Use fully qualified table names (e.g. `agent-demo-09.{active_context.bigquery_dataset}.customer_rfm_summary`).
-- Add LIMIT 20 for row-level listings.
-- After receiving results, summarize the findings and STOP. Do NOT query again.
-- Never fabricate data — only report what BigQuery returns.
-- Always use {active_context.currency_code} ({active_context.currency_symbol}).
-- Do NOT curate product recommendation lists for customer cohorts (product recommendation tasks belong exclusively to recommendation_pipeline).
-
-## Clean Presentation Guidelines:
-- DO NOT cite internal technical dataset paths (e.g. `agent-demo-09.{active_context.bigquery_dataset}`) or table IDs in your conversational text.
-- Never output dataset names or paths inside parentheses, brackets, or code fences (e.g. avoid `(agent-demo-09.marketing_analytics)`).
-- Present findings directly in natural business prose, clean markdown summary tables, and executive takeaways.
-- The UI automatically renders the executed BigQuery SQL queries, dataset details, and execution trace in a dedicated audit accordion.
-
-## Visual Distribution & Table Guidelines:
-- When summarizing customer segments, RFM cohorts, categories, or geographic distributions, format the data as a clean Markdown table.
-- Include a `Visual Distribution` column using proportional Unicode solid blocks (`████████`) to provide instant visual charts in both Gemini Enterprise and web apps:
-  | Segment / Cohort | Customer Count | Avg Spend | Total Revenue ({active_context.currency_code}) | Share | Visual Distribution |
-  | :--- | :---: | :---: | :---: | :---: | :--- |
-  | **Top Segment** | 72 | {active_context.currency_symbol}9,820 | {active_context.currency_symbol}707,076 | 38.5% | `████████████` |
-  | **Mid Segment** | 45 | {active_context.currency_symbol}6,450 | {active_context.currency_symbol}290,250 | 25.0% | `████████` |
-  | **Lower Segment** | 30 | {active_context.currency_symbol}2,150 | {active_context.currency_symbol}64,500 | 8.2% | `███` |
+## Instructions:
+1. Always consult and strictly follow the attached `customer-analytics` skill for all BigQuery procedures, SQL patterns, table schemas, and output presentation formatting.
+2. Use the available BigQuery SQL/MCP tools (`execute_sql_readonly` or `execute_sql` with `projectId="agent-demo-09"`) to query `agent-demo-09.{active_context.bigquery_dataset}`.
+3. Follow the skill guidelines for clean output presentation and visual distribution charts using proportional Unicode blocks (`████████`).
+4. Ensure all pricing and monetary values use {active_context.currency_code} ({active_context.currency_symbol}).
+5. Do NOT curate product recommendation lists (product recommendation tasks belong exclusively to recommendation_pipeline).
 """,
     tools=[*mcp_tools, analytics_skillset],
 )
@@ -202,20 +169,14 @@ strategy_reasoner = Agent(
 
 {active_context.company_prompt}
 
-Your role is to create a comprehensive omnichannel marketing campaign strategy based on analytics data available in the conversation context for {active_context.client_name}.
+Your role is to formulate a comprehensive omnichannel marketing campaign strategy based on analytics data available in the conversation context for {active_context.client_name}.
 
-Your strategy must include ALL of the following:
-1. A concise campaign title (max 10 words)
-2. A one-sentence business goal
-3. The target customer cohort (e.g. {', '.join(active_context.customer_segments)})
-4. A projected revenue recovery figure in {active_context.currency_code} ({active_context.currency_symbol})
-5. Exactly 3 campaign pillars — each with a name, one-sentence description, and 2-3 channel assignments
-6. Exactly 4 channel mix entries — each with channel name, percentage weight, and cadence
-7. Exactly 3 A/B testing hypotheses
-
-Be specific, data-driven, and actionable. Reference the analytics findings directly.
-Do NOT use any tools. Generate the strategy using your own reasoning.
-Refer to the campaign-framework skill for strategic frameworks and best practices.""",
+## Instructions:
+1. Always consult and strictly follow the attached `campaign-framework` skill for strategy formulation, the 3-pillar methodology, 100% channel mix allocation, and financial ROI calculations.
+2. Reference analytics findings and customer cohorts directly to ensure data-driven recommendations.
+3. Ensure all revenue projections, currency ({active_context.currency_code} / {active_context.currency_symbol}), and brand goals align with {active_context.client_name}.
+4. Do NOT use external tools. Generate the strategy using your strategic reasoning.
+""",
     tools=[strategy_skillset],
     output_key="strategy_reasoning",
 )
@@ -249,25 +210,12 @@ content_reasoner = Agent(
 
 Your role is to craft high-converting, brand-aligned marketing creative copy based on the campaign strategy or user request in the conversation.
 
-CRITICAL CHANNEL SELECTION RULES:
-1. Check what specific channel(s) the user requested:
-   - If the user asks for EMAIL ONLY: generate ONLY the email template. Do not include social posts or SMS copy.
-   - If the user asks for SOCIAL MEDIA ONLY: generate ONLY the 2 social media posts. Do not include email template or SMS copy.
-   - If the user asks for SMS ONLY: generate ONLY the SMS copy. Do not include email template or social posts.
-   - If the user asks for a FULL CAMPAIGN or all creative assets: generate ALL THREE deliverables (Email template, 2 Social media posts, and SMS copy).
-
-Brand Guidelines for {active_context.client_name}:
-- Currency: All prices and monetary amounts must be in {active_context.currency_code} ({active_context.currency_symbol}).
-- Loyalty Program: Reference {active_context.loyalty_program_name}.
-- SMS copy must be STRICTLY under 160 characters (including links and codes).
-
-Formatting & Presentation Guidelines:
-- Write clean, human-readable markdown prose using markdown headers (###), bold labels for `Subject:`, `Preview Text:`, `Body:`, and `CTA Button:`.
-- Do NOT wrap email copy or proposals inside triple-backtick (```) code fences. Code blocks are reserved strictly for technical code/SQL.
-- When multiple proposals or variations are requested, format each clearly with its own heading (e.g. `### Proposal 1: [Concept/Theme]`, `### Proposal 2: [Concept/Theme]`).
-
-Do NOT use any tools. Generate the content using your own creativity.
-Refer to the brand-voice-craft skill for brand voice guidelines and examples.""",
+## Instructions:
+1. Always consult and strictly follow the attached `brand-voice` skill for copywriting guardrails, brand tone, channel-specific constraints, and formatting rules.
+2. Scope output strictly to the channel(s) requested (Email-only, Social-only, SMS-only, or Full Campaign) as detailed in the skill.
+3. Ensure all prices, currency ({active_context.currency_code} / {active_context.currency_symbol}), and loyalty program references ({active_context.loyalty_program_name}) align with {active_context.client_name}.
+4. Do NOT use external tools. Generate creative copy using your copywriting expertise.
+""",
     tools=[content_skillset],
     output_key="content_reasoning",
 )
@@ -348,61 +296,10 @@ a2ui_reasoner = Agent(
 
 Your role is to design tailored, interactive digital offer banners and UI components specifically formatted for {active_context.client_name}.
 
-================================================================================
-CRITICAL QUANTITY & SCOPE RULES (FOLLOW STRICTLY):
-================================================================================
-1. **Single Product Request (Default)**:
-   - If the user asks for "one product", "single banner", "only generate one product app banner", "1 offer", or does NOT explicitly ask for multiple products / bundle / basket:
-     - Generate EXACTLY 1 hero product deal.
-     - You MUST set `additional_deals` to None (null) for ICA Sverige. DO NOT include extra deal items.
-     - You MUST set `additional_look_items` to None (null) for Crazy Fashion. DO NOT include extra outfit items.
-2. **Multi-Deal Bundle / Basket Request (Explicitly Requested Only)**:
-   - ONLY when the user EXPLICITLY asks for "multiple deals", "bundle", "weekly basket", "dinner package", or "complete the look with matching pieces", include 1-3 complementary items in `additional_deals` (ICA) or `additional_look_items` (Crazy Fashion).
-3. **Strict User Alignment**: NEVER generate 3 products when the user asked for 1 product. Always respect the exact quantity requested.
-
-================================================================================
-RETAILER COMPONENT SPECIFICATIONS:
-================================================================================
-
-1. **If ICA Sverige**:
-   - Design an interactive Swedish Grocery App Stammis Offer Banner with appetizing recipe integration:
-     - `brand`: 'ICA'
-     - `store_format`: 'ICA Maxi Stormarknad' (or 'ICA Kvantum', 'ICA Supermarket', 'ICA Nära')
-     - `store_name`: e.g. 'ICA Maxi Lindhagen, Stockholm'
-     - `badge_type`: 'Stammispris', 'Personligt Stammispris', or 'HelgKlipp!'
-     - `personalization_reason`: Rationale in Swedish (e.g. 'Valt för dig baserat på dina tidigare köp av KRAV-märkta skafferivaror')
-     - `target_persona`: e.g. 'Ekologiskt Medveten', 'Barnfamilj', 'Prisjägare', 'Gourmet'
-     - `product`: Swedish grocery item from catalog with `name`, `brand_line` ('ICA I love eco', 'Arla', 'ICA Gott Liv'), `volume_weight`, `origin_badge` ('Från Sverige 🇸🇪'), `eco_badge` ('KRAV 🌿'), `category`, `icon` (exact matching Unicode emoji e.g. '🥒', '🥚', '🥛', '🍎', '🥩', '🍞', '🧀', '☕', '🍗', '🥕', '🥑' or standard item keyword; never default to 'tomato' unless the product is tomatoes).
-     - `pricing`: `deal_price_major` (e.g. '24'), `deal_price_minor` (e.g. '90'), `unit` ('kr/st'), `regular_price` ('34:90 kr/st'), `savings_text` ('Spara 10:00 (29% rabatt)'), `comparison_price` ('Jfr-pris 16:60/l'), `limit_text` ('Max 2 köp/stammis')
-     - `valid_until`: e.g. 'Söndag 24 aug', `days_remaining`: 3
-     - `additional_deals`: None / null unless the user explicitly requested a multi-deal bundle.
-     - **Recipe Integration (Crucial for ICA)**: ALWAYS generate an inspiring Swedish meal pairing (`recipe_suggestion`) matching the featured ingredient:
-       - `title`: e.g. 'Klassisk Bolognese med Ekologiska Tomater & Basilika'
-       - `prep_time`: '25 min'
-       - `servings`: '4 port'
-       - `difficulty`: 'Enkel' or 'Medel'
-       - `cost_per_serving`: e.g. 'ca 24 kr/port'
-       - `ingredients`: 4-6 ingredients with measurements (e.g. ['400g Ekologiska Krossade Tomater', '500g Svensk Nötfärs 12%', '1 gul lök', '2 klyftor vitlök', 'Spaghetti'])
-       - `instructions_summary`: Short 1-2 sentence culinary tip
-
-2. **If Crazy Fashion (H&M-Style Editorial Drop Card)**:
-   - Design an H&M-inspired high-contrast fashion editorial drop card:
-     - `brand`: 'Crazy Fashion'
-     - `collection_title`: Editorial headline (e.g. 'AUTUMN DROP // SUSTAINABLE EDIT', 'STUDIO COLLECTION')
-     - `drop_badge`: 'MEMBER EXCLUSIVE', 'TRENDING NOW', or 'CONSCIOUS CHOICE 🌿'
-     - `products`: When creating a banner for multiple products or a recommended assortment (2-5 products), populate `products` with all curated items, each containing:
-       - `product_name`: High-fashion apparel item from catalog (e.g. 'NOVA Oversized Wool Blazer')
-       - `category`: 'Womenswear / Tailoring', 'Menswear / Knitwear', etc.
-       - `sustainability_tag`: '100% Recycled Italian Wool 🌿' or 'GOTS Certified Organic Cotton'
-       - `fit_and_fabric`: Fit notes (e.g. 'Relaxed boxy silhouette • Heavyweight structured twill')
-       - `color_options`: 3 tasteful color names (e.g. ['Oatmeal Heather', 'Midnight Black', 'Sage Green'])
-       - `size_options`: ['XS', 'S', 'M', 'L', 'XL']
-       - `pricing`: `regular_price` ('€79.99'), `member_price` ('€59.99'), `discount_pct` ('-25% MEMBER OFFER'), `crazy_club_points` ('+150 Club Points'), `garment_recycling_bonus` ('Extra -15% with garment recycling voucher')
-       - `personalization_reason`: English rationale explaining why this was curated for the customer cohort
-     - For single product requests: Populate `product_name`, `category`, `sustainability_tag`, `fit_and_fabric`, `color_options`, `size_options`, `pricing`, and leave `products` as null.
-     - `target_persona`: e.g. 'VIP Fashionista', 'Eco Trendsetter'
-     - `cta_text`: 'Claim Member Deal & Shop Now'
-     - `valid_until`: 'Sunday Midnight'
+## Instructions:
+1. Always consult and strictly follow the attached `a2ui-personalization` skill for all UI component specifications, retailer-specific styling (ICA Stammis Deal Banner with Swedish recipe integration vs. Crazy Fashion Editorial Drop Card), and pricing rules.
+2. Follow the cardinality rules in the skill: generate strictly 1 hero deal by default unless the user explicitly requests multiple products / bundle / basket.
+3. Ensure all pricing, currency ({active_context.currency_code} / {active_context.currency_symbol}), and loyalty features ({active_context.loyalty_program_name}) align with {active_context.client_name}.
 """,
     tools=[*mcp_tools, a2ui_skillset],
     output_key="a2ui_reasoning",
