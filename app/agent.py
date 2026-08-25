@@ -141,7 +141,7 @@ a2ui_skillset = SkillToolset(skills=[a2ui_skill])
 analytics_agent = Agent(
     name="analytics_agent",
     model="gemini-3.6-flash",
-    description=f"Executes BigQuery customer data analysis, cohort extraction, and RFM segmentation for {active_context.client_name}.",
+    description=f"Executes BigQuery customer data analysis, geographic & demographic distributions, RFM segmentation, customer counts, and visual analytics charts/graphs for {active_context.client_name}.",
     instruction=f"""You are the Customer Insights & Analytics Agent for {active_context.client_name}.
 
 Company & Data Target:
@@ -172,6 +172,12 @@ Company & Data Target:
 - Never fabricate data — only report what BigQuery returns.
 - Always use {active_context.currency_code} ({active_context.currency_symbol}).
 - Do NOT curate product recommendation lists for customer cohorts (product recommendation tasks belong exclusively to recommendation_pipeline).
+
+## Clean Presentation Guidelines:
+- DO NOT cite internal technical dataset paths (e.g. `agent-demo-09.{active_context.bigquery_dataset}`) or table IDs in your conversational text.
+- Never output dataset names or paths inside parentheses, brackets, or code fences (e.g. avoid `(agent-demo-09.marketing_analytics)`).
+- Present findings directly in natural business prose, clean markdown summary tables, and executive takeaways.
+- The UI automatically renders the executed BigQuery SQL queries, dataset details, and execution trace in a dedicated audit accordion.
 """,
     tools=[*mcp_tools, analytics_skillset],
 )
@@ -412,7 +418,7 @@ Depending on the active client in the conversation:
 
 a2ui_pipeline = SequentialAgent(
     name="a2ui_pipeline",
-    description=f"Designs personalized interactive retail UI components, Stammis grocery app offer banners, and fashion drop cards for {active_context.client_name}.",
+    description=f"Designs personalized interactive retail product offer cards, Stammis grocery app offer banners, and fashion drop cards for {active_context.client_name} (STRICTLY for product offer cards/deal banners, NOT for data analytics, geographic breakdowns, or graphs).",
     sub_agents=[a2ui_reasoner, a2ui_formatter],
 )
 
@@ -442,17 +448,16 @@ CRITICAL CONTEXT & IDENTITY RULES:
 3. **Delegation**: When the user requests customer data analysis, product recommendations, interactive A2UI components, campaign strategy formulation, or creative copywriting, delegate to the appropriate specialized sub-agent.
 
 ## Sub-Agents:
-1. **analytics_agent**: Data queries, BigQuery (`agent-demo-09.{active_context.bigquery_dataset}`), customer metrics, RFM segments, cohort analysis, customer events. (Do NOT route product recommendations or UI components here).
+1. **analytics_agent**: All customer data queries, BigQuery analysis, customer metrics, RFM segments, cohort analysis, demographic insights, geographic distribution (e.g. customer locations by city/country), spend breakdowns, customer counts, and visual analytics charts/graphs.
 2. **recommendation_pipeline**: Product recommendations for customer segments, curated 5-product assortments, merchandising strategies.
-3. **a2ui_pipeline**: Personalized retail UI components, Stammis app offer banners, digital deal cards, fashion drop cards.
+3. **a2ui_pipeline**: Retail product deal banners, Stammis grocery app discount banners with recipes, and fashion editorial drop cards. (Do NOT route customer analytics, charts, geographic graphs, or cohort data queries here).
 4. **strategy_pipeline**: Campaign strategy, channel mix, campaign pillars, A/B testing, ROI projections in {active_context.currency_code}.
 5. **content_pipeline**: Brand-aligned email copy, social media posts, SMS copy.
 
 ## Routing Rules (follow strictly):
-- General company/brand questions (overview, headquarters, values, loyalty rules, stores) → Answer directly from company context without delegating.
-- A2UI / Offer banner requests (e.g. generate A2UI component, design offer banner, create Stammis deal card, fashion drop card) → ALWAYS route to a2ui_pipeline.
-- Product recommendation requests (e.g. recommend products, suggest items for a segment/cohort, 5-product curation) → ALWAYS route to recommendation_pipeline.
-- Data/analytics questions (cohort metrics, transaction history, customer counts, event logs) → analytics_agent only.
+- Data, metrics, geographic distribution, charts & graphs (e.g. "create a graph over geographic distribution", "show customer breakdown by city", "plot customer segments", "analyze customer counts", "revenue by region", "visualize customer demographics") → ALWAYS route immediately to analytics_agent.
+- A2UI / Offer banner requests (e.g. "generate A2UI offer banner", "design Stammis deal card", "create fashion drop card for blazer", "app deal card") → ALWAYS route to a2ui_pipeline.
+- Product recommendation requests (e.g. "recommend 5 products for VIP segment", "suggest items for a cohort", "curate assortment") → ALWAYS route to recommendation_pipeline.
 - Strategy requests (campaign framework, channel mix, pillars) → analytics_agent first, then strategy_pipeline.
 - Content/copy requests (draft email, write copy, create post) → content_pipeline directly. If analytics context would help, route analytics_agent first, then content_pipeline.
 - Full campaign (strategy + content) → analytics_agent → strategy_pipeline → content_pipeline.

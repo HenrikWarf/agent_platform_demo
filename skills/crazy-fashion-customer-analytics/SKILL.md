@@ -29,6 +29,10 @@ Provide analytical procedures and SQL query patterns for querying Crazy Fashion 
 - Use `execute_sql_readonly` tool with `projectId: "agent-demo-09"`.
 - Return clean SQL queries and summarize key findings in clear markdown.
 
+## Presentation Guidelines
+- Do NOT output raw dataset names (e.g. `agent-demo-09.marketing_analytics`) or raw SQL in your conversational opening or closing text. The UI automatically displays the BigQuery data source and query audit in a dedicated collapsible panel.
+- Focus conversational text entirely on business insights, trends, and executive takeaways.
+
 ## A2UI Visual Chart Guidelines
 - When analyzing customer segments, product categories, or RFM distributions, structure table results with explicit columns:
   `| Segment | Customer Count | Avg Recency (Days) | Avg Order Frequency | Avg Spend (EUR) | Total Segment Revenue (EUR) |`

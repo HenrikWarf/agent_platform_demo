@@ -1081,6 +1081,65 @@ export default function ChatInterface({
                 </div>
               )}
 
+              {/* Dedicated BigQuery SQL & Analytics Data Source Audit Accordion */}
+              {msg.role === 'assistant' && (msg.data?.sql_executed || msg.data?.analytics?.sql_executed || msg.sql_executed) && (
+                <div style={{ marginTop: '0.6rem', marginBottom: '0.4rem' }}>
+                  <details
+                    style={{
+                      background: 'var(--code-bg)',
+                      borderTop: '1px solid var(--border-color)',
+                      borderRight: '1px solid var(--border-color)',
+                      borderBottom: '1px solid var(--border-color)',
+                      borderLeft: '4px solid #0284c7',
+                      borderRadius: '8px',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <summary
+                      style={{
+                        padding: '0.55rem 0.85rem',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        color: '#0284c7',
+                        background: 'var(--chip-bg)',
+                        userSelect: 'none',
+                        outline: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Database size={13} color="#0284c7" />
+                        <span>View Executed BigQuery SQL & Data Source Audit</span>
+                      </span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                        {activeClient?.bigquery_dataset || (msg.data?.analytics?.client_type === 'ica_sweden' ? 'marketing_analytics_ica' : 'marketing_analytics')}
+                      </span>
+                    </summary>
+                    <div style={{ padding: '0.75rem 0.9rem', borderTop: '1px solid var(--border-color)', overflowX: 'auto' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        <span>Target Dataset: <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-primary)' }}>agent-demo-09.{activeClient?.bigquery_dataset || 'marketing_analytics'}</code></span>
+                        <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>● Read-Only IAM Guarded</span>
+                      </div>
+                      <pre style={{
+                        margin: 0,
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.8rem',
+                        color: 'var(--text-main)',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        textAlign: 'left'
+                      }}>
+                        <code>{dedentCode(msg.data?.sql_executed || msg.data?.analytics?.sql_executed || msg.sql_executed)}</code>
+                      </pre>
+                    </div>
+                  </details>
+                </div>
+              )}
+
               {/* Expandable Background Activity & Skill Trace Accordion */}
               {msg.role === 'assistant' && ((msg.steps && msg.steps.length > 0) || (msg.data?.steps && msg.data.steps.length > 0)) && (() => {
                 const stepList = msg.steps || msg.data?.steps || [];
@@ -1894,6 +1953,25 @@ function MarkdownRenderer({ content, isUser }) {
                   </pre>
                 </div>
               </details>
+            );
+          }
+
+          // Single-line or short strings without newlines: render as compact inline chip
+          if (!codeStr.includes('\n') && codeStr.length < 80) {
+            return (
+              <code style={{
+                background: 'var(--chip-bg)',
+                padding: '0.15rem 0.45rem',
+                borderRadius: '4px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.84rem',
+                color: 'var(--color-primary)',
+                wordBreak: 'break-word',
+                display: 'inline-block',
+                margin: '0 0.15rem'
+              }}>
+                {codeStr}
+              </code>
             );
           }
 
