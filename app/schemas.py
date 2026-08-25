@@ -184,6 +184,48 @@ class FashionDropCardSchema(BaseModel):
     valid_until: str = Field(default="Sunday Midnight", description="Offer validity")
 
 
+# ─── A2UI Analytics Chart Schema (Visual BI & Cohort Dashboards) ───────────
+
+class ChartDataPoint(BaseModel):
+    label: str = Field(description="Data point label / segment name, e.g. 'VIP Fashionistas', 'Barnfamiljer'")
+    value: float = Field(description="Primary metric value, e.g. 707076.0 (revenue in SEK/EUR) or 72.0 (customer count)")
+    secondary_value: float | None = Field(default=None, description="Optional secondary metric, e.g. average order count, frequency, or share %")
+    formatted_value: str | None = Field(default=None, description="Display string with currency / units, e.g. '707,076 kr' or '€45,200'")
+    color: str | None = Field(default=None, description="Optional custom theme color override, e.g. '#e11d48'")
+
+
+class ChartKPIItem(BaseModel):
+    label: str = Field(description="KPI title, e.g. 'Total Revenue', 'Avg Recency', 'Top Segment'")
+    value: str = Field(description="Formatted KPI value, e.g. '1,860,000 kr', '€124,500', '12.4 Days'")
+    change_pct: str | None = Field(default=None, description="Optional trend or share indicator, e.g. '+14.2%', '38% of total'")
+    status: str | None = Field(default="neutral", description="'positive', 'negative', or 'neutral'")
+
+
+class A2UIAnalyticsChartSchema(BaseModel):
+    client_type: str = Field(description="'ica_sweden' or 'crazy_fashion'")
+    chart_type: str = Field(
+        default="horizontal_bar",
+        description="Type of chart to render: 'horizontal_bar', 'bar', 'donut', 'metric_grid'"
+    )
+    title: str = Field(description="Executive chart title, e.g. 'Customer Segment Revenue & RFM Distribution'")
+    subtitle: str | None = Field(default=None, description="Subtitle or query context, e.g. 'Live BigQuery customer_rfm_summary cohort analysis'")
+    primary_metric_label: str = Field(default="Revenue", description="Label of primary metric, e.g. 'Total Spend', 'Customer Count'")
+    secondary_metric_label: str | None = Field(default=None, description="Label of secondary metric, e.g. 'Order Frequency', 'Avg Recency'")
+    currency_symbol: str = Field(default="€", description="Currency symbol: 'kr' or '€'")
+    data_points: list[ChartDataPoint] = Field(description="Array of 3-8 chart data points representing segments/categories")
+    kpis: list[ChartKPIItem] | None = Field(default=None, description="Array of 2-4 highlight metric cards displayed above/beside chart")
+    key_insights: list[str] = Field(description="2-3 concise data-driven takeaways from the visualization")
+
+
+class AnalyticsOutputSchema(BaseModel):
+    summary_markdown: str = Field(description="Formatted markdown summary with table and findings")
+    target_segment: str = Field(default="All Cohorts (Full Dataset)", description="Target customer segment")
+    a2ui_chart: A2UIAnalyticsChartSchema | None = Field(
+        default=None,
+        description="Structured A2UI chart component payload for rendering interactive graphs"
+    )
+
+
 # ─── Unified A2UI Component Schema ──────────────────────────────────────────
 
 class A2UIComponentSchema(BaseModel):
@@ -195,6 +237,10 @@ class A2UIComponentSchema(BaseModel):
     fashion_drop_card: FashionDropCardSchema | None = Field(
         default=None,
         description="H&M-style editorial fashion drop card with complete-the-look items (populated when active client is Crazy Fashion)"
+    )
+    analytics_chart: A2UIAnalyticsChartSchema | None = Field(
+        default=None,
+        description="Interactive analytics graph / cohort breakdown chart"
     )
 
 

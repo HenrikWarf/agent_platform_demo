@@ -28,3 +28,8 @@ Provide analytical procedures and SQL query patterns for querying ICA Sverige cu
 - Calculate revenues and averages in SEK (kr).
 - Use `execute_sql_readonly` tool with `projectId: "agent-demo-09"`.
 - Return clean SQL queries and summarize key findings in Swedish or English as requested.
+
+## A2UI Visual Chart Guidelines
+- When analyzing customer segments, product categories, or Stammis RFM distributions, structure table results with explicit columns:
+  `| RFM Segment | Customer Count | Avg. Recency (Days) | Avg. Order Frequency | Avg. Spend per Customer (SEK) | Total Segment Revenue (SEK) |`
+- Provide 2-3 concise strategic takeaways to power executive A2UI chart dashboards.

@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AgentGraphVisualizer from './AgentGraphVisualizer';
 import A2UIOfferBanner from './A2UIOfferBanner';
+import A2UIAnalyticsChart from './A2UIAnalyticsChart';
 
 const AGENT_THEMES = {
   orchestrator: {
@@ -848,8 +849,16 @@ export default function ChatInterface({
                 <MarkdownRenderer content={msg.content} isUser={msg.role === 'user'} />
               </div>
 
+              {/* A2UI Dynamic Analytics Chart (Rendered when structured chart payload is present) */}
+              {msg.role === 'assistant' && (msg.data?.analytics?.a2ui_chart || msg.data?.a2ui?.analytics_chart || msg.data?.analytics_chart) && (
+                <A2UIAnalyticsChart
+                  chart={msg.data?.analytics?.a2ui_chart || msg.data?.a2ui?.analytics_chart || msg.data?.analytics_chart}
+                  activeClient={activeClient}
+                />
+              )}
+
               {/* A2UI Dynamic Offer Banner / Fashion Drop Card (Rendered strictly when a2ui payload is present) */}
-              {msg.role === 'assistant' && msg.data?.a2ui && Object.keys(msg.data.a2ui).length > 0 && (
+              {msg.role === 'assistant' && msg.data?.a2ui && (msg.data.a2ui.ica_offer_banner || msg.data.a2ui.fashion_drop_card) && (
                 <A2UIOfferBanner data={msg.data.a2ui} />
               )}
 

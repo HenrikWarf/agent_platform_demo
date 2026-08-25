@@ -28,3 +28,8 @@ Provide analytical procedures and SQL query patterns for querying Crazy Fashion 
 - Calculate revenues and averages in EUR (€).
 - Use `execute_sql_readonly` tool with `projectId: "agent-demo-09"`.
 - Return clean SQL queries and summarize key findings in clear markdown.
+
+## A2UI Visual Chart Guidelines
+- When analyzing customer segments, product categories, or RFM distributions, structure table results with explicit columns:
+  `| Segment | Customer Count | Avg Recency (Days) | Avg Order Frequency | Avg Spend (EUR) | Total Segment Revenue (EUR) |`
+- Provide 2-3 concise strategic takeaways to power executive A2UI chart dashboards.

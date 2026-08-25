@@ -14,6 +14,7 @@ import datetime
 import json
 import logging
 import os
+import re
 import uuid
 from typing import Any
 
@@ -539,7 +540,7 @@ class AgentRuntimeClient:
             yield {"type": "step", "step": step_gov}
 
             final_data = self._format_response(
-                events, prompt, target_segment, session_id=session_id, user_id=user_id
+                events, prompt, target_segment, session_id=session_id, user_id=user_id, client_id=client_id
             )
             final_data["steps"] = recorded_steps
             yield {
@@ -622,12 +623,13 @@ class AgentRuntimeClient:
         target_segment: str,
         session_id: str = "",
         user_id: str = "",
+        client_id: str = "",
     ) -> dict[str, Any]:
         """Format ADK SSE events into the frontend response structure.
 
         Extracts the final agent text response and any structured data from:
         - Tool functionResponse events (analytics from query_customer_data)
-        - Text events from formatter agents with output_schema (strategy, content)
+        - Text events from formatter agents with output_schema (strategy, content, a2ui)
         """
         analytics = {}
         strategy = {}
@@ -667,7 +669,7 @@ class AgentRuntimeClient:
                         continue
                 elif author in ("a2ui_formatter", "a2ui_agent") and not a2ui:
                     parsed = self._try_parse_json(text)
-                    if parsed and ("client_type" in parsed or "ica_offer_banner" in parsed or "fashion_drop_card" in parsed or "deal_price_major" in parsed or "collection_title" in parsed):
+                    if parsed and ("client_type" in parsed or "ica_offer_banner" in parsed or "fashion_drop_card" in parsed or "deal_price_major" in parsed or "collection_title" in parsed or "analytics_chart" in parsed):
                         a2ui = parsed
                         continue
 
@@ -707,8 +709,16 @@ class AgentRuntimeClient:
                             content = {"generated_assets": parsed}
                         elif not recommendation and ("recommended_products" in parsed):
                             recommendation = parsed
-                        elif not a2ui and ("client_type" in parsed or "ica_offer_banner" in parsed or "fashion_drop_card" in parsed or "deal_price_major" in parsed or "collection_title" in parsed):
+                        elif not a2ui and ("client_type" in parsed or "ica_offer_banner" in parsed or "fashion_drop_card" in parsed or "deal_price_major" in parsed or "collection_title" in parsed or "analytics_chart" in parsed):
                             a2ui = parsed
+
+        # Synthesize A2UI Analytics Chart from markdown table if analytics data present
+        if not analytics.get("a2ui_chart") and last_text:
+            extracted_chart = self._extract_analytics_chart(last_text, client_id=client_id)
+            if extracted_chart:
+                if not analytics:
+                    analytics = {"summary": "Customer analytics summary"}
+                analytics["a2ui_chart"] = extracted_chart
 
         # Build A2A trace as sender→receiver pairs
         # Filter out internal formatter agents from the trace display
@@ -762,6 +772,94 @@ class AgentRuntimeClient:
             "intent": intent,
             "target_segment": target_segment,
         }
+
+    @staticmethod
+    def _extract_analytics_chart(text: str, client_id: str | None = None) -> dict[str, Any] | None:
+        """Extracts structured A2UIAnalyticsChart data from markdown tables or returns None."""
+        if not text or "|" not in text:
+            return None
+
+        is_ica = (client_id == "ica_sweden")
+        lines = [line.strip() for line in text.split("\n") if "|" in line]
+        if len(lines) < 3:
+            return None
+
+        data_points = []
+        total_rev = 0
+        total_cust = 0
+
+        # lines[0] is header, lines[1] is separator |---|
+        for row_str in lines[2:]:
+            cols = [c.strip().replace("**", "").replace("__", "") for c in row_str.split("|")[1:-1]]
+            if not cols or len(cols) < 2 or "---" in cols[0] or cols[0].lower().startswith("total"):
+                continue
+
+            label = cols[0]
+            if not label or label.lower() in ("rfm segment", "segment", "cohort", "category", "channel"):
+                continue
+
+            count_val = None
+            rev_val = None
+
+            for i, c in enumerate(cols[1:], 1):
+                cleaned = re.sub(r"[^\d.,]", "", c).replace(",", "")
+                try:
+                    num = float(cleaned)
+                    if num > 0:
+                        if rev_val is None and (num > 500 or i == len(cols) - 1):
+                            rev_val = num
+                        elif count_val is None and num <= 500:
+                            count_val = num
+                except ValueError:
+                    pass
+
+            val = rev_val if rev_val is not None else (count_val or 0)
+            sec_val = count_val if (rev_val is not None and count_val is not None) else None
+
+            if val > 0:
+                total_rev += (rev_val or 0)
+                total_cust += int(count_val or 0)
+                formatted = f"{int(val):,} kr" if is_ica else f"€{int(val):,}"
+                data_points.append({
+                    "label": label,
+                    "value": val,
+                    "secondary_value": sec_val,
+                    "formatted_value": formatted,
+                })
+
+        if len(data_points) >= 2:
+            return {
+                "client_type": "ica_sweden" if is_ica else "crazy_fashion",
+                "chart_type": "horizontal_bar",
+                "title": "Kundsegmentsöversikt & Intäktsfördelning" if is_ica else "Customer Segment Revenue & Distribution",
+                "subtitle": f"Live BigQuery customer_rfm_summary cohort analysis ({'ICA Sverige' if is_ica else 'Crazy Fashion'})",
+                "primary_metric_label": "Intäkter (SEK)" if is_ica else "Revenue (EUR)",
+                "secondary_metric_label": "Antal kunder" if is_ica else "Customer Count",
+                "currency_symbol": "kr" if is_ica else "€",
+                "data_points": data_points,
+                "kpis": [
+                    {
+                        "label": "Total Intäkt" if is_ica else "Total Revenue",
+                        "value": f"{int(total_rev):,} kr" if is_ica else f"€{int(total_rev):,}",
+                        "status": "positive",
+                    },
+                    {
+                        "label": "Totalt antal kunder" if is_ica else "Total Customers",
+                        "value": str(total_cust) if total_cust > 0 else str(len(data_points)),
+                        "status": "neutral",
+                    },
+                    {
+                        "label": "Största segment" if is_ica else "Top Segment",
+                        "value": data_points[0]["label"],
+                        "status": "positive",
+                    },
+                ],
+                "key_insights": [
+                    f"{data_points[0]['label']} genererar den högsta omsättningen." if is_ica else f"{data_points[0]['label']} drives the highest revenue return.",
+                    "Stark potential för skräddarsydda lojalitetserbjudanden." if is_ica else "High potential for targeted loyalty campaigns.",
+                ],
+            }
+        return None
 
     @staticmethod
     def _extract_text(content: dict) -> str | None:
