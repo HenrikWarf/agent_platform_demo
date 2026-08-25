@@ -1,0 +1,18 @@
+{
+  "campaign_name": "Vardagshjältar — 20-Minuters Ekologisk Vardagspasta",
+  "target_segment": "Barnfamiljer Storhandlare",
+  "strategic_objective": "Increase midweek basket frequency and KRAV category penetration with quick family dinner bundles.",
+  "projected_kpis": {
+    "target_cohort_size": 300,
+    "projected_conversion_rate": "8.5%",
+    "projected_revenue_sek": "142,500 kr",
+    "projected_roi": "240%",
+    "stammis_points_distributed": "142,500"
+  },
+  "channel_orchestration": {
+    "email_cadence": "Tuesday 07:00 AM weekly dinner inspiration",
+    "ica_app_push": "Wednesday 16:00 PM clip-to-card reminder",
+    "in_store_signage": "Gavel exponering at store entrance (Veckans Stammisklipp)",
+    "sms_trigger": "Friday afternoon weekend dinner reminder for high-value Stammisar"
+  }
+}

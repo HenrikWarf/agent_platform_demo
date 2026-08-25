@@ -1,0 +1,18 @@
+{
+  "campaign_name": "Autumn Studio Drop // The Sustainable Capsule",
+  "target_segment": "VIP Fashionistas",
+  "strategic_objective": "Drive early pre-access adoption of the Autumn Studio Collection with premium recycled wool tailoring and Crazy Club VIP double points.",
+  "projected_kpis": {
+    "target_cohort_size": 300,
+    "projected_conversion_rate": "6.5%",
+    "projected_revenue_eur": "€24,375",
+    "projected_roi": "310%",
+    "crazy_club_points_distributed": "48,750"
+  },
+  "channel_orchestration": {
+    "email_cadence": "Thursday 18:00 CET editorial lookbook with VIP pre-access link",
+    "instagram_reels": "Friday teaser showcasing Italian recycled wool craftsmanship",
+    "in_store_curation": "Flagship entrance Studio Edit display with textile recycling point",
+    "vip_sms": "Saturday morning private styling session invite"
+  }
+}

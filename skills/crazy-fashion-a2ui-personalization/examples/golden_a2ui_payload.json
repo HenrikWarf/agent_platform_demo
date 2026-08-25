@@ -1,0 +1,36 @@
+{
+  "component_type": "crazy_fashion_drop_card",
+  "fashion_drop_card": {
+    "collection_headline": "STUDIO COLLECTION // AUTUMN 2026",
+    "editorial_subheadline": "Architectural Tailoring in 100% Recycled Italian Wool",
+    "member_exclusive_badge": "VIP EARLY ACCESS",
+    "sustainable_materials_tag": "100% Recycled Italian Wool 🌿",
+    "hero_product": {
+      "product_name": "NOVA Oversized Wool Blazer",
+      "category": "Womenswear / Tailoring",
+      "public_price": "€129.99",
+      "member_price": "€99.99",
+      "discount_percentage": "23% OFF",
+      "crazy_club_points_awarded": 200,
+      "available_sizes": ["XS", "S", "M", "L", "XL"],
+      "color_swatches": ["#2C2C2C", "#8B8682", "#D4AF37"]
+    },
+    "products": [
+      {
+        "product_id": "PROD_CF_01",
+        "product_name": "NOVA Oversized Wool Blazer",
+        "category": "Womenswear / Tailoring",
+        "public_price": "€129.99",
+        "member_price": "€99.99",
+        "discount_percentage": "23% OFF",
+        "sustainable_materials_tag": "100% Recycled Italian Wool 🌿",
+        "crazy_club_points_awarded": 200,
+        "available_sizes": ["XS", "S", "M", "L", "XL"],
+        "color_swatches": ["#2C2C2C", "#8B8682", "#D4AF37"],
+        "recommendation_reason": "Core tailoring piece with structured shoulders."
+      }
+    ],
+    "garment_recycling_voucher_perk": "Drop off unwanted textiles in-store for an instant -15% circular voucher.",
+    "cta_button_text": "Add to Bag — Member Price"
+  }
+}

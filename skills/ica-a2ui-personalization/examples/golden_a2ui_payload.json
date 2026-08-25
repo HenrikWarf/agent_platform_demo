@@ -1,0 +1,31 @@
+{
+  "component_type": "ica_stammis_offer_banner",
+  "ica_stammis_banner": {
+    "headline": "VARDAGSHJÄLTAR // VECKANS STAMMISPRIS",
+    "subheadline": "Svensk Kycklingfilé & Ekologisk Vardagspasta på 20 minuter",
+    "badge_text": "STAMMISPRIS",
+    "hero_deal": {
+      "product_name": "Svensk Kycklingbröstfilé 1kg",
+      "deal_price": "119:-",
+      "ordinary_price": "139:-",
+      "discount_label": "Spara 20:-",
+      "comparison_price": "119:00 kr/kg",
+      "svensk_kott_flag": true,
+      "krav_certified": true,
+      "stammis_points_bonus": 120
+    },
+    "recipe_card": {
+      "title": "20-Minuters Krämig Kycklingpasta",
+      "cooking_time_minutes": 20,
+      "difficulty": "Enkel",
+      "ingredients": [
+        "Svensk Kycklingfilé 1kg",
+        "Ekologisk Pasta Penne 500g",
+        "Svensk Färsk Broccoli 250g",
+        "Vispgrädde 36% 2.5dl"
+      ],
+      "short_instruction": "Stek kycklingen i bitar, koka pastan med broccoli de sista 3 minuterna. Blanda med grädde och servera!"
+    },
+    "cta_button_text": "Ladda till kortet"
+  }
+}

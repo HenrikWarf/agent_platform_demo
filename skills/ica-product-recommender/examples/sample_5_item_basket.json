@@ -1,0 +1,47 @@
+{
+  "target_segment": "Barnfamiljer Storhandlare",
+  "segment_profile_summary": "Active family households seeking nutritious, rapid weekday dinners and high-volume staples with strong Stammis value.",
+  "recommended_products": [
+    {
+      "product_id": "PROD_ICA_01",
+      "product_name": "Svensk Kycklingbröstfilé 1kg",
+      "category": "Kött & Chark",
+      "price_eur": 119.0,
+      "sustainability_certified": true,
+      "recommendation_reason": "Top dinner protein purchased by 44% of Barnfamiljer; provides 4 weekday family portions."
+    },
+    {
+      "product_id": "PROD_ICA_05",
+      "product_name": "Svensk Färsk Broccoli 250g",
+      "category": "Frukt & Grönt",
+      "price_eur": 16.9,
+      "sustainability_certified": true,
+      "recommendation_reason": "Fresh vegetable side that pairs with chicken and pasta for a balanced 15-minute dinner."
+    },
+    {
+      "product_id": "PROD_ICA_04",
+      "product_name": "Ekologisk Pasta Penne Rigate 500g",
+      "category": "Skafferi & Bröd",
+      "price_eur": 19.9,
+      "sustainability_certified": true,
+      "recommendation_reason": "Essential pantry carb with 3.8x monthly repeat cycle among family shoppers."
+    },
+    {
+      "product_id": "PROD_ICA_02",
+      "product_name": "Ekologisk Svensk Mellanmjölk 1.5L",
+      "category": "Mejeri & Ägg",
+      "price_eur": 22.9,
+      "sustainability_certified": true,
+      "recommendation_reason": "Core daily dairy staple with 92% basket penetration in family cohorts."
+    },
+    {
+      "product_id": "PROD_ICA_18",
+      "product_name": "Handskalade Räkor i Lake 280g",
+      "category": "Fisk & Skaldjur",
+      "price_eur": 69.9,
+      "sustainability_certified": false,
+      "recommendation_reason": "Featured Stammisklipp saving 20:- per jar; drives weekend basket value and high perceived member savings."
+    }
+  ],
+  "overall_curation_strategy": "A complete, high-volume Swedish family weekly basket anchored by Swedish chicken pasta, daily organic dairy, and a high-value Stammis weekend seafood deal."
+}

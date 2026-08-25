@@ -1,12 +1,19 @@
 ---
 name: crazy-fashion-campaign-framework
-description: "Formulates multi-channel marketing strategies, seasonal collection drop plans, garment recycling drives, and EUR ROI projections for Crazy Fashion."
-version: 1.0.0
-category: omnichannel_strategy
+description: "Formulates omnichannel marketing strategies, seasonal drop plans, garment recycling drives, and EUR ROI projections for Crazy Fashion."
+version: 2.0.0
+category: campaign_framework
 tenant: crazy_fashion
 ---
 
-# Omnichannel Strategy Framework Skill — Crazy Fashion
+# Campaign Strategy Framework — Crazy Fashion
+
+## Execution Workflow
+1. **Analyze Target Cohort**: Identify cohort volume, average basket spend in EUR, and frequency from BigQuery `customer_rfm_summary`.
+2. **Select Collection Theme**: Formulate seasonal drop themes (e.g. *Autumn Studio Drop*, *Conscious Cashmere Edit*, *Nordic Winter Transition*).
+3. **Project Financials & ROI**: Use `scripts/calculate_campaign_roi.py` to calculate projected EUR revenue, gross profit, and Crazy Club points.
+4. **Enforce Compliance**: Ensure claims align with `references/nordic_fashion_compliance.md` (*EU Green Claims Directive*, *Crazy Club VIP terms*, *Recycling vouchers*).
+5. **Omnichannel Orchestration**: Define budget allocation, channel cadence (Lookbook Email, Instagram, VIP SMS, In-Store), and KPI milestones modeled after `examples/golden_campaign_brief.json`.
 
 ## Strategic Framework Structure
 Every campaign strategy must adhere to structured components:

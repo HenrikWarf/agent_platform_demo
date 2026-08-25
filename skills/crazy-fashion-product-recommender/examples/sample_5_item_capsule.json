@@ -1,0 +1,47 @@
+{
+  "target_segment": "VIP Fashionistas",
+  "segment_profile_summary": "High-spend fashion curators seeking investment tailoring, luxurious tactile materials, and exclusive Crazy Club member drops.",
+  "recommended_products": [
+    {
+      "product_id": "PROD_CF_01",
+      "product_name": "NOVA Oversized Wool Blazer",
+      "category": "Womenswear / Tailoring",
+      "price_eur": 129.99,
+      "sustainability_certified": true,
+      "recommendation_reason": "Anchor tailoring piece crafted from 100% Recycled Italian Wool; generates +260 Crazy Club points."
+    },
+    {
+      "product_id": "PROD_CF_08",
+      "product_name": "Chunky Cashmere Roll-Neck Sweater",
+      "category": "Womenswear / Knitwear",
+      "price_eur": 149.99,
+      "sustainability_certified": true,
+      "recommendation_reason": "Sumptuous transitional layering knit with 70% recycled cashmere; high affinity among VIP buyers."
+    },
+    {
+      "product_id": "PROD_CF_03",
+      "product_name": "Tailored Wide-Leg Pleated Trousers",
+      "category": "Womenswear / Bottoms",
+      "price_eur": 89.99,
+      "sustainability_certified": true,
+      "recommendation_reason": "Creates a monochrome coordinated silhouette with the NOVA Blazer; structured drape."
+    },
+    {
+      "product_id": "PROD_CF_22",
+      "product_name": "Leather Chelsea Boots",
+      "category": "Footwear",
+      "price_eur": 179.99,
+      "sustainability_certified": true,
+      "recommendation_reason": "LWG-certified leather boots engineered for Nordic climate versatility; high-margin repeat category."
+    },
+    {
+      "product_id": "PROD_CF_35",
+      "product_name": "Heavyweight Recycled Wool Scarf",
+      "category": "Accessories",
+      "price_eur": 49.99,
+      "sustainability_certified": true,
+      "recommendation_reason": "Finishing touch accessory in Oatmeal Heather; optimal giftable add-on item."
+    }
+  ],
+  "overall_curation_strategy": "An architectural 5-piece Nordic capsule wardrobe combining structured Italian wool tailoring with tactile recycled cashmere and timeless leather boots."
+}
