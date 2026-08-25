@@ -10,7 +10,9 @@ tenant: crazy_fashion
 
 ## Drop Card Component Requirements
 1. **Collection Tagline**: Editorial headline (e.g., `STUDIO COLLECTION // AUTUMN 2026`).
-2. **Single Hero Look**: When the user requests a single banner or hero item, output strictly 1 hero product. Set `additional_look_items` to `null`.
+2. **Single Hero vs. Multi-Product Assortment**:
+   - **Single Item Request**: When the user requests a single banner or hero item, output strictly 1 hero product. Set `products` and `additional_look_items` to `null`.
+   - **Multi-Product Assortment (2-5 Products)**: When the user asks for a banner of recommendations or an assortment, populate the `products` array with all 2-5 items, each containing complete product names, categories, size options, color variants, member pricing, and personalization rationale.
 3. **Interactive Selectors**:
    - `available_sizes`: e.g. `["XS", "S", "M", "L", "XL"]`
    - `available_colors`: e.g. `[{"name": "Charcoal Grey", "hex": "#2b2b2b"}, {"name": "Camel Beige", "hex": "#c19a6b"}]`

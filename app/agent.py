@@ -393,15 +393,16 @@ RETAILER COMPONENT SPECIFICATIONS:
      - `brand`: 'Crazy Fashion'
      - `collection_title`: Editorial headline (e.g. 'AUTUMN DROP // SUSTAINABLE EDIT', 'STUDIO COLLECTION')
      - `drop_badge`: 'MEMBER EXCLUSIVE', 'TRENDING NOW', or 'CONSCIOUS CHOICE 🌿'
-     - `product_name`: High-fashion apparel item from catalog (e.g. 'NOVA Oversized Wool Blazer', 'Linen Wide Trousers')
-     - `category`: 'Womenswear / Tailoring', 'Menswear / Knitwear', etc.
-     - `sustainability_tag`: '100% Recycled Italian Wool 🌿' or 'GOTS Certified Organic Cotton'
-     - `fit_and_fabric`: Fit notes (e.g. 'Relaxed boxy silhouette • Heavyweight structured twill')
-     - `color_options`: 3 tasteful color names (e.g. ['Oatmeal Heather', 'Midnight Black', 'Sage Green'])
-     - `size_options`: ['XS', 'S', 'M', 'L', 'XL']
-     - `pricing`: `regular_price` ('€79.99'), `member_price` ('€59.99'), `discount_pct` ('-25% MEMBER OFFER'), `crazy_club_points` ('+150 Club Points'), `garment_recycling_bonus` ('Extra -15% with garment recycling voucher')
-     - `additional_look_items`: None / null unless the user explicitly requested matching outfit pieces.
-     - `personalization_reason`: English rationale explaining why this was curated for the customer cohort
+     - `products`: When creating a banner for multiple products or a recommended assortment (2-5 products), populate `products` with all curated items, each containing:
+       - `product_name`: High-fashion apparel item from catalog (e.g. 'NOVA Oversized Wool Blazer')
+       - `category`: 'Womenswear / Tailoring', 'Menswear / Knitwear', etc.
+       - `sustainability_tag`: '100% Recycled Italian Wool 🌿' or 'GOTS Certified Organic Cotton'
+       - `fit_and_fabric`: Fit notes (e.g. 'Relaxed boxy silhouette • Heavyweight structured twill')
+       - `color_options`: 3 tasteful color names (e.g. ['Oatmeal Heather', 'Midnight Black', 'Sage Green'])
+       - `size_options`: ['XS', 'S', 'M', 'L', 'XL']
+       - `pricing`: `regular_price` ('€79.99'), `member_price` ('€59.99'), `discount_pct` ('-25% MEMBER OFFER'), `crazy_club_points` ('+150 Club Points'), `garment_recycling_bonus` ('Extra -15% with garment recycling voucher')
+       - `personalization_reason`: English rationale explaining why this was curated for the customer cohort
+     - For single product requests: Populate `product_name`, `category`, `sustainability_tag`, `fit_and_fabric`, `color_options`, `size_options`, `pricing`, and leave `products` as null.
      - `target_persona`: e.g. 'VIP Fashionista', 'Eco Trendsetter'
      - `cta_text`: 'Claim Member Deal & Shop Now'
      - `valid_until`: 'Sunday Midnight'
@@ -419,7 +420,8 @@ Depending on the active client in the conversation:
 - If ICA Sverige: Set `client_type` to 'ica_sweden' and populate `ica_offer_banner` with all fields. Leave `fashion_drop_card` as null.
   - If the user requested only 1 single product or no multi-deal bundle was generated, set `additional_deals` to null.
 - If Crazy Fashion: Set `client_type` to 'crazy_fashion' and populate `fashion_drop_card` with all fields. Leave `ica_offer_banner` as null.
-  - If the user requested only 1 single product or no outfit pieces were generated, set `additional_look_items` to null.
+  - When multiple products were designed (e.g. for a 5-product recommendation assortment), populate the `products` list with all product detail items.
+  - If only 1 single product was designed, set `products` and `additional_look_items` to null.
 """,
     output_schema=A2UIComponentSchema,
     output_key="a2ui_result",

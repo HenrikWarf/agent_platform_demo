@@ -941,7 +941,7 @@ export default function ChatInterface({
 
               {/* A2UI Dynamic Offer Banner / Fashion Drop Card (Rendered strictly when a2ui payload is present) */}
               {msg.role === 'assistant' && msg.data?.a2ui && (msg.data.a2ui.ica_offer_banner || msg.data.a2ui.fashion_drop_card) && (
-                <A2UIOfferBanner data={msg.data.a2ui} />
+                <A2UIOfferBanner data={{ ...msg.data.a2ui, recommendation_products: msg.data?.recommendation?.recommended_products }} />
               )}
 
               {/* Product Recommendation Output Card */}

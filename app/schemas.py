@@ -163,23 +163,39 @@ class FashionDropItem(BaseModel):
     discount_pct: str = Field(description="Discount badge, e.g. '-25%'")
 
 
+class FashionProductDetail(BaseModel):
+    product_name: str = Field(description="Product title, e.g. 'NOVA Oversized Wool Blazer'")
+    category: str = Field(description="Category, e.g. 'Womenswear / Tailoring', 'Menswear / Knitwear', 'Accessories'")
+    sustainability_tag: str = Field(default="100% Recycled Italian Wool 🌿", description="Conscious material tag")
+    fit_and_fabric: str = Field(default="Relaxed boxy silhouette • Structured heavy twill", description="Fit description")
+    color_options: list[str] = Field(default=["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"], description="Color variants")
+    size_options: list[str] = Field(default=["XS", "S", "M", "L", "XL"], description="Available sizes")
+    pricing: FashionPricing = Field(description="Pricing breakdown with regular, member, and club points")
+    personalization_reason: str = Field(default="Curated based on customer segment style affinity", description="Why this item was curated")
+    additional_look_items: list[FashionDropItem] | None = Field(default=None, description="Optional matching pieces")
+
+
 class FashionDropCardSchema(BaseModel):
     brand: str = Field(default="Crazy Fashion", description="Brand name")
     collection_title: str = Field(default="AUTUMN DROP // SUSTAINABLE EDIT", description="Collection headline, e.g. 'AUTUMN DROP // SUSTAINABLE EDIT'")
     drop_badge: str = Field(default="MEMBER EXCLUSIVE", description="Badge pill, e.g. 'MEMBER EXCLUSIVE', 'TRENDING NOW', 'LIMITED RUN'")
-    product_name: str = Field(description="Hero product title, e.g. 'NOVA Oversized Wool Blazer'")
-    category: str = Field(description="Category, e.g. 'Womenswear / Tailoring', 'Menswear / Knitwear'")
-    sustainability_tag: str = Field(default="100% Recycled Italian Wool 🌿", description="Conscious material tag")
-    fit_and_fabric: str = Field(description="Fit description, e.g. 'Relaxed boxy silhouette • Structured heavy twill'")
-    color_options: list[str] = Field(default=["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"], description="Color variants")
-    size_options: list[str] = Field(default=["XS", "S", "M", "L", "XL"], description="Available sizes")
-    pricing: FashionPricing = Field(description="Pricing breakdown")
+    products: list[FashionProductDetail] | None = Field(
+        default=None,
+        description="Array of 2-5 curated fashion items allowing the user to navigate and browse between multiple product drop cards"
+    )
+    product_name: str | None = Field(default="NOVA Oversized Wool Blazer", description="Hero product title")
+    category: str | None = Field(default="Womenswear / Tailoring", description="Category")
+    sustainability_tag: str | None = Field(default="100% Recycled Italian Wool 🌿", description="Conscious material tag")
+    fit_and_fabric: str | None = Field(default="Relaxed boxy silhouette • Structured heavy twill", description="Fit description")
+    color_options: list[str] | None = Field(default=["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"], description="Color variants")
+    size_options: list[str] | None = Field(default=["XS", "S", "M", "L", "XL"], description="Available sizes")
+    pricing: FashionPricing | None = Field(default=None, description="Pricing breakdown")
     additional_look_items: list[FashionDropItem] | None = Field(
         default=None,
         description="Optional 'Complete the Look' matching pieces (1-2 items)"
     )
-    personalization_reason: str = Field(description="Why this item was curated for the customer segment")
-    target_persona: str = Field(description="Customer persona name, e.g. 'VIP Fashionista', 'Eco Trendsetter'")
+    personalization_reason: str | None = Field(default=None, description="Why this item was curated for the customer segment")
+    target_persona: str | None = Field(default="VIP Member Curation", description="Customer persona name, e.g. 'VIP Fashionista', 'Eco Trendsetter'")
     cta_text: str = Field(default="Claim Member Deal & Shop Now", description="Call-to-action button text")
     valid_until: str = Field(default="Sunday Midnight", description="Offer validity")
 

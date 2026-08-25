@@ -11,6 +11,8 @@ import {
   ChefHat,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Layers,
   Utensils,
   Plus
@@ -369,42 +371,104 @@ export default function A2UIOfferBanner({ data = {} }) {
  * ───────────────────────────────────────────────────────────────────────────── */
 function FashionDropCardComponent({ initialData = {} }) {
   const [selectedPreset, setSelectedPreset] = useState('vip');
+  const [activeProductIdx, setActiveProductIdx] = useState(0);
   const [selectedSize, setSelectedSize] = useState('M');
   const [selectedColor, setSelectedColor] = useState(0);
   const [isSavedToBag, setIsSavedToBag] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 
   const hasRealData = Boolean(
-    initialData && (initialData.product_name || initialData.pricing || initialData.collection_title)
+    initialData && (initialData.product_name || initialData.pricing || initialData.collection_title || (Array.isArray(initialData.products) && initialData.products.length > 0))
   );
 
-  const activeDrop = hasRealData ? {
-    ...initialData,
-    pricing: { ...(initialData.pricing || {}) }
-  } : {
-    ...FASHION_PERSONA_PRESETS[selectedPreset],
-    ...initialData,
-    pricing: {
-      ...FASHION_PERSONA_PRESETS[selectedPreset].pricing,
-      ...(initialData.pricing || {})
-    }
-  };
+  // 1. Build unified products array supporting multi-product recommendations & drop lists
+  let productsList = [];
+  if (Array.isArray(initialData?.products) && initialData.products.length > 0) {
+    productsList = initialData.products;
+  } else if (Array.isArray(initialData?.recommendation_products) && initialData.recommendation_products.length > 0) {
+    productsList = initialData.recommendation_products.map((p, pIdx) => ({
+      product_name: p.product_name || `Curated Item ${pIdx + 1}`,
+      category: p.category || 'Womenswear / Tailoring',
+      sustainability_tag: p.sustainability_certified ? '100% Recycled Italian Wool 🌿' : 'Conscious Choice',
+      fit_and_fabric: p.fit_and_fabric || 'Modern tailored silhouette • Premium sustainable weave',
+      color_options: p.color_options || ['Oatmeal Heather', 'Midnight Navy', 'Charcoal Slate'],
+      size_options: p.size_options || ['XS', 'S', 'M', 'L', 'XL'],
+      pricing: {
+        regular_price: `€${((typeof p.price_eur === 'number' ? p.price_eur : 59.99) * 1.25).toFixed(2)}`,
+        member_price: `€${(typeof p.price_eur === 'number' ? p.price_eur : 59.99).toFixed(2)}`,
+        discount_pct: '-25% MEMBER OFFER',
+        crazy_club_points: `+${Math.round((typeof p.price_eur === 'number' ? p.price_eur : 50) * 2)} Club Points`,
+        garment_recycling_bonus: 'Extra -15% with garment recycling voucher'
+      },
+      personalization_reason: p.recommendation_reason || initialData.personalization_reason || 'Curated recommendation based on segment style profile.'
+    }));
+  } else if (hasRealData) {
+    const heroProduct = {
+      product_name: initialData.product_name || "NOVA Oversized Wool Blazer",
+      category: initialData.category || "Womenswear / Tailoring",
+      sustainability_tag: initialData.sustainability_tag || "100% Recycled Italian Wool 🌿",
+      fit_and_fabric: initialData.fit_and_fabric || "Relaxed boxy silhouette • Structured heavy twill",
+      color_options: initialData.color_options || ["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"],
+      size_options: initialData.size_options || ["XS", "S", "M", "L", "XL"],
+      pricing: initialData.pricing || {
+        regular_price: "€79.99",
+        member_price: "€59.99",
+        discount_pct: "-25% MEMBER OFFER",
+        crazy_club_points: "+150 Club Points",
+        garment_recycling_bonus: "Extra -15% with garment recycling voucher"
+      },
+      personalization_reason: initialData.personalization_reason,
+      additional_look_items: initialData.additional_look_items
+    };
 
-  const {
-    collection_title = "STUDIO COLLECTION // AUTUMN 2026",
-    drop_badge = "MEMBER EXCLUSIVE",
-    product_name = "Tailored Garment",
-    category = "Apparel",
-    sustainability_tag = "100% Recycled Fibers 🌿",
-    fit_and_fabric = "Relaxed Fit • Structured Weave",
-    color_options = ["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"],
-    size_options = ["XS", "S", "M", "L", "XL"],
-    pricing,
-    additional_look_items,
-    personalization_reason,
-    target_persona,
-    valid_until
-  } = activeDrop;
+    if (Array.isArray(initialData.additional_look_items) && initialData.additional_look_items.length > 0) {
+      const additionalProducts = initialData.additional_look_items.map(item => ({
+        product_name: item.product_name,
+        category: item.category || 'Matching Piece',
+        sustainability_tag: item.sustainability_tag || '100% Recycled Fibers 🌿',
+        fit_and_fabric: 'Matching complementary silhouette',
+        color_options: ["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"],
+        size_options: ["XS", "S", "M", "L", "XL"],
+        pricing: {
+          regular_price: item.regular_price || "€59.99",
+          member_price: item.member_price || "€44.99",
+          discount_pct: item.discount_pct || "-25%",
+          crazy_club_points: "+100 Club Points",
+          garment_recycling_bonus: "Extra -15% with garment recycling voucher"
+        },
+        personalization_reason: "Matching complete-the-look piece"
+      }));
+      productsList = [heroProduct, ...additionalProducts];
+    } else {
+      productsList = [heroProduct];
+    }
+  } else {
+    productsList = [FASHION_PERSONA_PRESETS[selectedPreset]];
+  }
+
+  const safeIdx = Math.min(Math.max(0, activeProductIdx), productsList.length - 1);
+  const currentProduct = productsList[safeIdx] || productsList[0] || {};
+
+  const collection_title = initialData.collection_title || "STUDIO COLLECTION // AUTUMN 2026";
+  const drop_badge = initialData.drop_badge || "MEMBER EXCLUSIVE";
+  const target_persona = initialData.target_persona || "VIP Member Curation";
+  const valid_until = initialData.valid_until || "Sunday Midnight";
+
+  const product_name = currentProduct.product_name || "Tailored Garment";
+  const category = currentProduct.category || "Apparel";
+  const sustainability_tag = currentProduct.sustainability_tag || "100% Recycled Fibers 🌿";
+  const fit_and_fabric = currentProduct.fit_and_fabric || "Relaxed Fit • Structured Weave";
+  const color_options = Array.isArray(currentProduct.color_options) && currentProduct.color_options.length > 0 ? currentProduct.color_options : ["Oatmeal Heather", "Midnight Navy", "Charcoal Slate"];
+  const size_options = Array.isArray(currentProduct.size_options) && currentProduct.size_options.length > 0 ? currentProduct.size_options : ["XS", "S", "M", "L", "XL"];
+  const pricing = currentProduct.pricing || {
+    regular_price: "€79.99",
+    member_price: "€59.99",
+    discount_pct: "-25% OFF",
+    crazy_club_points: "+150 Club Points",
+    garment_recycling_bonus: "Extra -15% with garment recycling voucher"
+  };
+  const personalization_reason = currentProduct.personalization_reason || initialData.personalization_reason;
+  const additional_look_items = currentProduct.additional_look_items;
 
   const colorSwatches = [
     { name: color_options[0] || 'Oatmeal Heather', hex: '#d6c7b2' },
@@ -478,7 +542,10 @@ function FashionDropCardComponent({ initialData = {} }) {
               <button
                 key={key}
                 type="button"
-                onClick={() => setSelectedPreset(key)}
+                onClick={() => {
+                  setSelectedPreset(key);
+                  setActiveProductIdx(0);
+                }}
                 style={{
                   fontSize: '0.62rem',
                   fontWeight: selectedPreset === key ? 700 : 500,
@@ -498,16 +565,124 @@ function FashionDropCardComponent({ initialData = {} }) {
         )}
       </div>
 
+      {/* ── Multi-Product Carousel Navigation Strip (When multiple products available) ── */}
+      {productsList.length > 1 && (
+        <div style={{
+          background: 'rgba(79, 70, 229, 0.08)',
+          borderBottom: '1px solid rgba(79, 70, 229, 0.2)',
+          padding: '0.5rem 0.8rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.5rem',
+          overflowX: 'auto'
+        }}>
+          <button
+            type="button"
+            disabled={safeIdx === 0}
+            onClick={() => {
+              setActiveProductIdx(prev => Math.max(0, prev - 1));
+              setIsSavedToBag(false);
+            }}
+            style={{
+              background: safeIdx === 0 ? 'transparent' : 'var(--bg-card)',
+              color: safeIdx === 0 ? 'var(--text-dim)' : 'var(--color-primary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              padding: '0.25rem 0.55rem',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              cursor: safeIdx === 0 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.2rem',
+              flexShrink: 0
+            }}
+          >
+            <ChevronLeft size={13} /> Prev
+          </button>
+
+          {/* Product Pill Tabs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflowX: 'auto', padding: '0.1rem' }}>
+            {productsList.map((p, pIdx) => {
+              const isActive = safeIdx === pIdx;
+              const shortName = p.product_name ? p.product_name.replace(/^(Crazy Fashion|NOVA)\s*/i, '').slice(0, 18) : `Item ${pIdx + 1}`;
+              return (
+                <button
+                  key={pIdx}
+                  type="button"
+                  onClick={() => {
+                    setActiveProductIdx(pIdx);
+                    setIsSavedToBag(false);
+                  }}
+                  style={{
+                    background: isActive ? '#4f46e5' : 'var(--bg-secondary)',
+                    color: isActive ? '#ffffff' : 'var(--text-main)',
+                    border: isActive ? '1px solid #4f46e5' : '1px solid var(--border-color)',
+                    borderRadius: '20px',
+                    padding: '0.2rem 0.65rem',
+                    fontSize: '0.7rem',
+                    fontWeight: isActive ? 800 : 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    boxShadow: isActive ? '0 2px 8px rgba(79, 70, 229, 0.35)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ opacity: isActive ? 0.9 : 0.6, fontSize: '0.65rem', fontWeight: 800 }}>#{pIdx + 1}</span>
+                  <span>{shortName}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            disabled={safeIdx === productsList.length - 1}
+            onClick={() => {
+              setActiveProductIdx(prev => Math.min(productsList.length - 1, prev + 1));
+              setIsSavedToBag(false);
+            }}
+            style={{
+              background: safeIdx === productsList.length - 1 ? 'transparent' : 'var(--bg-card)',
+              color: safeIdx === productsList.length - 1 ? 'var(--text-dim)' : 'var(--color-primary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              padding: '0.25rem 0.55rem',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              cursor: safeIdx === productsList.length - 1 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.2rem',
+              flexShrink: 0
+            }}
+          >
+            Next <ChevronRight size={13} />
+          </button>
+        </div>
+      )}
+
       {/* ── Main Editorial Content Grid ── */}
       <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         
         {/* Title, Category & Wishlist */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.8rem' }}>
           <div>
-            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              {category}
-            </span>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0.4rem', letterSpacing: '-0.02em' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {category}
+              </span>
+              {productsList.length > 1 && (
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#4f46e5', background: 'rgba(79, 70, 229, 0.1)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                  Item {safeIdx + 1} of {productsList.length}
+                </span>
+              )}
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.1rem 0 0.4rem', letterSpacing: '-0.02em' }}>
               {product_name}
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -657,8 +832,75 @@ function FashionDropCardComponent({ initialData = {} }) {
           </div>
         </div>
 
-        {/* ── Optional "Complete the Look" Sub-Items ── */}
-        {additional_look_items && additional_look_items.length > 0 && (
+        {/* ── Curated Assortment Quick-Switch Grid (When multiple products available) ── */}
+        {productsList.length > 1 && (
+          <div style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '10px',
+            padding: '0.8rem'
+          }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Layers size={13} color="#4f46e5" />
+                <span>Full Recommended Assortment ({productsList.length} Items)</span>
+              </span>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Click to view details</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.45rem' }}>
+              {productsList.map((item, idx) => {
+                const isSelected = safeIdx === idx;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setActiveProductIdx(idx);
+                      setIsSavedToBag(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      background: isSelected ? 'rgba(79, 70, 229, 0.08)' : 'var(--bg-primary)',
+                      border: isSelected ? '1.5px solid #4f46e5' : '1px solid var(--border-color)',
+                      padding: '0.5rem 0.65rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.15rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: isSelected ? '#4f46e5' : 'var(--text-muted)' }}>
+                          #{idx + 1} • {item.category?.split('/')[0]?.trim() || 'Apparel'}
+                        </span>
+                        {isSelected && (
+                          <span style={{ fontSize: '0.6rem', fontWeight: 800, background: '#4f46e5', color: '#ffffff', padding: '0.05rem 0.35rem', borderRadius: '4px' }}>
+                            ACTIVE
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: '0.74rem', color: 'var(--text-main)', lineHeight: '1.3' }}>
+                        {item.product_name}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.4rem' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.76rem', color: '#e11d48' }}>
+                        {item.pricing?.member_price || '€59.99'}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                        {item.pricing?.regular_price || '€79.99'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Optional "Complete the Look" Sub-Items (For single-product cards with look pieces) ── */}
+        {productsList.length === 1 && additional_look_items && additional_look_items.length > 0 && (
           <div style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-color)',
@@ -731,7 +973,7 @@ function FashionDropCardComponent({ initialData = {} }) {
           }}
         >
           {isSavedToBag ? <Check size={18} /> : <ShoppingBag size={18} />}
-          {isSavedToBag ? '✓ Added to Club Bag!' : `Add to Bag • Size ${selectedSize}`}
+          {isSavedToBag ? `✓ Added ${product_name} to Club Bag!` : `Add to Bag • Size ${selectedSize}`}
         </button>
 
         {/* ── Personalization Rationale Drawer ── */}
