@@ -199,4 +199,4 @@ async def chat_with_observability_agent(req: ObsChatRequest) -> Dict[str, Any]:
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("OBSERVABILITY_PORT", "8081"))
-    uvicorn.run("observability_app.backend.app.py:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("observability_app.backend.app:app", host="0.0.0.0", port=port, reload=True)

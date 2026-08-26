@@ -10,6 +10,10 @@ FRONTEND_PORT=3001
 
 echo "🔍 === Starting GCP Multi-Agent Observability Platform ==="
 
+# Free ports if previously occupied
+lsof -ti:${BACKEND_PORT} | xargs kill -9 2>/dev/null || true
+lsof -ti:${FRONTEND_PORT} | xargs kill -9 2>/dev/null || true
+
 # 1. Start Observability Backend (FastAPI on Port 8081)
 echo "🐍 Starting Observability Backend on http://localhost:${BACKEND_PORT}..."
 cd "${ROOT_DIR}"
