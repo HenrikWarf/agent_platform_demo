@@ -93,7 +93,16 @@ export default function ObservabilityAssistantChat() {
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999 }}>
+    <div style={{ 
+      position: 'fixed', 
+      bottom: isExpanded ? '1rem' : '1.5rem', 
+      right: isExpanded ? '1rem' : '1.5rem', 
+      top: isExpanded ? '1rem' : 'auto',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'flex-end',
+      justifyContent: 'flex-end',
+    }}>
       
       {/* Floating Trigger Button */}
       {!isOpen && (
@@ -126,15 +135,16 @@ export default function ObservabilityAssistantChat() {
         <div
           className="glass-card"
           style={{
-            width: isExpanded ? '760px' : '440px',
-            height: isExpanded ? '700px' : '580px',
+            width: isExpanded ? 'min(920px, calc(100vw - 2rem))' : '440px',
+            height: isExpanded ? 'calc(100vh - 2rem)' : '580px',
+            maxHeight: isExpanded ? 'calc(100vh - 2rem)' : '580px',
             borderRadius: '16px',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            boxShadow: '0 20px 30px -10px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1)',
             border: '1px solid var(--border-active)',
-            transition: 'width 0.25s ease, height 0.25s ease',
+            transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
             background: 'var(--bg-secondary)',
           }}
         >
