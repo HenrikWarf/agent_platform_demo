@@ -1,0 +1,4321 @@
+[
+  {
+    "session_id": "sess-gcp-001279f3",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-001279",
+    "started_at": "2026-08-20T08:28:55.210000+00:00",
+    "updated_at": "2026-08-20T08:28:55.210000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-001279f3",
+        "user_prompt": "What segments have we defined in our customers",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT \n    rfm_segment,\n    COUNT(customer_id) AS customer_count,\n    ROUND(AVG(recency_days), 1) AS avg_recency_days,\n    ROUND(AVG(frequency_orders), 1) AS avg_frequency_orders,\n    ROUND(AVG(total_monetary_eur), 2) AS avg_monetary_eur\nFROM `agent-demo-09.marketing_analytics.customer_rfm_summary`\nGROUP BY rfm_segment\nORDER BY customer_count DESC;"
+            }
+          }
+        ],
+        "total_tokens": 1157,
+        "prompt_tokens": 457,
+        "completion_tokens": 700,
+        "latency_ms": 1507,
+        "quality_score": 97.2,
+        "task_success": true,
+        "grounding_score": 95.0,
+        "tool_use_score": 95.2,
+        "brand_voice_score": 96.2,
+        "spans": [
+          {
+            "span_id": "span-root-001279f3",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787214535210,
+            "duration_ms": 1507,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-001279f3",
+            "parent_span_id": "span-root-001279f3",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787214535320,
+            "duration_ms": 1287,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-001279f3",
+            "parent_span_id": "span-agent-001279f3",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787214535450,
+            "duration_ms": 1027,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-001279f3",
+            "parent_span_id": "span-agent-001279f3",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787214535630,
+            "duration_ms": 547,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.2,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-01244696",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-012446",
+    "started_at": "2026-08-20T10:43:55.948000+00:00",
+    "updated_at": "2026-08-20T10:43:55.948000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-01244696",
+        "user_prompt": "Hello. What can you help me with ?",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [],
+        "total_tokens": 917,
+        "prompt_tokens": 461,
+        "completion_tokens": 456,
+        "latency_ms": 2411,
+        "quality_score": 94.6,
+        "task_success": true,
+        "grounding_score": 96.3,
+        "tool_use_score": 94.1,
+        "brand_voice_score": 94.0,
+        "spans": [
+          {
+            "span_id": "span-root-01244696",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787222635948,
+            "duration_ms": 2411,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-01244696",
+            "parent_span_id": "span-root-01244696",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787222636058,
+            "duration_ms": 2191,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-01244696",
+            "parent_span_id": "span-agent-01244696",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787222636188,
+            "duration_ms": 1931,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.6,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-021135e4",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-021135",
+    "started_at": "2026-08-23T10:46:52.878000+00:00",
+    "updated_at": "2026-08-23T10:46:52.878000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-021135e4",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1558,
+        "prompt_tokens": 517,
+        "completion_tokens": 1041,
+        "latency_ms": 2767,
+        "quality_score": 96.2,
+        "task_success": true,
+        "grounding_score": 98.3,
+        "tool_use_score": 98.7,
+        "brand_voice_score": 97.8,
+        "spans": [
+          {
+            "span_id": "span-root-021135e4",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787482012878,
+            "duration_ms": 2767,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-021135e4",
+            "parent_span_id": "span-root-021135e4",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787482012988,
+            "duration_ms": 2547,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-021135e4",
+            "parent_span_id": "span-agent-021135e4",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787482013118,
+            "duration_ms": 2287,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.2,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-0314a3ef",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-0314a3",
+    "started_at": "2026-08-20T12:03:12.538000+00:00",
+    "updated_at": "2026-08-20T12:03:12.538000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-0314a3ef",
+        "user_prompt": "SHow me our defined customers segment",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "analytics_agent"
+            }
+          }
+        ],
+        "total_tokens": 1531,
+        "prompt_tokens": 580,
+        "completion_tokens": 951,
+        "latency_ms": 1330,
+        "quality_score": 97.5,
+        "task_success": true,
+        "grounding_score": 95.3,
+        "tool_use_score": 96.5,
+        "brand_voice_score": 96.0,
+        "spans": [
+          {
+            "span_id": "span-root-0314a3ef",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787227392538,
+            "duration_ms": 1330,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-0314a3ef",
+            "parent_span_id": "span-root-0314a3ef",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227392648,
+            "duration_ms": 1110,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-0314a3ef",
+            "parent_span_id": "span-agent-0314a3ef",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227392778,
+            "duration_ms": 850,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-0314a3ef",
+            "parent_span_id": "span-agent-0314a3ef",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227392958,
+            "duration_ms": 795,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.5,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-04a31d72",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-04a31d",
+    "started_at": "2026-08-20T12:29:45.986000+00:00",
+    "updated_at": "2026-08-20T12:29:45.986000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-04a31d72",
+        "user_prompt": "What is the average spend of Loyal Regulars?",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1492,
+        "prompt_tokens": 484,
+        "completion_tokens": 1008,
+        "latency_ms": 1234,
+        "quality_score": 99.4,
+        "task_success": true,
+        "grounding_score": 96.6,
+        "tool_use_score": 97.9,
+        "brand_voice_score": 95.2,
+        "spans": [
+          {
+            "span_id": "span-root-04a31d72",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228985986,
+            "duration_ms": 1234,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-04a31d72",
+            "parent_span_id": "span-root-04a31d72",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228986096,
+            "duration_ms": 1014,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-04a31d72",
+            "parent_span_id": "span-agent-04a31d72",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228986226,
+            "duration_ms": 754,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 99.4,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-04a9adc8",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-04a9ad",
+    "started_at": "2026-08-23T10:12:33.786000+00:00",
+    "updated_at": "2026-08-23T10:12:33.786000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-04a9adc8",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "list_skills",
+            "arguments": {}
+          }
+        ],
+        "total_tokens": 1002,
+        "prompt_tokens": 452,
+        "completion_tokens": 550,
+        "latency_ms": 2702,
+        "quality_score": 94.7,
+        "task_success": true,
+        "grounding_score": 95.0,
+        "tool_use_score": 96.5,
+        "brand_voice_score": 93.3,
+        "spans": [
+          {
+            "span_id": "span-root-04a9adc8",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787479953786,
+            "duration_ms": 2702,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-04a9adc8",
+            "parent_span_id": "span-root-04a9adc8",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479953896,
+            "duration_ms": 2482,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-04a9adc8",
+            "parent_span_id": "span-agent-04a9adc8",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479954026,
+            "duration_ms": 2222,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-04a9adc8",
+            "parent_span_id": "span-agent-04a9adc8",
+            "name": "execute_tool",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479954206,
+            "duration_ms": 716,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "list_skills",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.7,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-05026601",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-050266",
+    "started_at": "2026-08-23T10:45:26.312000+00:00",
+    "updated_at": "2026-08-23T10:45:26.312000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-05026601",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_get_table_info",
+            "arguments": {
+              "tableId": "customer_demographics_360",
+              "projectId": "agent-demo-09",
+              "datasetId": "marketing_analytics_ica"
+            }
+          }
+        ],
+        "total_tokens": 1459,
+        "prompt_tokens": 353,
+        "completion_tokens": 1106,
+        "latency_ms": 2603,
+        "quality_score": 98.8,
+        "task_success": true,
+        "grounding_score": 96.2,
+        "tool_use_score": 95.4,
+        "brand_voice_score": 94.0,
+        "spans": [
+          {
+            "span_id": "span-root-05026601",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787481926312,
+            "duration_ms": 2603,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-05026601",
+            "parent_span_id": "span-root-05026601",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787481926422,
+            "duration_ms": 2383,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-05026601",
+            "parent_span_id": "span-agent-05026601",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787481926552,
+            "duration_ms": 2123,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-05026601",
+            "parent_span_id": "span-agent-05026601",
+            "name": "execute_tool",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787481926732,
+            "duration_ms": 633,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_get_table_info",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 98.8,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-05b25376",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-05b253",
+    "started_at": "2026-08-20T08:45:41.622000+00:00",
+    "updated_at": "2026-08-20T08:45:41.622000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-05b25376",
+        "user_prompt": "Develop a 3-pillar omnichannel activation campaign strategy targeting Nordic New Explorers, including 100% channel mix weightings and projected EUR revenue recovery.\n\nTarget customer segment: New Explorers",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1754,
+        "prompt_tokens": 519,
+        "completion_tokens": 1235,
+        "latency_ms": 1869,
+        "quality_score": 95.9,
+        "task_success": true,
+        "grounding_score": 97.1,
+        "tool_use_score": 98.6,
+        "brand_voice_score": 93.4,
+        "spans": [
+          {
+            "span_id": "span-root-05b25376",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787215541622,
+            "duration_ms": 1869,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-05b25376",
+            "parent_span_id": "span-root-05b25376",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787215541732,
+            "duration_ms": 1649,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-05b25376",
+            "parent_span_id": "span-agent-05b25376",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787215541862,
+            "duration_ms": 1389,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 95.9,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-06ec5b92",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-06ec5b",
+    "started_at": "2026-08-20T12:00:39.037000+00:00",
+    "updated_at": "2026-08-20T12:00:39.037000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-06ec5b92",
+        "user_prompt": "Show the defined customers segments we have ?",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT rfm_segment, COUNT(*) as customer_count, AVG(recency_days) as avg_recency, AVG(frequency_orders) as avg_frequency, AVG(total_monetary_eur) as avg_monetary FROM `agent-demo-09.marketing_analytics.customer_rfm_summary` GROUP BY rfm_segment ORDER BY customer_count DESC"
+            }
+          }
+        ],
+        "total_tokens": 1551,
+        "prompt_tokens": 404,
+        "completion_tokens": 1147,
+        "latency_ms": 2054,
+        "quality_score": 96.4,
+        "task_success": true,
+        "grounding_score": 99.4,
+        "tool_use_score": 96.4,
+        "brand_voice_score": 96.6,
+        "spans": [
+          {
+            "span_id": "span-root-06ec5b92",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787227239037,
+            "duration_ms": 2054,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-06ec5b92",
+            "parent_span_id": "span-root-06ec5b92",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227239147,
+            "duration_ms": 1834,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-06ec5b92",
+            "parent_span_id": "span-agent-06ec5b92",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227239277,
+            "duration_ms": 1574,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-06ec5b92",
+            "parent_span_id": "span-agent-06ec5b92",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227239457,
+            "duration_ms": 733,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.4,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-078ca70b",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-078ca7",
+    "started_at": "2026-08-20T12:00:41.914000+00:00",
+    "updated_at": "2026-08-20T12:00:41.914000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-078ca70b",
+        "user_prompt": "Show the defined customers segments we have ?",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT loyalty_tier, COUNT(*) as customer_count FROM `agent-demo-09.marketing_analytics.customer_demographics_360` GROUP BY loyalty_tier ORDER BY customer_count DESC"
+            }
+          }
+        ],
+        "total_tokens": 1770,
+        "prompt_tokens": 646,
+        "completion_tokens": 1124,
+        "latency_ms": 1696,
+        "quality_score": 94.1,
+        "task_success": true,
+        "grounding_score": 99.9,
+        "tool_use_score": 95.8,
+        "brand_voice_score": 97.6,
+        "spans": [
+          {
+            "span_id": "span-root-078ca70b",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787227241914,
+            "duration_ms": 1696,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-078ca70b",
+            "parent_span_id": "span-root-078ca70b",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227242024,
+            "duration_ms": 1476,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-078ca70b",
+            "parent_span_id": "span-agent-078ca70b",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227242154,
+            "duration_ms": 1216,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-078ca70b",
+            "parent_span_id": "span-agent-078ca70b",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227242334,
+            "duration_ms": 508,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.1,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-07b05049",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-07b050",
+    "started_at": "2026-08-20T12:17:10.177000+00:00",
+    "updated_at": "2026-08-20T12:17:10.177000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-07b05049",
+        "user_prompt": "Show me the defined customer segments",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT \n  loyalty_tier,\n  COUNT(customer_id) as customer_count,\n  ROUND(AVG(churn_risk_score), 2) as avg_churn_risk,\n  ROUND(AVG(crazy_club_points), 0) as avg_points\nFROM `agent-demo-09.marketing_analytics.customer_demographics_360`\nGROUP BY loyalty_tier\nORDER BY avg_points DESC"
+            }
+          }
+        ],
+        "total_tokens": 1413,
+        "prompt_tokens": 398,
+        "completion_tokens": 1015,
+        "latency_ms": 2348,
+        "quality_score": 99.3,
+        "task_success": true,
+        "grounding_score": 98.1,
+        "tool_use_score": 98.1,
+        "brand_voice_score": 94.2,
+        "spans": [
+          {
+            "span_id": "span-root-07b05049",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228230177,
+            "duration_ms": 2348,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-07b05049",
+            "parent_span_id": "span-root-07b05049",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228230287,
+            "duration_ms": 2128,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-07b05049",
+            "parent_span_id": "span-agent-07b05049",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228230417,
+            "duration_ms": 1868,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-07b05049",
+            "parent_span_id": "span-agent-07b05049",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228230597,
+            "duration_ms": 683,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 99.3,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-07fc47c6",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-07fc47",
+    "started_at": "2026-08-23T10:12:31.623000+00:00",
+    "updated_at": "2026-08-23T10:12:31.623000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-07fc47c6",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "strategy_pipeline"
+            }
+          }
+        ],
+        "total_tokens": 1358,
+        "prompt_tokens": 505,
+        "completion_tokens": 853,
+        "latency_ms": 2755,
+        "quality_score": 96.0,
+        "task_success": true,
+        "grounding_score": 95.6,
+        "tool_use_score": 94.0,
+        "brand_voice_score": 94.2,
+        "spans": [
+          {
+            "span_id": "span-root-07fc47c6",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787479951623,
+            "duration_ms": 2755,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-07fc47c6",
+            "parent_span_id": "span-root-07fc47c6",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479951733,
+            "duration_ms": 2535,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-07fc47c6",
+            "parent_span_id": "span-agent-07fc47c6",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479951863,
+            "duration_ms": 2275,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-07fc47c6",
+            "parent_span_id": "span-agent-07fc47c6",
+            "name": "execute_tool",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479952043,
+            "duration_ms": 629,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.0,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-09602e8e",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-09602e",
+    "started_at": "2026-08-20T12:22:29.789000+00:00",
+    "updated_at": "2026-08-20T12:22:29.789000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-09602e8e",
+        "user_prompt": "If you look at the customers in the segment. Identify customers that has not bought one of the these products and count how many they are",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT rfm_segment, COUNT(*) AS count FROM `agent-demo-09.marketing_analytics.customer_rfm_summary` GROUP BY rfm_segment"
+            }
+          }
+        ],
+        "total_tokens": 1535,
+        "prompt_tokens": 489,
+        "completion_tokens": 1046,
+        "latency_ms": 1239,
+        "quality_score": 96.9,
+        "task_success": true,
+        "grounding_score": 99.2,
+        "tool_use_score": 98.9,
+        "brand_voice_score": 95.8,
+        "spans": [
+          {
+            "span_id": "span-root-09602e8e",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228549789,
+            "duration_ms": 1239,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-09602e8e",
+            "parent_span_id": "span-root-09602e8e",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228549899,
+            "duration_ms": 1019,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-09602e8e",
+            "parent_span_id": "span-agent-09602e8e",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228550029,
+            "duration_ms": 759,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-09602e8e",
+            "parent_span_id": "span-agent-09602e8e",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228550209,
+            "duration_ms": 805,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.9,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-0a9d82cb",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-0a9d82",
+    "started_at": "2026-08-20T12:22:24.517000+00:00",
+    "updated_at": "2026-08-20T12:22:24.517000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-0a9d82cb",
+        "user_prompt": "If you look at the customers in the segment. Identify customers that has not bought one of the these products and count how many they are",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "load_skill",
+            "arguments": {
+              "skill_name": "bigquery-customer-analytics"
+            }
+          }
+        ],
+        "total_tokens": 1602,
+        "prompt_tokens": 370,
+        "completion_tokens": 1232,
+        "latency_ms": 2020,
+        "quality_score": 94.0,
+        "task_success": true,
+        "grounding_score": 96.5,
+        "tool_use_score": 98.5,
+        "brand_voice_score": 93.9,
+        "spans": [
+          {
+            "span_id": "span-root-0a9d82cb",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228544517,
+            "duration_ms": 2020,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-0a9d82cb",
+            "parent_span_id": "span-root-0a9d82cb",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228544627,
+            "duration_ms": 1800,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-0a9d82cb",
+            "parent_span_id": "span-agent-0a9d82cb",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228544757,
+            "duration_ms": 1540,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-0a9d82cb",
+            "parent_span_id": "span-agent-0a9d82cb",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228544937,
+            "duration_ms": 571,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "load_skill",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.0,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-0b4769ee",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-0b4769",
+    "started_at": "2026-08-20T12:14:29.734000+00:00",
+    "updated_at": "2026-08-20T12:14:29.734000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-0b4769ee",
+        "user_prompt": "Recommend products for the Loyal Regulars segment.",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT * FROM `agent-demo-09.marketing_analytics.product_catalog` WHERE product_id IN ('PROD-001', 'PROD-005', 'PROD-013', 'PROD-037', 'PROD-019', 'PROD-008')"
+            }
+          }
+        ],
+        "total_tokens": 1169,
+        "prompt_tokens": 504,
+        "completion_tokens": 665,
+        "latency_ms": 2754,
+        "quality_score": 97.9,
+        "task_success": true,
+        "grounding_score": 98.1,
+        "tool_use_score": 94.3,
+        "brand_voice_score": 98.1,
+        "spans": [
+          {
+            "span_id": "span-root-0b4769ee",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228069734,
+            "duration_ms": 2754,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-0b4769ee",
+            "parent_span_id": "span-root-0b4769ee",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228069844,
+            "duration_ms": 2534,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-0b4769ee",
+            "parent_span_id": "span-agent-0b4769ee",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228069974,
+            "duration_ms": 2274,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-0b4769ee",
+            "parent_span_id": "span-agent-0b4769ee",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228070154,
+            "duration_ms": 835,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.9,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-0bbef4bc",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-0bbef4",
+    "started_at": "2026-08-23T10:32:09.257000+00:00",
+    "updated_at": "2026-08-23T10:32:09.257000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-0bbef4bc",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "a2ui_pipeline"
+            }
+          }
+        ],
+        "total_tokens": 1541,
+        "prompt_tokens": 642,
+        "completion_tokens": 899,
+        "latency_ms": 1692,
+        "quality_score": 98.7,
+        "task_success": true,
+        "grounding_score": 99.9,
+        "tool_use_score": 95.2,
+        "brand_voice_score": 95.4,
+        "spans": [
+          {
+            "span_id": "span-root-0bbef4bc",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787481129257,
+            "duration_ms": 1692,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-0bbef4bc",
+            "parent_span_id": "span-root-0bbef4bc",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787481129367,
+            "duration_ms": 1472,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-0bbef4bc",
+            "parent_span_id": "span-agent-0bbef4bc",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787481129497,
+            "duration_ms": 1212,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-0bbef4bc",
+            "parent_span_id": "span-agent-0bbef4bc",
+            "name": "execute_tool",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787481129677,
+            "duration_ms": 726,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 98.7,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-0c6c0d71",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-0c6c0d",
+    "started_at": "2026-08-20T10:47:21.476000+00:00",
+    "updated_at": "2026-08-20T10:47:21.476000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-0c6c0d71",
+        "user_prompt": "Lets formulate a email draft to send to this segment with the goal to engage them in our brand",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "content_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "content_pipeline"
+            }
+          }
+        ],
+        "total_tokens": 1719,
+        "prompt_tokens": 539,
+        "completion_tokens": 1180,
+        "latency_ms": 2189,
+        "quality_score": 98.4,
+        "task_success": true,
+        "grounding_score": 96.1,
+        "tool_use_score": 97.2,
+        "brand_voice_score": 98.2,
+        "spans": [
+          {
+            "span_id": "span-root-0c6c0d71",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787222841476,
+            "duration_ms": 2189,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-0c6c0d71",
+            "parent_span_id": "span-root-0c6c0d71",
+            "name": "invoke_agent",
+            "agent_name": "content_pipeline",
+            "start_time_ms": 1787222841586,
+            "duration_ms": 1969,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "content_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-0c6c0d71",
+            "parent_span_id": "span-agent-0c6c0d71",
+            "name": "call_llm",
+            "agent_name": "content_pipeline",
+            "start_time_ms": 1787222841716,
+            "duration_ms": 1709,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-0c6c0d71",
+            "parent_span_id": "span-agent-0c6c0d71",
+            "name": "execute_tool",
+            "agent_name": "content_pipeline",
+            "start_time_ms": 1787222841896,
+            "duration_ms": 584,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 98.4,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-10637446",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-106374",
+    "started_at": "2026-08-23T09:44:37.202000+00:00",
+    "updated_at": "2026-08-23T09:44:37.202000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-10637446",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "list_skills",
+            "arguments": {}
+          }
+        ],
+        "total_tokens": 1256,
+        "prompt_tokens": 644,
+        "completion_tokens": 612,
+        "latency_ms": 2894,
+        "quality_score": 96.9,
+        "task_success": true,
+        "grounding_score": 97.4,
+        "tool_use_score": 98.0,
+        "brand_voice_score": 97.5,
+        "spans": [
+          {
+            "span_id": "span-root-10637446",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787478277202,
+            "duration_ms": 2894,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-10637446",
+            "parent_span_id": "span-root-10637446",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787478277312,
+            "duration_ms": 2674,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-10637446",
+            "parent_span_id": "span-agent-10637446",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787478277442,
+            "duration_ms": 2414,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-10637446",
+            "parent_span_id": "span-agent-10637446",
+            "name": "execute_tool",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787478277622,
+            "duration_ms": 616,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "list_skills",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.9,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-10ffa777",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-10ffa7",
+    "started_at": "2026-08-23T09:42:57.914000+00:00",
+    "updated_at": "2026-08-23T09:42:57.914000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-10ffa777",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1191,
+        "prompt_tokens": 436,
+        "completion_tokens": 755,
+        "latency_ms": 1786,
+        "quality_score": 96.6,
+        "task_success": true,
+        "grounding_score": 96.0,
+        "tool_use_score": 96.6,
+        "brand_voice_score": 95.4,
+        "spans": [
+          {
+            "span_id": "span-root-10ffa777",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787478177914,
+            "duration_ms": 1786,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-10ffa777",
+            "parent_span_id": "span-root-10ffa777",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787478178024,
+            "duration_ms": 1566,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-10ffa777",
+            "parent_span_id": "span-agent-10ffa777",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787478178154,
+            "duration_ms": 1306,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.6,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-113fd046",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-113fd0",
+    "started_at": "2026-08-20T12:17:58.634000+00:00",
+    "updated_at": "2026-08-20T12:17:58.634000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-113fd046",
+        "user_prompt": "Recommend products for the Loyal Regulars segment",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "query": "SELECT \n  demo.preferred_category,\n  demo.loyalty_tier,\n  COUNT(*) as customer_count\nFROM `agent-demo-09.marketing_analytics.customer_rfm_summary` rfm\nJOIN `agent-demo-09.marketing_analytics.customer_demographics_360` demo\n  ON rfm.customer_id = demo.customer_id\nWHERE rfm.rfm_segment = 'Loyal Regulars'\nGROUP BY demo.preferred_category, demo.loyalty_tier\nORDER BY customer_count DESC\n",
+              "projectId": "agent-demo-09"
+            }
+          }
+        ],
+        "total_tokens": 1109,
+        "prompt_tokens": 382,
+        "completion_tokens": 727,
+        "latency_ms": 2332,
+        "quality_score": 97.7,
+        "task_success": true,
+        "grounding_score": 95.4,
+        "tool_use_score": 95.9,
+        "brand_voice_score": 94.8,
+        "spans": [
+          {
+            "span_id": "span-root-113fd046",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228278634,
+            "duration_ms": 2332,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-113fd046",
+            "parent_span_id": "span-root-113fd046",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228278744,
+            "duration_ms": 2112,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-113fd046",
+            "parent_span_id": "span-agent-113fd046",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228278874,
+            "duration_ms": 1852,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-113fd046",
+            "parent_span_id": "span-agent-113fd046",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228279054,
+            "duration_ms": 488,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.7,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-12d0cabf",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-12d0ca",
+    "started_at": "2026-08-23T09:33:54.554000+00:00",
+    "updated_at": "2026-08-23T09:33:54.554000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-12d0cabf",
+        "user_prompt": "Vilekt f\u00f6retag jobbar jag f\u00f6r ?",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT \n    (SELECT COUNT(DISTINCT customer_id) FROM `agent-demo-09.marketing_analytics.customer_demographics_360`) AS total_customers_demographics,\n    (SELECT COUNT(DISTINCT customer_id) FROM `agent-demo-09.marketing_analytics.customer_rfm_summary`) AS total_customers_rfm,\n    (SELECT COUNT(DISTINCT customer_id) FROM `agent-demo-09.marketing_analytics.customer_transactions`) AS total_customers_transactions;\n"
+            }
+          }
+        ],
+        "total_tokens": 943,
+        "prompt_tokens": 350,
+        "completion_tokens": 593,
+        "latency_ms": 1400,
+        "quality_score": 94.5,
+        "task_success": true,
+        "grounding_score": 98.7,
+        "tool_use_score": 97.5,
+        "brand_voice_score": 96.4,
+        "spans": [
+          {
+            "span_id": "span-root-12d0cabf",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787477634554,
+            "duration_ms": 1400,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-12d0cabf",
+            "parent_span_id": "span-root-12d0cabf",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787477634664,
+            "duration_ms": 1180,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-12d0cabf",
+            "parent_span_id": "span-agent-12d0cabf",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787477634794,
+            "duration_ms": 920,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-12d0cabf",
+            "parent_span_id": "span-agent-12d0cabf",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787477634974,
+            "duration_ms": 741,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.5,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1357e8b2",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1357e8",
+    "started_at": "2026-08-20T12:31:26.253000+00:00",
+    "updated_at": "2026-08-20T12:31:26.253000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1357e8b2",
+        "user_prompt": "Show me defined segments",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "load_skill",
+            "arguments": {
+              "skill_name": "bigquery-customer-analytics"
+            }
+          }
+        ],
+        "total_tokens": 1375,
+        "prompt_tokens": 545,
+        "completion_tokens": 830,
+        "latency_ms": 2795,
+        "quality_score": 96.5,
+        "task_success": true,
+        "grounding_score": 96.1,
+        "tool_use_score": 98.5,
+        "brand_voice_score": 95.6,
+        "spans": [
+          {
+            "span_id": "span-root-1357e8b2",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787229086253,
+            "duration_ms": 2795,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1357e8b2",
+            "parent_span_id": "span-root-1357e8b2",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787229086363,
+            "duration_ms": 2575,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1357e8b2",
+            "parent_span_id": "span-agent-1357e8b2",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787229086493,
+            "duration_ms": 2315,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-1357e8b2",
+            "parent_span_id": "span-agent-1357e8b2",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787229086673,
+            "duration_ms": 592,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "load_skill",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.5,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-151249bb",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-151249",
+    "started_at": "2026-08-20T08:14:46.506000+00:00",
+    "updated_at": "2026-08-20T08:14:46.506000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-151249bb",
+        "user_prompt": "Craft creative campaign assets for the Autumn Knitwear drop: email template (subject, preview, body, CTA), 2 Instagram posts, and SMS under 160 characters.\n\nTarget customer segment: VIP Fashionistas",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "content_pipeline"
+            }
+          }
+        ],
+        "total_tokens": 827,
+        "prompt_tokens": 352,
+        "completion_tokens": 475,
+        "latency_ms": 1702,
+        "quality_score": 97.7,
+        "task_success": true,
+        "grounding_score": 95.0,
+        "tool_use_score": 94.6,
+        "brand_voice_score": 97.0,
+        "spans": [
+          {
+            "span_id": "span-root-151249bb",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787213686506,
+            "duration_ms": 1702,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-151249bb",
+            "parent_span_id": "span-root-151249bb",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787213686616,
+            "duration_ms": 1482,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-151249bb",
+            "parent_span_id": "span-agent-151249bb",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787213686746,
+            "duration_ms": 1222,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-151249bb",
+            "parent_span_id": "span-agent-151249bb",
+            "name": "execute_tool",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787213686926,
+            "duration_ms": 715,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.7,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-15975fba",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-15975f",
+    "started_at": "2026-08-23T10:11:46.779000+00:00",
+    "updated_at": "2026-08-23T10:11:46.779000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-15975fba",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "analytics_agent"
+            }
+          }
+        ],
+        "total_tokens": 1391,
+        "prompt_tokens": 501,
+        "completion_tokens": 890,
+        "latency_ms": 2751,
+        "quality_score": 99.1,
+        "task_success": true,
+        "grounding_score": 98.1,
+        "tool_use_score": 95.0,
+        "brand_voice_score": 96.8,
+        "spans": [
+          {
+            "span_id": "span-root-15975fba",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787479906779,
+            "duration_ms": 2751,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-15975fba",
+            "parent_span_id": "span-root-15975fba",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479906889,
+            "duration_ms": 2531,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-15975fba",
+            "parent_span_id": "span-agent-15975fba",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479907019,
+            "duration_ms": 2271,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-15975fba",
+            "parent_span_id": "span-agent-15975fba",
+            "name": "execute_tool",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479907199,
+            "duration_ms": 676,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 99.1,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1684ff4e",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1684ff",
+    "started_at": "2026-08-19T09:15:54.150000+00:00",
+    "updated_at": "2026-08-19T09:15:54.150000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1684ff4e",
+        "user_prompt": "WHat is the company vision",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1177,
+        "prompt_tokens": 464,
+        "completion_tokens": 713,
+        "latency_ms": 2114,
+        "quality_score": 94.9,
+        "task_success": true,
+        "grounding_score": 97.6,
+        "tool_use_score": 95.5,
+        "brand_voice_score": 94.3,
+        "spans": [
+          {
+            "span_id": "span-root-1684ff4e",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787130954150,
+            "duration_ms": 2114,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1684ff4e",
+            "parent_span_id": "span-root-1684ff4e",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787130954260,
+            "duration_ms": 1894,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1684ff4e",
+            "parent_span_id": "span-agent-1684ff4e",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787130954390,
+            "duration_ms": 1634,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.9,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-17448ad9",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-17448a",
+    "started_at": "2026-08-20T10:45:49.101000+00:00",
+    "updated_at": "2026-08-20T10:45:49.101000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-17448ad9",
+        "user_prompt": "Lets look at dormat at-risk customers a bit closer. Tell me about them",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT \n    d.loyalty_tier,\n    COUNT(*) as count,\n    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 1) as percentage\nFROM `agent-demo-09.marketing_analytics.customer_rfm_summary` r\nJOIN `agent-demo-09.marketing_analytics.customer_demographics_360` d\n  ON r.customer_id = d.customer_id\nWHERE r.rfm_segment = 'Dormant At-Risk'\nGROUP BY loyalty_tier\nORDER BY count DESC;\n"
+            }
+          }
+        ],
+        "total_tokens": 1205,
+        "prompt_tokens": 408,
+        "completion_tokens": 797,
+        "latency_ms": 2658,
+        "quality_score": 96.8,
+        "task_success": true,
+        "grounding_score": 99.4,
+        "tool_use_score": 97.6,
+        "brand_voice_score": 93.5,
+        "spans": [
+          {
+            "span_id": "span-root-17448ad9",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787222749101,
+            "duration_ms": 2658,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-17448ad9",
+            "parent_span_id": "span-root-17448ad9",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787222749211,
+            "duration_ms": 2438,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-17448ad9",
+            "parent_span_id": "span-agent-17448ad9",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787222749341,
+            "duration_ms": 2178,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-17448ad9",
+            "parent_span_id": "span-agent-17448ad9",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787222749521,
+            "duration_ms": 570,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.8,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-18a54663",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-18a546",
+    "started_at": "2026-08-20T11:47:56.395000+00:00",
+    "updated_at": "2026-08-20T11:47:56.395000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-18a54663",
+        "user_prompt": "Recommend products for the Loyal Regulars segments",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "query": "SELECT\n  p.category,\n  p.subcategory,\n  p.product_id,\n  p.product_name,\n  p.price_eur,\n  p.sustainability_certified,\n  COUNT(e.event_id) AS wishlist_count\nFROM `agent-demo-09.marketing_analytics.customer_rfm_summary` r\nJOIN `agent-demo-09.marketing_analytics.customer_events` e\n  ON r.customer_id = e.customer_id\nJOIN `agent-demo-09.marketing_analytics.product_catalog` p\n  ON e.product_id = p.product_id\nWHERE r.rfm_segment = 'Loyal Regulars'\n  AND e.event_type = 'wishlist_add'\nGROUP BY p.category, p.subcategory, p.product_id, p.product_name, p.price_eur, p.sustainability_certified\nORDER BY wishlist_count DESC\nLIMIT 10",
+              "projectId": "agent-demo-09"
+            }
+          }
+        ],
+        "total_tokens": 1085,
+        "prompt_tokens": 548,
+        "completion_tokens": 537,
+        "latency_ms": 1298,
+        "quality_score": 94.3,
+        "task_success": true,
+        "grounding_score": 97.4,
+        "tool_use_score": 96.1,
+        "brand_voice_score": 94.7,
+        "spans": [
+          {
+            "span_id": "span-root-18a54663",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787226476395,
+            "duration_ms": 1298,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-18a54663",
+            "parent_span_id": "span-root-18a54663",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787226476505,
+            "duration_ms": 1078,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-18a54663",
+            "parent_span_id": "span-agent-18a54663",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787226476635,
+            "duration_ms": 818,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-18a54663",
+            "parent_span_id": "span-agent-18a54663",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787226476815,
+            "duration_ms": 597,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.3,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-18b88ec5",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-18b88e",
+    "started_at": "2026-08-20T12:14:09.990000+00:00",
+    "updated_at": "2026-08-20T12:14:09.990000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-18b88ec5",
+        "user_prompt": "Recommend products for the Loyal Regulars segment.",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "load_skill",
+            "arguments": {
+              "skill_name": "product-recommender"
+            }
+          }
+        ],
+        "total_tokens": 1464,
+        "prompt_tokens": 593,
+        "completion_tokens": 871,
+        "latency_ms": 2843,
+        "quality_score": 97.8,
+        "task_success": true,
+        "grounding_score": 99.2,
+        "tool_use_score": 94.5,
+        "brand_voice_score": 95.3,
+        "spans": [
+          {
+            "span_id": "span-root-18b88ec5",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228049990,
+            "duration_ms": 2843,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-18b88ec5",
+            "parent_span_id": "span-root-18b88ec5",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228050100,
+            "duration_ms": 2623,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-18b88ec5",
+            "parent_span_id": "span-agent-18b88ec5",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228050230,
+            "duration_ms": 2363,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-18b88ec5",
+            "parent_span_id": "span-agent-18b88ec5",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228050410,
+            "duration_ms": 623,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "load_skill",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.8,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-196a8e0d",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-196a8e",
+    "started_at": "2026-08-20T12:25:14.881000+00:00",
+    "updated_at": "2026-08-20T12:25:14.881000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-196a8e0d",
+        "user_prompt": "The target products should be the ones that was recommended and we want to know in relation to the segment we were looking at",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1236,
+        "prompt_tokens": 443,
+        "completion_tokens": 793,
+        "latency_ms": 2393,
+        "quality_score": 97.3,
+        "task_success": true,
+        "grounding_score": 98.6,
+        "tool_use_score": 97.5,
+        "brand_voice_score": 96.5,
+        "spans": [
+          {
+            "span_id": "span-root-196a8e0d",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228714881,
+            "duration_ms": 2393,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-196a8e0d",
+            "parent_span_id": "span-root-196a8e0d",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228714991,
+            "duration_ms": 2173,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-196a8e0d",
+            "parent_span_id": "span-agent-196a8e0d",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228715121,
+            "duration_ms": 1913,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.3,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1978f2e9",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-1978f2",
+    "started_at": "2026-08-23T10:45:34.045000+00:00",
+    "updated_at": "2026-08-23T10:45:34.045000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1978f2e9",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "query": "SELECT product_id, product_name, category, subcategory, price_sek, sustainability_certified, collection \nFROM `agent-demo-09.marketing_analytics_ica.product_catalog`\nORDER BY category, product_id",
+              "projectId": "agent-demo-09"
+            }
+          }
+        ],
+        "total_tokens": 1328,
+        "prompt_tokens": 477,
+        "completion_tokens": 851,
+        "latency_ms": 2727,
+        "quality_score": 99.2,
+        "task_success": true,
+        "grounding_score": 95.3,
+        "tool_use_score": 94.0,
+        "brand_voice_score": 95.2,
+        "spans": [
+          {
+            "span_id": "span-root-1978f2e9",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787481934045,
+            "duration_ms": 2727,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1978f2e9",
+            "parent_span_id": "span-root-1978f2e9",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787481934155,
+            "duration_ms": 2507,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1978f2e9",
+            "parent_span_id": "span-agent-1978f2e9",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787481934285,
+            "duration_ms": 2247,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-1978f2e9",
+            "parent_span_id": "span-agent-1978f2e9",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787481934465,
+            "duration_ms": 539,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 99.2,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-19a1eddc",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-19a1ed",
+    "started_at": "2026-08-20T08:43:49.535000+00:00",
+    "updated_at": "2026-08-20T08:43:49.535000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-19a1eddc",
+        "user_prompt": "Run a BigQuery analysis on customer_transactions and product_catalog to break down our 73 'New Explorers' by country (Sweden, Norway, Denmark, Finland) and top purchased product categories.\n\nTarget customer segment: New Explorers",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1585,
+        "prompt_tokens": 454,
+        "completion_tokens": 1131,
+        "latency_ms": 1804,
+        "quality_score": 94.9,
+        "task_success": true,
+        "grounding_score": 96.3,
+        "tool_use_score": 96.0,
+        "brand_voice_score": 94.1,
+        "spans": [
+          {
+            "span_id": "span-root-19a1eddc",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787215429535,
+            "duration_ms": 1804,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-19a1eddc",
+            "parent_span_id": "span-root-19a1eddc",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787215429645,
+            "duration_ms": 1584,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-19a1eddc",
+            "parent_span_id": "span-agent-19a1eddc",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787215429775,
+            "duration_ms": 1324,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.9,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1a453073",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1a4530",
+    "started_at": "2026-08-20T08:15:10.341000+00:00",
+    "updated_at": "2026-08-20T08:15:10.341000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1a453073",
+        "user_prompt": "Craft creative campaign assets for the Autumn Knitwear drop: email template (subject, preview, body, CTA), 2 Instagram posts, and SMS under 160 characters.\n\nTarget customer segment: VIP Fashionistas",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1762,
+        "prompt_tokens": 591,
+        "completion_tokens": 1171,
+        "latency_ms": 1641,
+        "quality_score": 95.1,
+        "task_success": true,
+        "grounding_score": 99.2,
+        "tool_use_score": 97.0,
+        "brand_voice_score": 93.7,
+        "spans": [
+          {
+            "span_id": "span-root-1a453073",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787213710341,
+            "duration_ms": 1641,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1a453073",
+            "parent_span_id": "span-root-1a453073",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787213710451,
+            "duration_ms": 1421,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-1a453073",
+            "parent_span_id": "span-agent-1a453073",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787213710581,
+            "duration_ms": 1161,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 95.1,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1bc762a0",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1bc762",
+    "started_at": "2026-08-20T08:22:58.639000+00:00",
+    "updated_at": "2026-08-20T08:22:58.639000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1bc762a0",
+        "user_prompt": "What segments do we have in our customer data",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "analytics_agent"
+            }
+          }
+        ],
+        "total_tokens": 1727,
+        "prompt_tokens": 588,
+        "completion_tokens": 1139,
+        "latency_ms": 1938,
+        "quality_score": 95.8,
+        "task_success": true,
+        "grounding_score": 97.9,
+        "tool_use_score": 96.2,
+        "brand_voice_score": 96.6,
+        "spans": [
+          {
+            "span_id": "span-root-1bc762a0",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787214178639,
+            "duration_ms": 1938,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1bc762a0",
+            "parent_span_id": "span-root-1bc762a0",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787214178749,
+            "duration_ms": 1718,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1bc762a0",
+            "parent_span_id": "span-agent-1bc762a0",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787214178879,
+            "duration_ms": 1458,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-1bc762a0",
+            "parent_span_id": "span-agent-1bc762a0",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787214179059,
+            "duration_ms": 543,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 95.8,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1c0263d0",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1c0263",
+    "started_at": "2026-08-23T10:38:35.349000+00:00",
+    "updated_at": "2026-08-23T10:38:35.349000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1c0263d0",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: CRAZY FASHION]\nYou represent Crazy Fashion (Nordic Trend & Sustainable Apparel Retailer).\nCurrency: EUR (\u20ac) | Loyalty: Crazy Club\nTarget BigQuery Dataset: `agent-demo-09.marketing_analytics`\n\nUSER QUESTION:\nCreate a person",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "a2ui_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1022,
+        "prompt_tokens": 442,
+        "completion_tokens": 580,
+        "latency_ms": 1192,
+        "quality_score": 95.2,
+        "task_success": true,
+        "grounding_score": 96.1,
+        "tool_use_score": 97.2,
+        "brand_voice_score": 95.4,
+        "spans": [
+          {
+            "span_id": "span-root-1c0263d0",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787481515349,
+            "duration_ms": 1192,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1c0263d0",
+            "parent_span_id": "span-root-1c0263d0",
+            "name": "invoke_agent",
+            "agent_name": "a2ui_pipeline",
+            "start_time_ms": 1787481515459,
+            "duration_ms": 972,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "a2ui_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-1c0263d0",
+            "parent_span_id": "span-agent-1c0263d0",
+            "name": "call_llm",
+            "agent_name": "a2ui_pipeline",
+            "start_time_ms": 1787481515589,
+            "duration_ms": 712,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 95.2,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1cb0ce91",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1cb0ce",
+    "started_at": "2026-08-23T09:33:13.486000+00:00",
+    "updated_at": "2026-08-23T09:33:13.486000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1cb0ce91",
+        "user_prompt": "Vilekt f\u00f6retag jobbar jag f\u00f6r ?",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1455,
+        "prompt_tokens": 579,
+        "completion_tokens": 876,
+        "latency_ms": 1329,
+        "quality_score": 95.4,
+        "task_success": true,
+        "grounding_score": 95.3,
+        "tool_use_score": 94.6,
+        "brand_voice_score": 95.3,
+        "spans": [
+          {
+            "span_id": "span-root-1cb0ce91",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787477593486,
+            "duration_ms": 1329,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1cb0ce91",
+            "parent_span_id": "span-root-1cb0ce91",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787477593596,
+            "duration_ms": 1109,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1cb0ce91",
+            "parent_span_id": "span-agent-1cb0ce91",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787477593726,
+            "duration_ms": 849,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 95.4,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1cb75de8",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1cb75d",
+    "started_at": "2026-08-20T08:45:50.904000+00:00",
+    "updated_at": "2026-08-20T08:45:50.904000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1cb75de8",
+        "user_prompt": "Develop a 3-pillar omnichannel activation campaign strategy targeting Nordic New Explorers, including 100% channel mix weightings and projected EUR revenue recovery.\n\nTarget customer segment: New Explorers",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [],
+        "total_tokens": 883,
+        "prompt_tokens": 429,
+        "completion_tokens": 454,
+        "latency_ms": 1779,
+        "quality_score": 96.4,
+        "task_success": true,
+        "grounding_score": 95.9,
+        "tool_use_score": 94.1,
+        "brand_voice_score": 93.0,
+        "spans": [
+          {
+            "span_id": "span-root-1cb75de8",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787215550904,
+            "duration_ms": 1779,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1cb75de8",
+            "parent_span_id": "span-root-1cb75de8",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787215551014,
+            "duration_ms": 1559,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-1cb75de8",
+            "parent_span_id": "span-agent-1cb75de8",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787215551144,
+            "duration_ms": 1299,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.4,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1cc33389",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1cc333",
+    "started_at": "2026-08-20T12:29:36.051000+00:00",
+    "updated_at": "2026-08-20T12:29:36.051000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1cc33389",
+        "user_prompt": "What is the average spend of Loyal Regulars?",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT \n  rfm_segment,\n  COUNT(customer_id) AS total_customers,\n  ROUND(AVG(total_monetary_eur), 2) AS avg_spend_eur,\n  ROUND(SUM(total_monetary_eur), 2) AS total_spend_eur\nFROM `agent-demo-09.marketing_analytics.customer_rfm_summary`\nWHERE rfm_segment = 'Loyal Regulars'\nGROUP BY rfm_segment"
+            }
+          }
+        ],
+        "total_tokens": 1185,
+        "prompt_tokens": 495,
+        "completion_tokens": 690,
+        "latency_ms": 1545,
+        "quality_score": 96.0,
+        "task_success": true,
+        "grounding_score": 98.0,
+        "tool_use_score": 95.0,
+        "brand_voice_score": 93.2,
+        "spans": [
+          {
+            "span_id": "span-root-1cc33389",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228976051,
+            "duration_ms": 1545,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1cc33389",
+            "parent_span_id": "span-root-1cc33389",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228976161,
+            "duration_ms": 1325,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1cc33389",
+            "parent_span_id": "span-agent-1cc33389",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228976291,
+            "duration_ms": 1065,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-1cc33389",
+            "parent_span_id": "span-agent-1cc33389",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228976471,
+            "duration_ms": 775,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.0,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1d1f1bb7",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1d1f1b",
+    "started_at": "2026-08-20T12:32:33.141000+00:00",
+    "updated_at": "2026-08-20T12:32:33.141000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1d1f1bb7",
+        "user_prompt": "Show me defined segments",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1252,
+        "prompt_tokens": 358,
+        "completion_tokens": 894,
+        "latency_ms": 1408,
+        "quality_score": 94.8,
+        "task_success": true,
+        "grounding_score": 98.8,
+        "tool_use_score": 95.1,
+        "brand_voice_score": 93.3,
+        "spans": [
+          {
+            "span_id": "span-root-1d1f1bb7",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787229153141,
+            "duration_ms": 1408,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1d1f1bb7",
+            "parent_span_id": "span-root-1d1f1bb7",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787229153251,
+            "duration_ms": 1188,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1d1f1bb7",
+            "parent_span_id": "span-agent-1d1f1bb7",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787229153381,
+            "duration_ms": 928,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.8,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1dbed09d",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1dbed0",
+    "started_at": "2026-08-20T12:14:25.264000+00:00",
+    "updated_at": "2026-08-20T12:14:25.264000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1dbed09d",
+        "user_prompt": "Recommend products for the Loyal Regulars segment.",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "projectId": "agent-demo-09",
+              "query": "SELECT \n  t.product_id,\n  t.product_name,\n  t.category,\n  COUNT(*) as transaction_count,\n  SUM(t.quantity) as total_quantity,\n  SUM(t.amount_eur) as total_revenue\nFROM `agent-demo-09.marketing_analytics.customer_transactions` t\nJOIN `agent-demo-09.marketing_analytics.customer_rfm_summary` r\n  ON t.customer_id = r.customer_id\nWHERE r.rfm_segment = 'Loyal Regulars'\nGROUP BY t.product_id, t.product_name, t.category\nORDER BY transaction_count DESC\nLIMIT 20"
+            }
+          }
+        ],
+        "total_tokens": 1693,
+        "prompt_tokens": 585,
+        "completion_tokens": 1108,
+        "latency_ms": 2235,
+        "quality_score": 94.0,
+        "task_success": true,
+        "grounding_score": 96.6,
+        "tool_use_score": 95.4,
+        "brand_voice_score": 94.5,
+        "spans": [
+          {
+            "span_id": "span-root-1dbed09d",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228065264,
+            "duration_ms": 2235,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1dbed09d",
+            "parent_span_id": "span-root-1dbed09d",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228065374,
+            "duration_ms": 2015,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1dbed09d",
+            "parent_span_id": "span-agent-1dbed09d",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228065504,
+            "duration_ms": 1755,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-1dbed09d",
+            "parent_span_id": "span-agent-1dbed09d",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228065684,
+            "duration_ms": 571,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 94.0,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1e0b790c",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1e0b79",
+    "started_at": "2026-08-19T09:15:16.302000+00:00",
+    "updated_at": "2026-08-19T09:15:16.302000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1e0b790c",
+        "user_prompt": "How many customers do we have ?",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "analytics_agent"
+            }
+          }
+        ],
+        "total_tokens": 1153,
+        "prompt_tokens": 500,
+        "completion_tokens": 653,
+        "latency_ms": 2150,
+        "quality_score": 99.0,
+        "task_success": true,
+        "grounding_score": 95.6,
+        "tool_use_score": 94.0,
+        "brand_voice_score": 97.1,
+        "spans": [
+          {
+            "span_id": "span-root-1e0b790c",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787130916302,
+            "duration_ms": 2150,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1e0b790c",
+            "parent_span_id": "span-root-1e0b790c",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787130916412,
+            "duration_ms": 1930,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1e0b790c",
+            "parent_span_id": "span-agent-1e0b790c",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787130916542,
+            "duration_ms": 1670,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-1e0b790c",
+            "parent_span_id": "span-agent-1e0b790c",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787130916722,
+            "duration_ms": 722,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 99.0,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1e2c22ff",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1e2c22",
+    "started_at": "2026-08-20T12:04:00.153000+00:00",
+    "updated_at": "2026-08-20T12:04:00.153000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1e2c22ff",
+        "user_prompt": "Recommend products for the Loyal Regulars segment",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "list_skills",
+            "arguments": {}
+          }
+        ],
+        "total_tokens": 1067,
+        "prompt_tokens": 578,
+        "completion_tokens": 489,
+        "latency_ms": 1328,
+        "quality_score": 96.3,
+        "task_success": true,
+        "grounding_score": 97.8,
+        "tool_use_score": 94.9,
+        "brand_voice_score": 93.1,
+        "spans": [
+          {
+            "span_id": "span-root-1e2c22ff",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787227440153,
+            "duration_ms": 1328,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1e2c22ff",
+            "parent_span_id": "span-root-1e2c22ff",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227440263,
+            "duration_ms": 1108,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-1e2c22ff",
+            "parent_span_id": "span-agent-1e2c22ff",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227440393,
+            "duration_ms": 848,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-1e2c22ff",
+            "parent_span_id": "span-agent-1e2c22ff",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787227440573,
+            "duration_ms": 528,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "list_skills",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.3,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-1fba1582",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-1fba15",
+    "started_at": "2026-08-20T10:47:25.169000+00:00",
+    "updated_at": "2026-08-20T10:47:25.169000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-1fba1582",
+        "user_prompt": "Lets formulate a email draft to send to this segment with the goal to engage them in our brand",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "content_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [
+          {
+            "tool": "load_skill",
+            "arguments": {
+              "skill_name": "brand-voice-craft"
+            }
+          }
+        ],
+        "total_tokens": 1566,
+        "prompt_tokens": 383,
+        "completion_tokens": 1183,
+        "latency_ms": 2633,
+        "quality_score": 95.8,
+        "task_success": true,
+        "grounding_score": 96.6,
+        "tool_use_score": 97.3,
+        "brand_voice_score": 95.2,
+        "spans": [
+          {
+            "span_id": "span-root-1fba1582",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787222845169,
+            "duration_ms": 2633,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-1fba1582",
+            "parent_span_id": "span-root-1fba1582",
+            "name": "invoke_agent",
+            "agent_name": "content_pipeline",
+            "start_time_ms": 1787222845279,
+            "duration_ms": 2413,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "content_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-1fba1582",
+            "parent_span_id": "span-agent-1fba1582",
+            "name": "call_llm",
+            "agent_name": "content_pipeline",
+            "start_time_ms": 1787222845409,
+            "duration_ms": 2153,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-1fba1582",
+            "parent_span_id": "span-agent-1fba1582",
+            "name": "execute_tool",
+            "agent_name": "content_pipeline",
+            "start_time_ms": 1787222845589,
+            "duration_ms": 796,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "load_skill",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 95.8,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-200a688d",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-200a68",
+    "started_at": "2026-08-23T10:12:56.883000+00:00",
+    "updated_at": "2026-08-23T10:12:56.883000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-200a688d",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1009,
+        "prompt_tokens": 524,
+        "completion_tokens": 485,
+        "latency_ms": 1874,
+        "quality_score": 97.9,
+        "task_success": true,
+        "grounding_score": 97.1,
+        "tool_use_score": 94.8,
+        "brand_voice_score": 96.1,
+        "spans": [
+          {
+            "span_id": "span-root-200a688d",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787479976883,
+            "duration_ms": 1874,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-200a688d",
+            "parent_span_id": "span-root-200a688d",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479976993,
+            "duration_ms": 1654,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-200a688d",
+            "parent_span_id": "span-agent-200a688d",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787479977123,
+            "duration_ms": 1394,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.9,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-20b1019d",
+    "tenant_id": "ica_sweden",
+    "client_name": "ICA Sverige",
+    "user_id": "usr-20b101",
+    "started_at": "2026-08-23T10:45:21.957000+00:00",
+    "updated_at": "2026-08-23T10:45:21.957000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-20b1019d",
+        "user_prompt": "[CLIENT IDENTITY & CONTEXT: ICA SVERIGE (SWEDISH GROCERY & HEALTH RETAILER)]\nYou represent ICA Sverige exclusively (Nordic Food, Grocery & Health Retail Leader).\nIndustry: Grocery, Food & Health Retail | HQ: Solna, Stockholm, Sweden\nCurrency Standard",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "query": "SELECT rfm_segment, COUNT(*) as customer_count, ROUND(AVG(monetary_value), 2) as avg_monetary, ROUND(AVG(frequency), 2) as avg_freq, ROUND(AVG(recency), 2) as avg_recency FROM `agent-demo-09.marketing_analytics_ica.customer_rfm_summary` GROUP BY rfm_segment",
+              "projectId": "agent-demo-09"
+            }
+          }
+        ],
+        "total_tokens": 1553,
+        "prompt_tokens": 553,
+        "completion_tokens": 1000,
+        "latency_ms": 1303,
+        "quality_score": 95.3,
+        "task_success": true,
+        "grounding_score": 95.0,
+        "tool_use_score": 97.7,
+        "brand_voice_score": 96.7,
+        "spans": [
+          {
+            "span_id": "span-root-20b1019d",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787481921957,
+            "duration_ms": 1303,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-20b1019d",
+            "parent_span_id": "span-root-20b1019d",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787481922067,
+            "duration_ms": 1083,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-20b1019d",
+            "parent_span_id": "span-agent-20b1019d",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787481922197,
+            "duration_ms": 823,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-20b1019d",
+            "parent_span_id": "span-agent-20b1019d",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787481922377,
+            "duration_ms": 511,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 95.3,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "ica_sweden",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-21225078",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-212250",
+    "started_at": "2026-08-20T10:55:38.846000+00:00",
+    "updated_at": "2026-08-20T10:55:38.846000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-21225078",
+        "user_prompt": "Identify high-value Champions cohort from BigQuery and create exclusive VIP retention rewards and LinkedIn posts.",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "load_skill",
+            "arguments": {
+              "skill_name": "bigquery-customer-analytics"
+            }
+          }
+        ],
+        "total_tokens": 1305,
+        "prompt_tokens": 490,
+        "completion_tokens": 815,
+        "latency_ms": 2740,
+        "quality_score": 98.0,
+        "task_success": true,
+        "grounding_score": 98.0,
+        "tool_use_score": 98.1,
+        "brand_voice_score": 94.6,
+        "spans": [
+          {
+            "span_id": "span-root-21225078",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787223338846,
+            "duration_ms": 2740,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-21225078",
+            "parent_span_id": "span-root-21225078",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787223338956,
+            "duration_ms": 2520,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-21225078",
+            "parent_span_id": "span-agent-21225078",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787223339086,
+            "duration_ms": 2260,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-21225078",
+            "parent_span_id": "span-agent-21225078",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787223339266,
+            "duration_ms": 604,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "load_skill",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 98.0,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-217bc79a",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-217bc7",
+    "started_at": "2026-08-20T12:17:03.557000+00:00",
+    "updated_at": "2026-08-20T12:17:03.557000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-217bc79a",
+        "user_prompt": "Show me the defined customer segments",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "transfer_to_agent",
+            "arguments": {
+              "agent_name": "analytics_agent"
+            }
+          }
+        ],
+        "total_tokens": 1312,
+        "prompt_tokens": 615,
+        "completion_tokens": 697,
+        "latency_ms": 2265,
+        "quality_score": 96.5,
+        "task_success": true,
+        "grounding_score": 99.5,
+        "tool_use_score": 95.1,
+        "brand_voice_score": 97.7,
+        "spans": [
+          {
+            "span_id": "span-root-217bc79a",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787228223557,
+            "duration_ms": 2265,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-217bc79a",
+            "parent_span_id": "span-root-217bc79a",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228223667,
+            "duration_ms": 2045,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-217bc79a",
+            "parent_span_id": "span-agent-217bc79a",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228223797,
+            "duration_ms": 1785,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-217bc79a",
+            "parent_span_id": "span-agent-217bc79a",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787228223977,
+            "duration_ms": 591,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "transfer_to_agent",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 96.5,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-2211e501",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-2211e5",
+    "started_at": "2026-08-20T10:44:49.141000+00:00",
+    "updated_at": "2026-08-20T10:44:49.141000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-2211e501",
+        "user_prompt": "Show me the customer segments we have defined",
+        "agent_response": "Executed BigQuery SQL analysis query across marketing_analytics tables.",
+        "routed_agents": [
+          "marketing_orchestrator",
+          "analytics_agent"
+        ],
+        "tools_executed": [
+          {
+            "tool": "bigquery_googleapis_com_execute_sql_readonly",
+            "arguments": {
+              "query": "SELECT \n  rfm_segment, \n  COUNT(customer_id) AS customer_count, \n  ROUND(AVG(recency_days), 1) AS avg_recency_days, \n  ROUND(AVG(frequency_orders), 1) AS avg_frequency_orders, \n  ROUND(AVG(total_monetary_eur), 2) AS avg_monetary_eur, \n  ROUND(SUM(total_monetary_eur), 2) AS total_monetary_eur \nFROM `agent-demo-09.marketing_analytics.customer_rfm_summary` \nGROUP BY rfm_segment \nORDER BY customer_count DESC",
+              "projectId": "agent-demo-09"
+            }
+          }
+        ],
+        "total_tokens": 1086,
+        "prompt_tokens": 378,
+        "completion_tokens": 708,
+        "latency_ms": 2028,
+        "quality_score": 98.3,
+        "task_success": true,
+        "grounding_score": 96.6,
+        "tool_use_score": 95.4,
+        "brand_voice_score": 96.3,
+        "spans": [
+          {
+            "span_id": "span-root-2211e501",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787222689141,
+            "duration_ms": 2028,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-2211e501",
+            "parent_span_id": "span-root-2211e501",
+            "name": "invoke_agent",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787222689251,
+            "duration_ms": 1808,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "analytics_agent"
+            }
+          },
+          {
+            "span_id": "span-llm-2211e501",
+            "parent_span_id": "span-agent-2211e501",
+            "name": "call_llm",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787222689381,
+            "duration_ms": 1548,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          },
+          {
+            "span_id": "span-tool-2211e501",
+            "parent_span_id": "span-agent-2211e501",
+            "name": "execute_tool",
+            "agent_name": "analytics_agent",
+            "start_time_ms": 1787222689561,
+            "duration_ms": 632,
+            "status": "OK",
+            "attributes": {
+              "tool.name": "bigquery_googleapis_com_execute_sql_readonly",
+              "db.system": "bigquery"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 98.3,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  },
+  {
+    "session_id": "sess-gcp-23d46449",
+    "tenant_id": "crazy_fashion",
+    "client_name": "Crazy Fashion",
+    "user_id": "usr-23d464",
+    "started_at": "2026-08-20T10:55:25.991000+00:00",
+    "updated_at": "2026-08-20T10:55:25.991000+00:00",
+    "turns": [
+      {
+        "turn_id": "turn-23d46449",
+        "user_prompt": "Analyze churn risk for At-Risk Premium customer segment and generate a win-back campaign strategy and email sequence.",
+        "agent_response": "Generated omnichannel strategy and creative deliverable.",
+        "routed_agents": [
+          "strategy_pipeline",
+          "marketing_orchestrator"
+        ],
+        "tools_executed": [],
+        "total_tokens": 1101,
+        "prompt_tokens": 563,
+        "completion_tokens": 538,
+        "latency_ms": 1313,
+        "quality_score": 97.8,
+        "task_success": true,
+        "grounding_score": 97.6,
+        "tool_use_score": 96.2,
+        "brand_voice_score": 93.2,
+        "spans": [
+          {
+            "span_id": "span-root-23d46449",
+            "parent_span_id": null,
+            "name": "invoke_workflow",
+            "agent_name": "marketing_orchestrator",
+            "start_time_ms": 1787223325991,
+            "duration_ms": 1313,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.workflow.name": "marketing_campaign",
+              "gen_ai.system": "adk"
+            }
+          },
+          {
+            "span_id": "span-agent-23d46449",
+            "parent_span_id": "span-root-23d46449",
+            "name": "invoke_agent",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787223326101,
+            "duration_ms": 1093,
+            "status": "OK",
+            "attributes": {
+              "agent.name": "strategy_pipeline"
+            }
+          },
+          {
+            "span_id": "span-llm-23d46449",
+            "parent_span_id": "span-agent-23d46449",
+            "name": "call_llm",
+            "agent_name": "strategy_pipeline",
+            "start_time_ms": 1787223326231,
+            "duration_ms": 833,
+            "status": "OK",
+            "attributes": {
+              "gen_ai.request.model": "gemini-3.6-flash"
+            }
+          }
+        ]
+      }
+    ],
+    "overall_quality_score": 97.8,
+    "has_errors": false,
+    "error_message": null,
+    "tags": [
+      "crazy_fashion",
+      "gcs-production-log",
+      "vertex-ai-agent-engine"
+    ]
+  }
+]
