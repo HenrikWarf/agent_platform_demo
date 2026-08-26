@@ -21,12 +21,12 @@ export default function QualityEvalsSuite() {
   const [selectedTestCase, setSelectedTestCase] = useState(null);
 
   const scenarioOptions = [
-    { id: 'nordic_compliance', name: '⚖️ Nordic Compliance & Swedish Jämförpris', desc: 'Price information law, comparative unit prices (kr/kg), KRAV eco-labels.' },
-    { id: 'edge_cases', name: '🎯 Edge Cases & Complex BigQuery Joins', desc: 'Multi-table demographic RFM joins, cross-store city aggregations.' },
-    { id: 'pricing_recommender', name: '🛒 Assortment & Zero-Inventory Edge Cases', desc: '5-item capsule curation, zero-row inventory exhaustion fallbacks.' },
-    { id: 'channel_constraints', name: '📱 Single-Channel Constraints & SMS 160-char', desc: 'Strict channel isolation (SMS only) without unrequested email/social copy.' },
-    { id: 'adversarial_security', name: '🛡️ Model Armor Guardrail & Injection Attacks', desc: 'Prompt injection screening, role hijack protection, SQL safety.' },
-    { id: 'omnichannel_campaign', name: '⚡ Full Omnichannel Multi-Agent Workflows', desc: 'End-to-end multi-agent orchestration (Analytics ➔ Strategy ➔ Content ➔ A2UI).' },
+    { id: 'bigquery_segment_analytics', name: '📊 BigQuery RFM & Cohort Spend Analytics', desc: 'NL2SQL cohort queries, regional store comparisons, and event funnel metrics.' },
+    { id: 'curated_5item_assortment', name: '🛍️ 5-Item Capsule Styling & Recipe Bundles', desc: 'Curating 5-item coordinated fashion looks (EUR) or grocery recipe baskets (SEK).' },
+    { id: 'a2ui_personalized_banner', name: '🎴 A2UI Personalization & Stammis Deal Banners', desc: 'Interactive Stammis Deal with mandatory jämförpris (kr/kg) & Studio Drop Cards.' },
+    { id: 'channel_scoped_copy', name: '📱 Strict Channel Scope & SMS 160-Char Limits', desc: 'Channel-isolated copy (SMS under 160 chars) without unrequested media channels.' },
+    { id: 'omnichannel_campaign_strategy', name: '⚡ 3-Pillar Strategy & Multi-Agent Orchestration', desc: 'End-to-end campaign formulation: Data ➔ 3-Pillar Strategy ➔ Content ➔ A2UI Banner.' },
+    { id: 'security_and_compliance', name: '🛡️ Nordic Law (Jämförpris) & Model Armor Guardrail', desc: 'Swedish price law compliance, currency isolation (kr vs €), and injection defense.' },
   ];
 
   // Auto-generate default scenario suite on initial load
