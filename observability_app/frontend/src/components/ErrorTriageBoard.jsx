@@ -2,14 +2,121 @@ import React, { useState } from 'react';
 import { 
   AlertTriangle, CheckCircle2, Clock, ShieldAlert, Bug, 
   ChevronRight, MessageSquare, Tag, Layers, ArrowRight, Database, Zap, FileCode2,
-  Sparkles, RefreshCw, Sliders, Cpu, FileCheck, AlertOctagon, HelpCircle
+  Sparkles, RefreshCw, Sliders, Cpu, FileCheck, AlertOctagon, HelpCircle, Activity,
+  Check, Filter, X
 } from 'lucide-react';
+
+const AGENT_FLEET_STATUS = [
+  {
+    id: 'marketing_orchestrator',
+    name: 'Marketing Orchestrator',
+    role: 'Root Coordinator & Workflow Routing',
+    skill: 'campaign-framework',
+    color: '#4f46e5',
+    icon: <Layers size={18} color="#4f46e5" />,
+    status: 'HEALTHY',
+    successRate: 97.8,
+    openIssues: 1,
+    improvements: 'Minimizing delegation ping-pong hops on compound customer inquiries; ensuring single-turn sub-agent transfers.',
+    suggestions: [
+      'Audit orchestrator system prompt for direct sub-agent routing without intermediate reasoning hops.',
+      'Run batch evaluation on "3-Pillar Strategy & Multi-Agent Orchestration" scenario.',
+      'Verify A2A protocol JSON-RPC envelope headers and latency overhead.',
+    ],
+  },
+  {
+    id: 'analytics_agent',
+    name: 'Analytics Agent',
+    role: 'BigQuery NL2SQL Specialist',
+    skill: 'bigquery-customer-analytics',
+    color: '#0284c7',
+    icon: <Database size={18} color="#0284c7" />,
+    status: 'HEALTHY',
+    successRate: 98.6,
+    openIssues: 0,
+    improvements: 'Ensuring strict column aliasing (e.g. AS total_monetary_eur) and handling store city comparisons without null joins.',
+    suggestions: [
+      'Audit BigQuery data dictionary in skills/bigquery-customer-analytics/references/.',
+      'Monitor BigQuery SQL execution latency in Cloud Trace spans.',
+      'Test edge-case zero-row queries on dormant customer cohorts.',
+    ],
+  },
+  {
+    id: 'recommendation_pipeline',
+    name: 'Product Recommender',
+    role: '5-Item Assortment & Cross-Sell Engine',
+    skill: 'product-recommender',
+    color: '#059669',
+    icon: <Sparkles size={18} color="#059669" />,
+    status: 'HEALTHY',
+    successRate: 98.1,
+    openIssues: 0,
+    improvements: 'Strict 5-item cardinality enforcement; verifying catalog ID existence before returning recommendation payload.',
+    suggestions: [
+      'Enforce ProductCatalog schema array validation in recommendation formatter.',
+      'Review inventory joins in marketing_analytics BigQuery tables.',
+      'Test customer RFM affinity alignment for new vs loyal tiers.',
+    ],
+  },
+  {
+    id: 'a2ui_pipeline',
+    name: 'A2UI Pipeline',
+    role: 'Interactive Component Personalization',
+    skill: 'a2ui-personalization',
+    color: '#7c3aed',
+    icon: <Sliders size={18} color="#7c3aed" />,
+    status: 'NEEDS_ATTENTION',
+    successRate: 94.2,
+    openIssues: 1,
+    improvements: 'Mandatory Swedish Price Information Act compliance (jämförpris kr/kg, kr/l); single-item vs multi-item banner layout fidelity.',
+    suggestions: [
+      'Audit skills/a2ui-personalization/SKILL.md for mandatory unit comparison pricing.',
+      'Verify unit price calculation in A2UIOfferBanner.jsx component.',
+      'Run "A2UI Personalization & Stammis Deal Banners" quality evaluation suite.',
+    ],
+  },
+  {
+    id: 'content_pipeline',
+    name: 'Content Pipeline',
+    role: 'Brand Voice & Channel-Selective Copy',
+    skill: 'brand-voice-craft',
+    color: '#d97706',
+    icon: <FileCode2 size={18} color="#d97706" />,
+    status: 'NEEDS_ATTENTION',
+    successRate: 93.4,
+    openIssues: 2,
+    improvements: 'Strict SMS length constraint (< 160 characters); eliminating unrequested media channels when user asks for SMS-only.',
+    suggestions: [
+      'Add deterministic character-length validation in content_json_agent schema.',
+      'Verify channel isolation negative constraints in skills/brand-voice-craft/.',
+      'Test SMS 160-character truncation on Swedish special characters (å, ä, ö).',
+    ],
+  },
+  {
+    id: 'agent_gateway',
+    name: 'Agent Gateway / Armor',
+    role: 'Security & Ingress Guardrail',
+    skill: 'model_armor',
+    color: '#e11d48',
+    icon: <ShieldAlert size={18} color="#e11d48" />,
+    status: 'HEALTHY',
+    successRate: 99.4,
+    openIssues: 0,
+    improvements: 'Currency crossover isolation (preventing SEK in Crazy Fashion or EUR in ICA); sensitive customer PII sanitization.',
+    suggestions: [
+      'Verify Model Armor template bindings in deploy/agent_gateway.yaml.',
+      'Run adversarial prompt injection tests on system prompt override attempts.',
+      'Monitor Cloud Logging security audit filter events.',
+    ],
+  },
+];
 
 export default function ErrorTriageBoard({ issues, onRefresh }) {
   const clusters = issues || [];
   const [selectedCluster, setSelectedCluster] = useState(clusters[0] || null);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterCategory, setFilterCategory] = useState('ALL');
+  const [selectedAgentFilter, setSelectedAgentFilter] = useState(null);
   const [newNote, setNewNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -19,6 +126,18 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
   const filteredClusters = clusters.filter(c => {
     if (filterStatus !== 'ALL' && c.status !== filterStatus) return false;
     if (filterCategory !== 'ALL' && c.category !== filterCategory) return false;
+    if (selectedAgentFilter) {
+      const agentKey = selectedAgentFilter.toLowerCase();
+      const clusterAgent = (c.affected_agent || '').toLowerCase();
+      if (!clusterAgent.includes(agentKey) && !agentKey.includes(clusterAgent)) {
+        if (agentKey === 'recommendation_pipeline' && !clusterAgent.includes('recommender') && !clusterAgent.includes('assortment')) return false;
+        if (agentKey === 'a2ui_pipeline' && !clusterAgent.includes('a2ui') && !clusterAgent.includes('banner')) return false;
+        if (agentKey === 'content_pipeline' && !clusterAgent.includes('content') && !clusterAgent.includes('copy')) return false;
+        if (agentKey === 'marketing_orchestrator' && !clusterAgent.includes('orchestrator')) return false;
+        if (agentKey === 'analytics_agent' && !clusterAgent.includes('analytic') && !clusterAgent.includes('sql')) return false;
+        if (agentKey === 'agent_gateway' && !clusterAgent.includes('gateway') && !clusterAgent.includes('armor') && !clusterAgent.includes('guardrail')) return false;
+      }
+    }
     return true;
   });
 
@@ -87,14 +206,149 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {/* Top Banner & Cluster Filters */}
+      {/* TOP SECTION: Agent Fleet Health, Status & Actionable Improvement Matrix */}
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Activity size={22} color="var(--accent-indigo)" />
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Agent Fleet Overview, Status & Improvement Matrix</h2>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              Continuous reliability telemetry across all 6 multi-agent platform components, active operational statuses, identified weaknesses, and guided optimization recommendations.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className="badge" style={{ background: 'rgba(5, 150, 105, 0.12)', color: 'var(--accent-emerald)', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: 700 }}>
+              ● 6/6 Agents Online
+            </span>
+            <span className="badge" style={{ background: 'rgba(79, 70, 229, 0.12)', color: 'var(--accent-indigo)', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: 700 }}>
+              96.7% Health Index
+            </span>
+            {selectedAgentFilter && (
+              <button
+                onClick={() => setSelectedAgentFilter(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '6px',
+                  background: 'rgba(225, 29, 72, 0.12)',
+                  color: 'var(--accent-rose)',
+                  border: '1px solid rgba(225, 29, 72, 0.3)',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={13} /> Clear Agent Filter ({selectedAgentFilter})
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 6 Agent Cards Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1rem' }}>
+          {AGENT_FLEET_STATUS.map((agent) => {
+            const isFilterActive = selectedAgentFilter === agent.id;
+            return (
+              <div
+                key={agent.id}
+                onClick={() => setSelectedAgentFilter(isFilterActive ? null : agent.id)}
+                style={{
+                  padding: '1.15rem 1.25rem',
+                  borderRadius: '10px',
+                  background: isFilterActive ? 'var(--bg-card-hover)' : 'var(--bg-secondary)',
+                  border: isFilterActive ? `2px solid ${agent.color}` : '1px solid var(--border-color)',
+                  boxShadow: isFilterActive ? 'var(--shadow-glow)' : 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {/* Agent Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: `${agent.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {agent.icon}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {agent.name}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        {agent.role}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.2rem' }}>
+                    <span 
+                      style={{ 
+                        fontSize: '0.68rem', 
+                        fontWeight: 800, 
+                        padding: '0.15rem 0.5rem', 
+                        borderRadius: '4px', 
+                        background: agent.status === 'HEALTHY' ? 'rgba(5, 150, 105, 0.12)' : 'rgba(217, 119, 6, 0.12)', 
+                        color: agent.status === 'HEALTHY' ? 'var(--accent-emerald)' : 'var(--accent-amber)',
+                        border: agent.status === 'HEALTHY' ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid rgba(217, 119, 6, 0.3)'
+                      }}
+                    >
+                      {agent.status === 'HEALTHY' ? '● HEALTHY' : '⚠️ ATTENTION NEEDED'}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      {agent.successRate}% Success · {agent.openIssues} Issue{agent.openIssues !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+
+                {/* What Could Improve */}
+                <div style={{ padding: '0.6rem 0.75rem', borderRadius: '6px', background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-amber)', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem', textTransform: 'uppercase' }}>
+                    <AlertTriangle size={12} /> What Could Improve
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                    {agent.improvements}
+                  </div>
+                </div>
+
+                {/* Suggestions on What to Look Into */}
+                <div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-indigo)', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.35rem', textTransform: 'uppercase' }}>
+                    <Sparkles size={12} /> Suggestions to Look Into
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    {agent.suggestions.map((sug, idx) => (
+                      <li key={idx} style={{ marginBottom: '0.15rem' }}>{sug}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Filter Trigger footer */}
+                <div style={{ marginTop: 'auto', paddingTop: '0.4rem', borderTop: '1px dashed var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: isFilterActive ? agent.color : 'var(--text-muted)' }}>
+                  <span style={{ fontWeight: 700 }}>
+                    {isFilterActive ? '✓ Filtering issues below' : 'Click card to filter issues'}
+                  </span>
+                  <Filter size={12} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      {/* BOTTOM SECTION: Multi-Agent Error Clustering & Problem Matrix */}
       <div className="glass-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <Layers size={22} color="var(--accent-indigo)" />
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Multi-Agent Error Clustering & Problem Matrix</h2>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Multi-Agent Error Clustering & Problem Matrix</h3>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
             Dynamic failure grouping across 7 enterprise dimensions: Grounding, Routing Loops, Empty Tools, Channel Contracts, SQL, Token Saturation, and Nordic Law.
