@@ -84,10 +84,17 @@ class EvalRunRequest(BaseModel):
     tool_calls: Optional[List[Dict[str, Any]]] = None
 
 
-class GenerateSuiteRequest(BaseModel):
-    scenario_theme: str = "nordic_compliance"
+class GenerateScenariosRequest(BaseModel):
     tenant_id: str = "ica_sweden"
     count: int = 4
+
+
+class GenerateSuiteRequest(BaseModel):
+    scenario_theme: str = "bigquery_segment_analytics"
+    tenant_id: str = "ica_sweden"
+    count: int = 4
+    scenario_name: Optional[str] = None
+    scenario_desc: Optional[str] = None
 
 
 class BatchEvalRequest(BaseModel):
@@ -171,6 +178,15 @@ async def get_agent_metrics() -> List[Dict[str, Any]]:
     return telemetry_store.get_agent_fleet_metrics()
 
 
+@app.post("/api/obs/eval/generate-scenarios")
+async def generate_eval_scenarios(req: GenerateScenariosRequest) -> List[Dict[str, str]]:
+    """Generates novel AI enterprise testing scenarios using Gemini on Vertex AI."""
+    return eval_engine.generate_ai_scenarios(
+        tenant_id=req.tenant_id,
+        count=req.count,
+    )
+
+
 @app.post("/api/obs/eval/generate-suite")
 async def generate_eval_suite(req: GenerateSuiteRequest) -> List[Dict[str, Any]]:
     """Generates dynamic evaluation test scenarios with Gemini on Vertex AI."""
@@ -178,6 +194,8 @@ async def generate_eval_suite(req: GenerateSuiteRequest) -> List[Dict[str, Any]]
         scenario_theme=req.scenario_theme,
         tenant_id=req.tenant_id,
         count=req.count,
+        scenario_name=req.scenario_name,
+        scenario_desc=req.scenario_desc,
     )
 
 

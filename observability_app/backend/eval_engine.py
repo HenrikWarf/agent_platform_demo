@@ -42,11 +42,76 @@ class QualityEvalEngine:
             logger.warning(f"Could not initialize Vertex AI client for eval: {e}.")
             self.client = None
 
+    def generate_ai_scenarios(
+        self,
+        tenant_id: str = "ica_sweden",
+        count: int = 4,
+    ) -> List[Dict[str, str]]:
+        """Uses Gemini to generate novel, creative enterprise testing scenarios for the selected retailer."""
+        is_ica = (tenant_id == "ica_sweden")
+        tenant_name = "ICA Sverige (Swedish Grocery & Stammis)" if is_ica else "Crazy Fashion (Nordic Apparel & Crazy Club)"
+        currency = "SEK (kr / :-)" if is_ica else "EUR (€)"
+
+        prompt = f"""You are an elite QA and AI Evaluation Benchmark Architect for Vertex AI Agent Engine.
+Generate {count} novel, advanced enterprise evaluation test scenarios for {tenant_name} (using {currency}).
+
+Each scenario should target a distinct enterprise challenge such as:
+- Cross-table BigQuery analytical queries & regional metrics
+- Multi-agent delegation sequencing & transfers
+- A2UI interactive personalization & legal compliance (e.g. Swedish Price Information Act)
+- Negative inventory / out-of-stock reasoning
+- Strict channel-selective copy constraints (SMS < 160 chars)
+- Edge-case financial discount math & customer lifetime value
+
+Return a JSON list of objects with the exact schema:
+[
+  {{
+    "id": "unique_snake_case_id",
+    "name": "Emoji + Descriptive Scenario Title",
+    "desc": "1-2 sentence detailed description of what failure modes and multi-agent capabilities this scenario tests."
+  }}
+]
+Do not wrap in markdown quotes. Return JSON only."""
+
+        if self.client:
+            try:
+                response = self.client.models.generate_content(
+                    model=EVAL_MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.7,
+                        response_mime_type="application/json",
+                    ),
+                )
+                parsed = json.loads(response.text.strip())
+                if isinstance(parsed, list) and len(parsed) > 0:
+                    return parsed
+            except Exception as e:
+                logger.warning(f"Gemini scenario generation failed: {e}. Returning fallback scenarios.")
+
+        # Fallback dynamic scenarios
+        if is_ica:
+            return [
+                {"id": "ica_seasonal_easter_feast", "name": "🐣 Påskbord & Seasonal Stammis Recipe Basket", "desc": "Tests holiday meal planning, 5-item seasonal grocery curation in SEK, and jämförpris compliance."},
+                {"id": "ica_store_level_pnl", "name": "🏪 Store-Level Basket P&L & Regional Aggregations", "desc": "Tests complex BigQuery aggregations comparing Stockholm Maxi vs Göteborg Kvantum sales volume."},
+                {"id": "ica_churn_prevention", "name": "🚨 At-Risk Stammis Churn Prevention & SMS Voucher", "desc": "Evaluates targeted SMS copy (<160 chars) with personalized Stammis point bonus triggers."},
+                {"id": "ica_krav_green_claims", "name": "🌿 KRAV Organic & Swedish Origin Compliance Audit", "desc": "Tests hallucination guardrails ensuring eco-labels are only applied to certified organic products."},
+            ]
+        else:
+            return [
+                {"id": "cf_black_friday_drop", "name": "🖤 Black Friday VIP Studio Capsule Drop", "desc": "Tests 5-item coordinated capsule looks in EUR with tier discounts and VIP Crazy Club point calculations."},
+                {"id": "cf_inventory_exhaustion", "name": "📦 Negative Inventory & Out-of-Stock Handling", "desc": "Tests that the agent does not fabricate fake products when silk blazer inventory in Malmö is 0 rows."},
+                {"id": "cf_cross_channel_consistency", "name": "🎯 Cross-Channel Voice Consistency (Email vs SMS)", "desc": "Evaluates tone adherence between editorial Scandinavian minimalism and compact SMS notifications."},
+                {"id": "cf_rfm_ltv_forecasting", "name": "📈 High-LTV Segment Forecasting & Demographic Joins", "desc": "Tests complex multi-table BigQuery queries correlating age brackets with average basket sizes."},
+            ]
+
     def generate_eval_suite(
         self,
         scenario_theme: str = "bigquery_segment_analytics",
         tenant_id: str = "ica_sweden",
         count: int = 4,
+        scenario_name: Optional[str] = None,
+        scenario_desc: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Generates realistic, domain-grounded evaluation questions matching actual agent use cases."""
         is_ica = (tenant_id == "ica_sweden")
@@ -82,9 +147,13 @@ class QualityEvalEngine:
             },
         }
 
-        active_spec = scenario_guidelines.get(scenario_theme, scenario_guidelines["bigquery_segment_analytics"])
-        target_agent = active_spec["agent"]
-        focus_desc = active_spec["focus"]
+        if scenario_theme in scenario_guidelines:
+            active_spec = scenario_guidelines[scenario_theme]
+            target_agent = active_spec["agent"]
+            focus_desc = active_spec["focus"]
+        else:
+            target_agent = "marketing_orchestrator"
+            focus_desc = f"{scenario_name or scenario_theme}: {scenario_desc or 'Evaluate specialized domain requirements.'}"
 
         system_instruction = (
             f"You are the Principal AI Evaluation Benchmark Engineer for '{tenant_name}'.\n\n"

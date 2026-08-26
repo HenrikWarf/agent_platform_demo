@@ -8,10 +8,22 @@ import {
 
 export default function QualityEvalsSuite() {
   const [tenant, setTenant] = useState('ica_sweden');
+
+  const INITIAL_SCENARIO_OPTIONS = [
+    { id: 'bigquery_segment_analytics', name: '📊 BigQuery RFM & Cohort Spend Analytics', desc: 'NL2SQL cohort queries, regional store comparisons, and event funnel metrics.' },
+    { id: 'curated_5item_assortment', name: '🛍️ 5-Item Capsule Styling & Recipe Bundles', desc: 'Curating 5-item coordinated fashion looks (EUR) or grocery recipe baskets (SEK).' },
+    { id: 'a2ui_personalized_banner', name: '🎴 A2UI Personalization & Stammis Deal Banners', desc: 'Interactive Stammis Deal with mandatory jämförpris (kr/kg) & Studio Drop Cards.' },
+    { id: 'channel_scoped_copy', name: '📱 Strict Channel Scope & SMS 160-Char Limits', desc: 'Channel-isolated copy (SMS under 160 chars) without unrequested media channels.' },
+    { id: 'omnichannel_campaign_strategy', name: '⚡ 3-Pillar Strategy & Multi-Agent Orchestration', desc: 'End-to-end campaign formulation: Data ➔ 3-Pillar Strategy ➔ Content ➔ A2UI Banner.' },
+    { id: 'security_and_compliance', name: '🛡️ Nordic Law (Jämförpris) & Model Armor Guardrail', desc: 'Swedish price law compliance, currency isolation (kr vs €), and injection defense.' },
+  ];
+
+  const [scenarios, setScenarios] = useState(INITIAL_SCENARIO_OPTIONS);
   const [scenarioTheme, setScenarioTheme] = useState('bigquery_segment_analytics');
   const [questionCount, setQuestionCount] = useState(4);
   
   // Generation & Test Suite State
+  const [isGeneratingScenarios, setIsGeneratingScenarios] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [testCases, setTestCases] = useState([]);
   
@@ -21,25 +33,44 @@ export default function QualityEvalsSuite() {
   const [selectedTestCase, setSelectedTestCase] = useState(null);
   const resultsRef = useRef(null);
 
-  const scenarioOptions = [
-    { id: 'bigquery_segment_analytics', name: '📊 BigQuery RFM & Cohort Spend Analytics', desc: 'NL2SQL cohort queries, regional store comparisons, and event funnel metrics.' },
-    { id: 'curated_5item_assortment', name: '🛍️ 5-Item Capsule Styling & Recipe Bundles', desc: 'Curating 5-item coordinated fashion looks (EUR) or grocery recipe baskets (SEK).' },
-    { id: 'a2ui_personalized_banner', name: '🎴 A2UI Personalization & Stammis Deal Banners', desc: 'Interactive Stammis Deal with mandatory jämförpris (kr/kg) & Studio Drop Cards.' },
-    { id: 'channel_scoped_copy', name: '📱 Strict Channel Scope & SMS 160-Char Limits', desc: 'Channel-isolated copy (SMS under 160 chars) without unrequested media channels.' },
-    { id: 'omnichannel_campaign_strategy', name: '⚡ 3-Pillar Strategy & Multi-Agent Orchestration', desc: 'End-to-end campaign formulation: Data ➔ 3-Pillar Strategy ➔ Content ➔ A2UI Banner.' },
-    { id: 'security_and_compliance', name: '🛡️ Nordic Law (Jämförpris) & Model Armor Guardrail', desc: 'Swedish price law compliance, currency isolation (kr vs €), and injection defense.' },
-  ];
-
-  // Auto-generate default scenario suite on initial load
+  // Generate initial test suite on initial mount only
   useEffect(() => {
     handleGenerateSuite();
-  }, [tenant, scenarioTheme]);
+  }, []);
+
+  const handleGenerateNewScenarios = async () => {
+    setIsGeneratingScenarios(true);
+    try {
+      const res = await fetch('/api/obs/eval/generate-scenarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenant_id: tenant,
+          count: 4,
+        }),
+      });
+      const newScenarios = await res.json();
+      if (Array.isArray(newScenarios) && newScenarios.length > 0) {
+        setScenarios(prev => {
+          const existingIds = new Set(prev.map(s => s.id));
+          const filtered = newScenarios.filter(s => !existingIds.has(s.id));
+          return [...filtered, ...prev];
+        });
+        setScenarioTheme(newScenarios[0].id);
+      }
+    } catch (e) {
+      console.error('Failed to generate new scenarios', e);
+    } finally {
+      setIsGeneratingScenarios(false);
+    }
+  };
 
   const handleGenerateSuite = async () => {
     setIsGenerating(true);
     setBatchVerdict(null);
     setSelectedTestCase(null);
     try {
+      const activeSc = scenarios.find(s => s.id === scenarioTheme);
       const res = await fetch('/api/obs/eval/generate-suite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,6 +78,8 @@ export default function QualityEvalsSuite() {
           scenario_theme: scenarioTheme,
           tenant_id: tenant,
           count: questionCount,
+          scenario_name: activeSc?.name,
+          scenario_desc: activeSc?.desc,
         }),
       });
       const data = await res.json();
@@ -155,15 +188,38 @@ export default function QualityEvalsSuite() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Sliders size={16} color="var(--accent-indigo)" />
-            Step 1: Configure Scenario & Generate AI Test Questions
+            Step 1: Select Scenario & Generate AI Test Questions
           </div>
-          <span className="badge" style={{ background: 'rgba(79, 70, 229, 0.12)', color: 'var(--accent-indigo)' }}>
-            Powered by Gemini on Vertex AI
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              onClick={handleGenerateNewScenarios}
+              disabled={isGeneratingScenarios}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '6px',
+                background: 'rgba(79, 70, 229, 0.12)',
+                border: '1px solid rgba(79, 70, 229, 0.3)',
+                color: 'var(--accent-indigo)',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: isGeneratingScenarios ? 'not-allowed' : 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {isGeneratingScenarios ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
+              <span>{isGeneratingScenarios ? 'Synthesizing...' : '✨ Generate New Scenarios'}</span>
+            </button>
+            <span className="badge" style={{ background: 'rgba(79, 70, 229, 0.12)', color: 'var(--accent-indigo)' }}>
+              Powered by Gemini on Vertex AI
+            </span>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
-          {scenarioOptions.map((sc) => {
+          {scenarios.map((sc) => {
             const isSelected = scenarioTheme === sc.id;
             return (
               <div
@@ -233,7 +289,7 @@ export default function QualityEvalsSuite() {
             }}
           >
             {isGenerating ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
-            <span>{isGenerating ? 'Synthesizing Test Scenarios...' : '✨ Generate AI Test Suite with Gemini'}</span>
+            <span>{isGenerating ? 'Synthesizing Test Scenarios...' : 'Generate Test Scenarios'}</span>
           </button>
         </div>
       </div>
