@@ -47,28 +47,38 @@ class QualityEvalEngine:
         tenant_id: str = "ica_sweden",
         count: int = 4,
     ) -> List[Dict[str, str]]:
-        """Uses Gemini to generate novel, creative enterprise testing scenarios for the selected retailer."""
+        """Generates clean, practical enterprise test scenarios following the exact design pattern of the baseline scenarios."""
         is_ica = (tenant_id == "ica_sweden")
-        tenant_name = "ICA Sverige (Swedish Grocery & Stammis)" if is_ica else "Crazy Fashion (Nordic Apparel & Crazy Club)"
-        currency = "SEK (kr / :-)" if is_ica else "EUR (€)"
+        tenant_name = "ICA Sverige (Swedish Grocery)" if is_ica else "Crazy Fashion (Nordic Apparel)"
+        currency = "SEK" if is_ica else "EUR"
 
-        prompt = f"""You are an elite QA and AI Evaluation Benchmark Architect for Vertex AI Agent Engine.
-Generate {count} novel, advanced enterprise evaluation test scenarios for {tenant_name} (using {currency}).
+        prompt = f"""You are a Test Scenario Architect for an enterprise multi-agent retail platform.
+Generate {count} clear, practical testing scenarios for '{tenant_name}' ({currency}).
 
-Each scenario should target a distinct enterprise challenge such as:
-- Cross-table BigQuery analytical queries & regional metrics
-- Multi-agent delegation sequencing & transfers
-- A2UI interactive personalization & legal compliance (e.g. Swedish Price Information Act)
-- Negative inventory / out-of-stock reasoning
-- Strict channel-selective copy constraints (SMS < 160 chars)
-- Edge-case financial discount math & customer lifetime value
+CRITICAL DESIGN RULES:
+1. Keep the scenarios simple, clear, and direct — matching the exact format of the baseline scenarios.
+2. 'name': Start with a single relevant emoji, followed by a concise 3-6 word scenario title.
+3. 'desc': Exactly ONE short, clean sentence describing the specific task or agent capability being tested.
+4. Focus directly on standard agent capabilities:
+   - BigQuery customer segment & transaction analytics
+   - 5-item product assortment recommendations
+   - A2UI personalized deal banners / drop cards
+   - Channel-scoped marketing copy (SMS < 160 chars, Email newsletters)
+   - Multi-agent campaign strategy formulation
+   - Price compliance & currency accuracy
 
-Return a JSON list of objects with the exact schema:
+REFERENCE EXAMPLES TO MATCH:
+- name: "📊 BigQuery RFM & Cohort Spend Analytics", desc: "NL2SQL cohort queries, regional store comparisons, and event funnel metrics."
+- name: "🛍️ 5-Item Capsule Styling & Recipe Bundles", desc: "Curating 5-item coordinated fashion looks (EUR) or grocery recipe baskets (SEK)."
+- name: "🎴 A2UI Personalization & Stammis Deal Banners", desc: "Interactive Stammis Deal with mandatory jämförpris (kr/kg) & Studio Drop Cards."
+- name: "📱 Strict Channel Scope & SMS 160-Char Limits", desc: "Channel-isolated copy (SMS under 160 chars) without unrequested media channels."
+
+Return a JSON array of objects:
 [
   {{
-    "id": "unique_snake_case_id",
-    "name": "Emoji + Descriptive Scenario Title",
-    "desc": "1-2 sentence detailed description of what failure modes and multi-agent capabilities this scenario tests."
+    "id": "clean_snake_case_id",
+    "name": "Emoji + Title",
+    "desc": "Short one-sentence description."
   }}
 ]
 Do not wrap in markdown quotes. Return JSON only."""
@@ -79,7 +89,7 @@ Do not wrap in markdown quotes. Return JSON only."""
                     model=EVAL_MODEL,
                     contents=prompt,
                     config=types.GenerateContentConfig(
-                        temperature=0.7,
+                        temperature=0.3,
                         response_mime_type="application/json",
                     ),
                 )
@@ -92,17 +102,17 @@ Do not wrap in markdown quotes. Return JSON only."""
         # Fallback dynamic scenarios
         if is_ica:
             return [
-                {"id": "ica_seasonal_easter_feast", "name": "🐣 Påskbord & Seasonal Stammis Recipe Basket", "desc": "Tests holiday meal planning, 5-item seasonal grocery curation in SEK, and jämförpris compliance."},
-                {"id": "ica_store_level_pnl", "name": "🏪 Store-Level Basket P&L & Regional Aggregations", "desc": "Tests complex BigQuery aggregations comparing Stockholm Maxi vs Göteborg Kvantum sales volume."},
-                {"id": "ica_churn_prevention", "name": "🚨 At-Risk Stammis Churn Prevention & SMS Voucher", "desc": "Evaluates targeted SMS copy (<160 chars) with personalized Stammis point bonus triggers."},
-                {"id": "ica_krav_green_claims", "name": "🌿 KRAV Organic & Swedish Origin Compliance Audit", "desc": "Tests hallucination guardrails ensuring eco-labels are only applied to certified organic products."},
+                {"id": "ica_seasonal_recipe_basket", "name": "🍲 Seasonal Middagstips & Recipe Basket", "desc": "Curating 5-item seasonal dinner recipes with Stammis discounts in SEK."},
+                {"id": "ica_city_store_comparison", "name": "🏬 Stockholm vs Göteborg Regional Spend", "desc": "BigQuery queries comparing average basket value and loyalty tiers across cities."},
+                {"id": "ica_stammis_app_banner", "name": "🏷️ Stammis App Personalization & Jämförpris", "desc": "Generating personalized Stammis deal cards with mandatory kr/kg unit pricing."},
+                {"id": "ica_weekend_sms_promo", "name": "📩 Weekend Stammis Flash SMS Campaign", "desc": "Channel-isolated SMS promotions strictly constrained to 160 characters."},
             ]
         else:
             return [
-                {"id": "cf_black_friday_drop", "name": "🖤 Black Friday VIP Studio Capsule Drop", "desc": "Tests 5-item coordinated capsule looks in EUR with tier discounts and VIP Crazy Club point calculations."},
-                {"id": "cf_inventory_exhaustion", "name": "📦 Negative Inventory & Out-of-Stock Handling", "desc": "Tests that the agent does not fabricate fake products when silk blazer inventory in Malmö is 0 rows."},
-                {"id": "cf_cross_channel_consistency", "name": "🎯 Cross-Channel Voice Consistency (Email vs SMS)", "desc": "Evaluates tone adherence between editorial Scandinavian minimalism and compact SMS notifications."},
-                {"id": "cf_rfm_ltv_forecasting", "name": "📈 High-LTV Segment Forecasting & Demographic Joins", "desc": "Tests complex multi-table BigQuery queries correlating age brackets with average basket sizes."},
+                {"id": "cf_autumn_capsule_curation", "name": "🍂 Autumn Capsule Wardrobe Styling", "desc": "Curating 5 coordinated sustainable apparel items with member pricing in EUR."},
+                {"id": "cf_vip_club_segment_analytics", "name": "💎 VIP Fashionistas Revenue Analytics", "desc": "BigQuery RFM analysis evaluating repeat purchase frequency and monetary spend."},
+                {"id": "cf_studio_drop_card", "name": "👗 Studio Drop Card & Size Selector", "desc": "Generating interactive editorial drop cards with size swatches and Crazy Club points."},
+                {"id": "cf_flash_sale_sms", "name": "💬 VIP 25% Flash Drop SMS Alert", "desc": "Short, punchy member notification copy strictly constrained under 160 characters."},
             ]
 
     def generate_eval_suite(
@@ -152,7 +162,18 @@ Do not wrap in markdown quotes. Return JSON only."""
             target_agent = active_spec["agent"]
             focus_desc = active_spec["focus"]
         else:
-            target_agent = "marketing_orchestrator"
+            # Smart agent resolution based on title/desc keywords
+            combined_text = f"{scenario_name or ''} {scenario_desc or ''} {scenario_theme}".lower()
+            if any(k in combined_text for k in ["analytics", "sql", "bigquery", "query", "spend", "basket size"]):
+                target_agent = "analytics_agent"
+            elif any(k in combined_text for k in ["recipe", "capsule", "assortment", "bundle", "styling", "5-item"]):
+                target_agent = "recommendation_pipeline"
+            elif any(k in combined_text for k in ["banner", "drop card", "a2ui", "stammis deal", "card", "swatch"]):
+                target_agent = "a2ui_pipeline"
+            elif any(k in combined_text for k in ["sms", "email", "copy", "newsletter", "social", "post"]):
+                target_agent = "content_pipeline"
+            else:
+                target_agent = "marketing_orchestrator"
             focus_desc = f"{scenario_name or scenario_theme}: {scenario_desc or 'Evaluate specialized domain requirements.'}"
 
         system_instruction = (

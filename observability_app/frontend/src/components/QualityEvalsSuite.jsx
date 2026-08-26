@@ -207,6 +207,26 @@ export default function QualityEvalsSuite() {
               {isGeneratingScenarios ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
               <span>{isGeneratingScenarios ? 'Synthesizing...' : '✨ Generate New Scenarios'}</span>
             </button>
+            {scenarios.length > INITIAL_SCENARIO_OPTIONS.length && (
+              <button
+                onClick={() => {
+                  setScenarios(INITIAL_SCENARIO_OPTIONS);
+                  setScenarioTheme('bigquery_segment_analytics');
+                }}
+                style={{
+                  padding: '0.35rem 0.6rem',
+                  borderRadius: '6px',
+                  background: 'transparent',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Reset Scenarios
+              </button>
+            )}
             <span className="badge" style={{ background: 'rgba(79, 70, 229, 0.12)', color: 'var(--accent-indigo)' }}>
               Powered by Gemini on Vertex AI
             </span>
