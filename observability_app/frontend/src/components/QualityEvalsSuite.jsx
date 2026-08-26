@@ -263,9 +263,9 @@ export default function QualityEvalsSuite() {
 
         {/* Action Controls */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Suite Size:</span>
-            {[3, 4, 6].map((num) => (
+          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600, marginRight: '0.15rem' }}>Suite Size:</span>
+            {[1, 3, 4, 6, 8, 10].map((num) => (
               <button
                 key={num}
                 onClick={() => setQuestionCount(num)}
@@ -278,9 +278,10 @@ export default function QualityEvalsSuite() {
                   border: '1px solid var(--border-color)',
                   background: questionCount === num ? 'var(--accent-indigo)' : 'var(--bg-secondary)',
                   color: questionCount === num ? '#ffffff' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                {num} Questions
+                {num === 1 ? '1 Question' : `${num} Questions`}
               </button>
             ))}
           </div>
