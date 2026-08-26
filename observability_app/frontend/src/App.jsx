@@ -9,7 +9,7 @@ import QualityEvalsSuite from './components/QualityEvalsSuite';
 import ErrorTriageBoard from './components/ErrorTriageBoard';
 import ConversationTraceWaterfall from './components/ConversationTraceWaterfall';
 import AgentDeepDive from './components/AgentDeepDive';
-import ObservabilityCopilotChat from './components/ObservabilityCopilotChat';
+import ObservabilityAssistantChat from './components/ObservabilityAssistantChat';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -232,8 +232,8 @@ export default function App() {
         {activeTab === 'agents' && <AgentDeepDive />}
       </main>
 
-      {/* Floating Observability Copilot Chat (Bottom Right) */}
-      <ObservabilityCopilotChat />
+      {/* Floating Observability Assistant Chat (Bottom Right) */}
+      <ObservabilityAssistantChat />
 
     </div>
   );

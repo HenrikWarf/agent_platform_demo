@@ -32,7 +32,7 @@ FRONTEND_PID=$!
 echo "✨ Observability Platform is running!"
 echo "   📊 Frontend Dashboard: http://localhost:${FRONTEND_PORT}"
 echo "   🔌 Telemetry Backend:  http://localhost:${BACKEND_PORT}/api/obs/overview"
-echo "   💬 Observability Copilot Chat is active in the bottom right corner."
+echo "   💬 Observability Assistant Chat is active in the bottom right corner."
 
 # Cleanup on exit
 trap "echo 'Stopping Observability Platform...'; kill ${BACKEND_PID} ${FRONTEND_PID} 2>/dev/null || true; exit 0" SIGINT SIGTERM EXIT

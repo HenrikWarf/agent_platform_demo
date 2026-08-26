@@ -1,8 +1,8 @@
 """FastAPI Backend Server for Multi-Agent Observability & Quality Triage Platform.
 
 Runs on port 8081 by default.
-Exposes REST endpoints for telemetry KPIs, error triage, conversation waterfall traces,
-eval evaluations, and the Observability Copilot Chat Agent.
+Exposes REST endpoints for telemetry KPIs, 7-dimension error clusters, conversation waterfall traces,
+LLM quality evaluations, and the Observability Assistant Agent.
 """
 
 from __future__ import annotations
@@ -13,6 +13,11 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# Ensure Vertex AI authentication is set
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
+os.environ["GOOGLE_API_USE_CLIENT_CERTIFICATE"] = "false"
+
 # Ensure repository root is on Python path
 repo_root = Path(__file__).resolve().parent.parent.parent
 if str(repo_root) not in sys.path:
@@ -20,8 +25,13 @@ if str(repo_root) not in sys.path:
 
 from fastapi import FastAPI, HTTPException, Query  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from google.adk.artifacts import InMemoryArtifactService  # noqa: E402
+from google.adk.runners import Runner  # noqa: E402
+from google.adk.sessions import InMemorySessionService  # noqa: E402
+from google.genai.types import Content, Part  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
+from observability_app.agent.agent import app as adk_app  # noqa: E402
 from observability_app.agent.agent import obs_agent  # noqa: E402
 from observability_app.backend.eval_engine import eval_engine  # noqa: E402
 from observability_app.backend.telemetry_store import telemetry_store  # noqa: E402
@@ -44,6 +54,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize ADK Runner and Session Services for Observability Assistant
+obs_session_service = InMemorySessionService()
+obs_artifact_service = InMemoryArtifactService()
+obs_runner = Runner(
+    app=adk_app,
+    session_service=obs_session_service,
+    artifact_service=obs_artifact_service,
+    auto_create_session=True,
+)
+_obs_chat_session_id: Optional[str] = None
+
 
 # ==============================================================================
 # REQUEST & RESPONSE SCHEMAS
@@ -51,7 +72,7 @@ app.add_middleware(
 
 class UpdateTriageRequest(BaseModel):
     status: str
-    author: Optional[str] = "User"
+    author: Optional[str] = "Engineer"
     note: Optional[str] = None
 
 
@@ -87,9 +108,9 @@ async def get_overview() -> Dict[str, Any]:
 @app.get("/api/obs/clusters")
 async def list_error_clusters(
     status: Optional[str] = Query(None, description="Filter by status: OPEN, INVESTIGATING, RESOLVED"),
-    category: Optional[str] = Query(None, description="Filter by category: SQL_SYNTAX_OR_EXECUTION, SCHEMA_VALIDATION, etc."),
+    category: Optional[str] = Query(None, description="Filter by category: DATA_HALLUCINATION_DRIFT, ROUTING_DELEGATION_LOOP, etc."),
 ) -> List[Dict[str, Any]]:
-    """Returns grouped error clusters with affected session lists, signatures, and root causes."""
+    """Returns grouped error clusters across the 7 enterprise failure dimensions."""
     return telemetry_store.get_error_clusters(status=status, category=category)
 
 
@@ -100,7 +121,7 @@ async def update_cluster_status(cluster_id: str, req: UpdateTriageRequest) -> Di
     updated = telemetry_store.update_cluster_status(
         cluster_id=cluster_id,
         new_status=req.status,
-        author=req.author or "User",
+        author=req.author or "Engineer",
         note=req.note,
     )
     if not updated:
@@ -146,17 +167,23 @@ async def run_quality_eval(req: EvalRunRequest) -> Dict[str, Any]:
 
 
 @app.post("/api/obs/chat")
-async def chat_with_observability_agent(req: ObsChatRequest) -> Dict[str, Any]:
-    """Direct chat endpoint with the Observability Copilot Agent."""
+async def chat_with_observability_assistant(req: ObsChatRequest) -> Dict[str, Any]:
+    """Direct chat endpoint with the Observability Assistant Agent."""
+    global _obs_chat_session_id
     try:
-        from google.adk.runners import Runner
+        if not _obs_chat_session_id:
+            sess = await obs_session_service.create_session(app_name=adk_app.name, user_id="user-observability-lead")
+            _obs_chat_session_id = sess.id
 
-        runner = Runner(agent=obs_agent)
+        message = Content(role="user", parts=[Part.from_text(text=req.message)])
         response_text = ""
         tools_called = []
 
-        # Run ADK agent turn
-        for event in runner.run(req.message):
+        async for event in obs_runner.run_async(
+            user_id="user-observability-lead",
+            session_id=_obs_chat_session_id,
+            new_message=message,
+        ):
             if hasattr(event, "content") and event.content:
                 if isinstance(event.content, str):
                     response_text += event.content
@@ -165,38 +192,40 @@ async def chat_with_observability_agent(req: ObsChatRequest) -> Dict[str, Any]:
                         if hasattr(part, "text") and part.text:
                             response_text += part.text
                         if hasattr(part, "function_call") and part.function_call:
-                            tools_called.append(part.function_call.name)
+                            tool_name = part.function_call.name
+                            if tool_name not in tools_called:
+                                tools_called.append(tool_name)
 
         if not response_text:
-            response_text = "I have analyzed the telemetry database and fleet records. How can I assist with quality evaluation or triage?"
+            response_text = "I have queried the fleet telemetry store. How can I assist with error triage or agent performance?"
 
         return {
             "response": response_text,
             "tools_called": tools_called,
-            "agent": "observability_copilot",
+            "agent": "observability_assistant",
         }
     except Exception as e:
-        logger.error(f"Error in chat_with_observability_agent: {e}", exc_info=True)
-        # Resilient fallback if ADK runner needs standalone execution
+        logger.error(f"Error in chat_with_observability_assistant: {e}", exc_info=True)
+        # Resilient telemetry fallback
         try:
             kpis = telemetry_store.get_overview_kpis()
-            open_issues = telemetry_store.get_triage_issues(status="OPEN")
+            open_clusters = telemetry_store.get_error_clusters(status="OPEN")
             fallback_text = (
-                f"### Observability Copilot Insights\n\n"
-                f"- **Global Quality Score**: {kpis['global_quality_score']}%\n"
+                f"### Observability Assistant Insights\n\n"
+                f"- **Global Fleet Quality Score**: {kpis['global_quality_score']}%\n"
                 f"- **Task Completion Rate**: {kpis['task_completion_rate']}%\n"
                 f"- **Average Turn Latency**: {kpis['average_latency_ms']}ms\n"
-                f"- **Open Triage Issues**: {len(open_issues)} issues needing investigation\n\n"
+                f"- **Open Problem Clusters**: {len(open_clusters)} active\n\n"
                 f"I am actively monitoring `agent-demo-09` across Crazy Fashion and ICA Sverige. "
-                f"Ask me to analyze any session, investigate error clusters, or run live evaluations!"
+                f"Ask me about any specific agent trace, problem cluster, or live evaluation!"
             )
             return {
                 "response": fallback_text,
                 "tools_called": ["get_fleet_health_overview"],
-                "agent": "observability_copilot",
+                "agent": "observability_assistant",
             }
         except Exception as e2:
-            return {"response": f"Observability copilot ready: {e2}", "tools_called": [], "agent": "observability_copilot"}
+            return {"response": f"Observability assistant ready: {e2}", "tools_called": [], "agent": "observability_assistant"}
 
 
 if __name__ == "__main__":
