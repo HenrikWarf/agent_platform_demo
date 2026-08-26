@@ -20,6 +20,9 @@ cd "${ROOT_DIR}"
 PYTHONPATH=. ./venv/bin/python observability_app/backend/app.py &
 BACKEND_PID=$!
 
+# Brief delay to ensure FastAPI binds to port 8081 before Vite dev proxy connects
+sleep 1.5
+
 # 2. Start Observability Frontend (Vite on Port 3001)
 echo "⚛️  Starting Observability React Frontend on http://localhost:${FRONTEND_PORT}..."
 cd "${ROOT_DIR}/observability_app/frontend"
