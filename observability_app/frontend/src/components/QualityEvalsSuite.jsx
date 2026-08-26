@@ -11,7 +11,7 @@ export default function QualityEvalsSuite() {
 
   const INITIAL_SCENARIO_OPTIONS = [
     { id: 'bigquery_segment_analytics', name: '📊 BigQuery RFM & Cohort Spend Analytics', desc: 'NL2SQL cohort queries, regional store comparisons, and event funnel metrics.' },
-    { id: 'curated_5item_assortment', name: '🛍️ 5-Item Capsule Styling & Recipe Bundles', desc: 'Curating 5-item coordinated fashion looks (EUR) or grocery recipe baskets (SEK).' },
+    { id: 'curated_5item_assortment', name: '🛍️ 5-Item Curated Product Assortments', desc: 'Curating 5-item personalized product assortments and cross-sell bundles (EUR / SEK).' },
     { id: 'a2ui_personalized_banner', name: '🎴 A2UI Personalization & Stammis Deal Banners', desc: 'Interactive Stammis Deal with mandatory jämförpris (kr/kg) & Studio Drop Cards.' },
     { id: 'channel_scoped_copy', name: '📱 Strict Channel Scope & SMS 160-Char Limits', desc: 'Channel-isolated copy (SMS under 160 chars) without unrequested media channels.' },
     { id: 'omnichannel_campaign_strategy', name: '⚡ 3-Pillar Strategy & Multi-Agent Orchestration', desc: 'End-to-end campaign formulation: Data ➔ 3-Pillar Strategy ➔ Content ➔ A2UI Banner.' },

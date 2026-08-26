@@ -2,7 +2,7 @@
 
 Aligns 100% with the real multi-agent architecture and retail use cases:
 - Analytics Agent (BigQuery NL2SQL over marketing_analytics tables)
-- Recommendation Pipeline (5-Item curated assortments & recipe bundles)
+- Recommendation Pipeline (5-Item curated product assortments & cross-sell bundles)
 - A2UI Pipeline (Stammis Deal Banners with jämförpris & Fashion Drop Cards)
 - Strategy Pipeline (3-Pillar Omnichannel ROI Frameworks)
 - Content Pipeline (Channel-scoped copy & strict SMS 160-char limits)
@@ -61,7 +61,7 @@ CRITICAL DESIGN RULES:
 3. 'desc': Exactly ONE short, clean sentence describing the specific task or agent capability being tested.
 4. Focus directly on standard agent capabilities:
    - BigQuery customer segment & transaction analytics
-   - 5-item product assortment recommendations
+   - 5-item product assortment recommendations (grocery product baskets / fashion capsule wardrobe)
    - A2UI personalized deal banners / drop cards
    - Channel-scoped marketing copy (SMS < 160 chars, Email newsletters)
    - Multi-agent campaign strategy formulation
@@ -69,7 +69,7 @@ CRITICAL DESIGN RULES:
 
 REFERENCE EXAMPLES TO MATCH:
 - name: "📊 BigQuery RFM & Cohort Spend Analytics", desc: "NL2SQL cohort queries, regional store comparisons, and event funnel metrics."
-- name: "🛍️ 5-Item Capsule Styling & Recipe Bundles", desc: "Curating 5-item coordinated fashion looks (EUR) or grocery recipe baskets (SEK)."
+- name: "🛍️ 5-Item Curated Product Assortments", desc: "Curating 5-item personalized product assortments and cross-sell bundles (EUR / SEK)."
 - name: "🎴 A2UI Personalization & Stammis Deal Banners", desc: "Interactive Stammis Deal with mandatory jämförpris (kr/kg) & Studio Drop Cards."
 - name: "📱 Strict Channel Scope & SMS 160-Char Limits", desc: "Channel-isolated copy (SMS under 160 chars) without unrequested media channels."
 
@@ -102,7 +102,7 @@ Do not wrap in markdown quotes. Return JSON only."""
         # Fallback dynamic scenarios
         if is_ica:
             return [
-                {"id": "ica_seasonal_recipe_basket", "name": "🍲 Seasonal Middagstips & Recipe Basket", "desc": "Curating 5-item seasonal dinner recipes with Stammis discounts in SEK."},
+                {"id": "ica_seasonal_grocery_basket", "name": "🛒 Seasonal Grocery Assortment Basket", "desc": "Curating 5 complementary pantry and organic products with Stammis discounts in SEK."},
                 {"id": "ica_city_store_comparison", "name": "🏬 Stockholm vs Göteborg Regional Spend", "desc": "BigQuery queries comparing average basket value and loyalty tiers across cities."},
                 {"id": "ica_stammis_app_banner", "name": "🏷️ Stammis App Personalization & Jämförpris", "desc": "Generating personalized Stammis deal cards with mandatory kr/kg unit pricing."},
                 {"id": "ica_weekend_sms_promo", "name": "📩 Weekend Stammis Flash SMS Campaign", "desc": "Channel-isolated SMS promotions strictly constrained to 160 characters."},
@@ -137,7 +137,7 @@ Do not wrap in markdown quotes. Return JSON only."""
             },
             "curated_5item_assortment": {
                 "agent": "recommendation_pipeline",
-                "focus": f"Curating exactly 5 complementary products. For ICA: seasonal recipe basket (e.g. Fredagsmys Taco, Torsdagsärtsoppa, KRAV-brunch) in SEK. For Crazy Fashion: coordinated 5-piece capsule wardrobe (tailoring, knitwear, denim, outerwear, accessories) in EUR.",
+                "focus": f"Curating exactly 5 complementary products from the product catalog. For ICA: 5-item grocery assortment basket (dairy, bakery, produce, pantry essentials, coffee) with Stammis pricing in SEK. For Crazy Fashion: coordinated 5-piece capsule wardrobe (tailoring, knitwear, denim, outerwear, accessories) in EUR.",
             },
             "a2ui_personalized_banner": {
                 "agent": "a2ui_pipeline",
@@ -166,7 +166,7 @@ Do not wrap in markdown quotes. Return JSON only."""
             combined_text = f"{scenario_name or ''} {scenario_desc or ''} {scenario_theme}".lower()
             if any(k in combined_text for k in ["analytics", "sql", "bigquery", "query", "spend", "basket size"]):
                 target_agent = "analytics_agent"
-            elif any(k in combined_text for k in ["recipe", "capsule", "assortment", "bundle", "styling", "5-item"]):
+            elif any(k in combined_text for k in ["assortment", "capsule", "bundle", "styling", "5-item", "basket", "cross-sell"]):
                 target_agent = "recommendation_pipeline"
             elif any(k in combined_text for k in ["banner", "drop card", "a2ui", "stammis deal", "card", "swatch"]):
                 target_agent = "a2ui_pipeline"
@@ -490,7 +490,7 @@ Provide detailed qualitative critique and an actionable optimization recommendat
                     agent_resp = f"SMS (138 chars): \"Crazy Club Exclusive: 20% off the Autumn Studio Drop this weekend only! Use code STUDIOVIP in the app: crazyfa.com/drop\""
             elif "recommendation" in target_agent or "recommender" in target_agent:
                 if tenant_id == "ica_sweden":
-                    agent_resp = f"5-Item Crated Recipe Basket (Torsdagsärtsoppa & Pannkakor): 1. Gula Ärtor 500g (14:90 kr), 2. Rimmat Fläsk 400g (39:90 kr), 3. KRAV Mjölk 1.5L (18:50 kr), 4. Svenska Ägg 6-p (24:90 kr), 5. ICA Sylt 400g (22:90 kr). Total: 121:10 SEK."
+                    agent_resp = f"5-Item Curated Grocery Assortment (ICA Stammis Basket): 1. ICA Kaffe Mellanrost 450g (39:90 kr), 2. ICA Smör Normalsaltat 500g (48:90 kr), 3. KRAV Mjölk 1.5L (18:50 kr), 4. Svenska Ägg 6-p (24:90 kr), 5. ICA Prästost 400g (49:90 kr). Total: 182:10 SEK."
                 else:
                     agent_resp = f"5-Item Autumn Studio Capsule Look: 1. Wool Tailored Blazer (€89.99), 2. Ribbed Knit Sweater (€49.99), 3. Straight Cut Denim (€39.99), 4. Leather Chelsea Boots (€69.99), 5. Cashmere Scarf (€29.99). Total: €279.95 EUR."
             else:
