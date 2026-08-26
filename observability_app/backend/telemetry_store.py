@@ -397,6 +397,8 @@ class TelemetryStore:
                 grounding_score=98.0 if not ("Grounding" in str(err_msg) or "Empty" in str(err_msg)) else 68.0,
                 tool_use_score=97.0 if not ("BigQuery" in str(err_msg)) else 62.0,
                 brand_voice_score=96.0 if not ("Channel" in str(err_msg) or "Compliance" in str(err_msg)) else 72.0,
+                spans=spans,
+            )
             self.sessions[sid] = ConversationSession(
                 session_id=sid,
                 tenant_id=tid,
