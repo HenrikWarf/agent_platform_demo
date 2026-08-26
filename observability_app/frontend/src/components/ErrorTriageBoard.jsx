@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   AlertTriangle, CheckCircle2, Clock, ShieldAlert, Bug, 
-  ChevronRight, MessageSquare, Tag, Layers, ArrowRight, Database, Zap, FileCode2
+  ChevronRight, MessageSquare, Tag, Layers, ArrowRight, Database, Zap, FileCode2,
+  Sparkles, RefreshCw, Sliders, Cpu, FileCheck, AlertOctagon, HelpCircle
 } from 'lucide-react';
 
 export default function ErrorTriageBoard({ issues, onRefresh }) {
@@ -73,10 +74,15 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
   };
 
   const getCategoryIcon = (category) => {
+    if (category.includes('HALLUCINATION')) return <Sparkles size={16} color="var(--accent-rose)" />;
+    if (category.includes('ROUTING')) return <RefreshCw size={16} color="var(--accent-purple)" />;
+    if (category.includes('EMPTY_TOOL')) return <HelpCircle size={16} color="var(--accent-amber)" />;
+    if (category.includes('CHANNEL')) return <Sliders size={16} color="var(--accent-indigo)" />;
     if (category.includes('SQL')) return <Database size={16} color="var(--accent-cyan)" />;
-    if (category.includes('SCHEMA')) return <FileCode2 size={16} color="var(--accent-amber)" />;
+    if (category.includes('TOKEN')) return <Cpu size={16} color="var(--accent-amber)" />;
+    if (category.includes('COMPLIANCE')) return <FileCheck size={16} color="var(--accent-emerald)" />;
     if (category.includes('LATENCY')) return <Zap size={16} color="var(--accent-purple)" />;
-    if (category.includes('GUARDRAIL')) return <ShieldAlert size={16} color="var(--accent-rose)" />;
+    if (category.includes('GUARDRAIL') || category.includes('MODEL_ARMOR')) return <ShieldAlert size={16} color="var(--accent-rose)" />;
     return <Bug size={16} color="var(--accent-indigo)" />;
   };
 
@@ -88,15 +94,15 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <Layers size={22} color="var(--accent-indigo)" />
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Automated Error Clustering & Triage Matrix</h2>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Multi-Agent Error Clustering & Problem Matrix</h2>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Dynamic failure grouping across real BigQuery tool executions, schema validations, and latency SLAs.
+            Dynamic failure grouping across 7 enterprise dimensions: Grounding, Routing Loops, Empty Tools, Channel Contracts, SQL, Token Saturation, and Nordic Law.
           </p>
         </div>
 
         {/* Filter Controls */}
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <select 
             value={filterStatus} 
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -113,11 +119,16 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
             onChange={(e) => setFilterCategory(e.target.value)}
             style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
           >
-            <option value="ALL">All Cluster Categories</option>
-            <option value="SQL_SYNTAX_OR_EXECUTION">BigQuery SQL Failures</option>
-            <option value="SCHEMA_VALIDATION">Schema & Limits</option>
-            <option value="LATENCY_OUTLIER">Latency Outliers</option>
-            <option value="GUARDRAIL_SECURITY">Security & Guardrails</option>
+            <option value="ALL">All 7 Failure Dimensions</option>
+            <option value="DATA_HALLUCINATION_DRIFT">Factual Grounding & Hallucination</option>
+            <option value="ROUTING_DELEGATION_LOOP">Multi-Agent Routing Loops</option>
+            <option value="EMPTY_TOOL_HANDOFF">Empty Tool Handoffs</option>
+            <option value="CHANNEL_SCOPE_DRIFT">Channel Scope & Contracts</option>
+            <option value="SQL_SYNTAX_OR_EXECUTION">BigQuery SQL & Column Alias</option>
+            <option value="TOKEN_BLOAT_SATURATION">Context Saturation & Token Bloat</option>
+            <option value="NORDIC_COMPLIANCE_BREACH">Nordic Law & Jämförpris</option>
+            <option value="LATENCY_SLA_SPIKE">Latency SLA Spikes</option>
+            <option value="MODEL_ARMOR_GUARDRAIL">Model Armor Security</option>
           </select>
         </div>
       </div>
@@ -128,12 +139,12 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
         {/* Left Column: Grouped Error Clusters List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Detected Error Clusters ({filteredClusters.length})
+            Problem Clusters ({filteredClusters.length})
           </div>
 
           {filteredClusters.length === 0 ? (
             <div className="glass-card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No error clusters match the active filters.
+              No error clusters match the selected filter.
             </div>
           ) : (
             filteredClusters.map((cluster) => {
@@ -200,7 +211,8 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
                   {getStatusBadge(activeCluster.status)}
                   <span className="badge" style={{ fontSize: '0.7rem' }}>{activeCluster.tenant_id}</span>
                 </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {getCategoryIcon(activeCluster.category)}
                   {activeCluster.cluster_name || activeCluster.title}
                 </h3>
               </div>
@@ -261,9 +273,9 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
             {/* Error Signature Pattern */}
             <div>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
-                Error Signature / Match Pattern
+                Diagnostic Anomaly Signature
               </div>
-              <div style={{ padding: '0.75rem 1rem', borderRadius: '6px', background: 'rgba(0,0,0,0.04)', border: '1px solid var(--border-color)', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem', color: 'var(--accent-rose)' }}>
+              <div style={{ padding: '0.75rem 1rem', borderRadius: '6px', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem', color: 'var(--accent-rose)' }}>
                 {activeCluster.error_signature || activeCluster.error_message}
               </div>
             </div>
@@ -281,7 +293,7 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
 
               <div style={{ padding: '1rem', borderRadius: '8px', background: 'rgba(5, 150, 105, 0.05)', border: '1px solid rgba(5, 150, 105, 0.2)' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-emerald)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <CheckCircle2 size={16} /> Actionable Remediation
+                  <CheckCircle2 size={16} /> ADK Skill Remediation
                 </div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>
                   {activeCluster.remediation || activeCluster.remediation_guidance}
@@ -295,7 +307,7 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
                   Real Production Session Instances ({activeCluster.affected_sessions.length})
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
                   {activeCluster.affected_sessions.map((inst, idx) => (
                     <div key={idx} style={{ padding: '0.75rem 1rem', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -306,7 +318,7 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
                           "{inst.prompt}"
                         </span>
                       </div>
-                      <span className="badge" style={{ fontSize: '0.75rem' }}>
+                      <span className="badge" style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
                         {inst.latency_ms} ms
                       </span>
                     </div>
@@ -318,7 +330,7 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
             {/* Audit Notes & Log */}
             <div>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
-                Triage Audit Trail & Operator Notes
+                Triage Audit Trail & Engineering Notes
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 {(activeCluster.notes || []).map((n, idx) => (
@@ -370,7 +382,7 @@ export default function ErrorTriageBoard({ issues, onRefresh }) {
           </div>
         ) : (
           <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-            Select an error cluster from the left to inspect root causes and remediation.
+            Select a problem cluster from the left to inspect root causes and remediation.
           </div>
         )}
 
