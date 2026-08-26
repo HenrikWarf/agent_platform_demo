@@ -412,7 +412,7 @@ class TelemetryStore:
         success_rate = (sum(1 for t in all_turns if t.task_success) / total_turns) * 100
         avg_grounding = sum(t.grounding_score for t in all_turns) / total_turns
         avg_latency = sum(t.latency_ms for t in all_turns) / total_turns
-        total_tokens = sum(t.total_tokens for t in all_tokens := [t.total_tokens for t in all_turns])
+        total_tokens = sum(t.total_tokens for t in all_turns)
 
         open_clusters = sum(1 for c in self.error_clusters.values() if c.status in ["OPEN", "INVESTIGATING"])
         total_error_instances = sum(c.total_occurrences for c in self.error_clusters.values() if c.status in ["OPEN", "INVESTIGATING"])
