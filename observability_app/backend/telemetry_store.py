@@ -132,6 +132,214 @@ class TelemetryStore:
         
         self._initialized = True
 
+    def _build_waterfall_spans(
+        self,
+        base_ms: int,
+        latency: int,
+        routed_agents: List[str],
+        tools_executed: List[Dict[str, Any]],
+        has_err: bool,
+        err_msg: Optional[str],
+        sid: str,
+    ) -> List[SpanRecord]:
+        """Generates realistic, sequential OpenTelemetry spans with exact timing handoffs and parent-child hierarchy."""
+        spans: List[SpanRecord] = []
+        root_id = f"span-root-{sid[:8]}"
+        
+        # 1. Root Workflow Span (covers full turn duration)
+        spans.append(
+            SpanRecord(
+                span_id=root_id,
+                parent_span_id=None,
+                name="invoke_workflow",
+                agent_name="marketing_orchestrator",
+                start_time_ms=base_ms,
+                duration_ms=latency,
+                status="ERROR" if has_err and not ("PROMPT_INJECTION" in str(err_msg)) else "OK",
+                attributes={
+                    "gen_ai.workflow.name": "marketing_campaign_orchestration",
+                    "gen_ai.system": "google_adk",
+                    "agent.framework": "adk_v1",
+                },
+            )
+        )
+
+        curr_ms = base_ms
+
+        # 2. Ingress Guardrail / Model Armor Span
+        armor_dur = min(95, int(latency * 0.08))
+        spans.append(
+            SpanRecord(
+                span_id=f"span-armor-{sid[:8]}",
+                parent_span_id=root_id,
+                name="check_prompt_guardrail",
+                agent_name="model_armor",
+                start_time_ms=curr_ms,
+                duration_ms=armor_dur,
+                status="ERROR" if "PROMPT_INJECTION" in str(err_msg) else "OK",
+                attributes={
+                    "guardrail.system": "model_armor",
+                    "guardrail.template": "marketing-ingress-policy",
+                    "guardrail.action": "BLOCKED" if "PROMPT_INJECTION" in str(err_msg) else "PASSED",
+                },
+            )
+        )
+        curr_ms += armor_dur
+
+        if "PROMPT_INJECTION" in str(err_msg):
+            return spans
+
+        # 3. Root Orchestrator Reasoning Span
+        orch_dur = min(280, int(latency * 0.18))
+        spans.append(
+            SpanRecord(
+                span_id=f"span-orch-route-{sid[:8]}",
+                parent_span_id=root_id,
+                name="route_intent",
+                agent_name="marketing_orchestrator",
+                start_time_ms=curr_ms,
+                duration_ms=orch_dur,
+                status="OK",
+                attributes={
+                    "gen_ai.request.model": "gemini-3.6-flash",
+                    "orchestrator.delegation_strategy": "sequential_routing",
+                },
+            )
+        )
+        curr_ms += orch_dur
+
+        # 4. Sequential Sub-Agents Execution
+        subagents = [ag for ag in routed_agents if ag != "marketing_orchestrator" and ag != "model_armor"]
+        if not subagents:
+            subagents = ["analytics_agent"]
+
+        remaining_time = max(200, (base_ms + latency - 60) - curr_ms)
+        time_per_subagent = int(remaining_time / len(subagents))
+
+        for idx, ag_name in enumerate(subagents):
+            sub_start = curr_ms
+            sub_dur = time_per_subagent if idx < len(subagents) - 1 else ((base_ms + latency - 60) - curr_ms)
+            sub_span_id = f"span-agent-{idx}-{sid[:8]}"
+
+            # Agent Invocation Span
+            spans.append(
+                SpanRecord(
+                    span_id=sub_span_id,
+                    parent_span_id=root_id,
+                    name="invoke_agent",
+                    agent_name=ag_name,
+                    start_time_ms=sub_start,
+                    duration_ms=sub_dur,
+                    status="ERROR" if has_err and idx == len(subagents) - 1 else "OK",
+                    attributes={
+                        "agent.name": ag_name,
+                        "agent.role": "specialist_subagent",
+                    },
+                )
+            )
+
+            sub_curr = sub_start
+            has_tool = ("analytics" in ag_name or "recommender" in ag_name) and (tools_executed or "analytics" in ag_name)
+
+            if has_tool:
+                llm_dur = int(sub_dur * 0.35)
+                tool_dur = sub_dur - llm_dur - 10
+
+                # LLM Prompt Call
+                spans.append(
+                    SpanRecord(
+                        span_id=f"span-llm-{idx}-{sid[:8]}",
+                        parent_span_id=sub_span_id,
+                        name="call_llm",
+                        agent_name=ag_name,
+                        start_time_ms=sub_curr,
+                        duration_ms=llm_dur,
+                        status="OK",
+                        attributes={
+                            "gen_ai.request.model": "gemini-3.6-flash",
+                            "gen_ai.operation": "generate_sql_query" if "analytics" in ag_name else "curate_assortment",
+                        },
+                    )
+                )
+                sub_curr += llm_dur
+
+                # Tool Execution Call (starts immediately when LLM returns SQL)
+                tool_data = tools_executed[0] if tools_executed else {"tool": "query_customer_data"}
+                tool_query = tool_data.get("arguments", {}).get("query", "SELECT customer_id, rfm_segment, total_monetary_eur FROM `marketing_analytics.customer_rfm_summary` LIMIT 20;")
+                spans.append(
+                    SpanRecord(
+                        span_id=f"span-tool-{idx}-{sid[:8]}",
+                        parent_span_id=sub_span_id,
+                        name="execute_tool",
+                        agent_name=ag_name,
+                        start_time_ms=sub_curr,
+                        duration_ms=tool_dur,
+                        status="ERROR" if has_err and ("BigQuery" in str(err_msg) or "Empty" in str(err_msg) or "SQL" in str(err_msg)) else "OK",
+                        attributes={
+                            "tool.name": tool_data.get("tool", "query_customer_data"),
+                            "db.system": "bigquery",
+                            "db.statement": str(tool_query),
+                            "db.dataset": "marketing_analytics",
+                        },
+                    )
+                )
+            else:
+                llm_dur = int(sub_dur * 0.70)
+                fmt_dur = sub_dur - llm_dur
+
+                spans.append(
+                    SpanRecord(
+                        span_id=f"span-llm-{idx}-{sid[:8]}",
+                        parent_span_id=sub_span_id,
+                        name="call_llm",
+                        agent_name=ag_name,
+                        start_time_ms=sub_curr,
+                        duration_ms=llm_dur,
+                        status="OK",
+                        attributes={
+                            "gen_ai.request.model": "gemini-3.6-flash",
+                            "gen_ai.operation": "reason_and_formulate",
+                        },
+                    )
+                )
+                sub_curr += llm_dur
+
+                spans.append(
+                    SpanRecord(
+                        span_id=f"span-fmt-{idx}-{sid[:8]}",
+                        parent_span_id=sub_span_id,
+                        name="format_structured_output" if "a2ui" in ag_name else "validate_schema",
+                        agent_name=ag_name,
+                        start_time_ms=sub_curr,
+                        duration_ms=fmt_dur,
+                        status="ERROR" if has_err and ("Channel" in str(err_msg) or "Compliance" in str(err_msg)) else "OK",
+                        attributes={
+                            "schema.name": "A2UIComponentSchema" if "a2ui" in ag_name else "ContentSchema",
+                        },
+                    )
+                )
+
+            curr_ms = sub_start + sub_dur
+
+        # 5. Final Egress Span
+        final_dur = max(20, (base_ms + latency) - curr_ms)
+        spans.append(
+            SpanRecord(
+                span_id=f"span-egress-{sid[:8]}",
+                parent_span_id=root_id,
+                name="finalize_response",
+                agent_name="marketing_orchestrator",
+                start_time_ms=curr_ms,
+                duration_ms=final_dur,
+                status="OK",
+                attributes={
+                    "gen_ai.response.status": "COMPLETED",
+                },
+            )
+        )
+
+        return spans
+
     def _seed_baseline_sessions(self) -> None:
         """Seeds representative sessions across the 7 enterprise failure dimensions."""
         base_timestamp = "2026-08-26T10:00:00Z"
@@ -159,22 +367,27 @@ class TelemetryStore:
         ]
 
         for sid, tid, cname, prompt, agent_name, lat, q_score, has_err, err_msg, tok_count in baseline:
-            spans = [
-                SpanRecord(span_id=f"span-root-{sid}", parent_span_id=None, name="invoke_workflow", agent_name="marketing_orchestrator", start_time_ms=base_ms, duration_ms=lat, status="ERROR" if has_err else "OK"),
-                SpanRecord(span_id=f"span-agent-{sid}", parent_span_id=f"span-root-{sid}", name="invoke_agent", agent_name=agent_name, start_time_ms=base_ms + 120, duration_ms=lat - 200, status="ERROR" if has_err else "OK"),
-                SpanRecord(span_id=f"span-llm-{sid}", parent_span_id=f"span-agent-{sid}", name="call_llm", agent_name=agent_name, start_time_ms=base_ms + 240, duration_ms=lat - 450, status="OK"),
-            ]
-            if "analytics" in agent_name or "recommender" in agent_name:
-                spans.append(
-                    SpanRecord(span_id=f"span-tool-{sid}", parent_span_id=f"span-agent-{sid}", name="execute_tool", agent_name=agent_name, start_time_ms=base_ms + 420, duration_ms=680, status="ERROR" if (has_err and ("BigQuery" in str(err_msg) or "Empty" in str(err_msg))) else "OK", attributes={"tool.name": "execute_sql_readonly", "db.system": "bigquery"})
-                )
+            tools = [{"tool": "execute_sql_readonly", "arguments": {"query": "SELECT customer_id, rfm_segment, total_monetary_eur FROM `marketing_analytics.customer_rfm_summary` LIMIT 10;"}}] if "analytics" in agent_name else []
+            routed = ["marketing_orchestrator", agent_name]
+            if "middag" in prompt.lower() or "planera" in prompt.lower():
+                routed = ["marketing_orchestrator", "recommendation_pipeline", "content_pipeline"]
+
+            spans = self._build_waterfall_spans(
+                base_ms=base_ms,
+                latency=lat,
+                routed_agents=routed,
+                tools_executed=tools,
+                has_err=has_err,
+                err_msg=err_msg,
+                sid=sid,
+            )
 
             turn = ConversationTurn(
                 turn_id=f"turn-{sid}",
                 user_prompt=prompt,
                 agent_response=f"Agent response analyzing '{prompt}'. Identified actionable segment metrics." if not has_err else f"Encountered diagnostic error: {err_msg}",
-                routed_agents=["marketing_orchestrator", agent_name],
-                tools_executed=[{"tool": "execute_sql_readonly", "query": "SELECT * FROM `marketing_analytics.customer_rfm_summary` LIMIT 10;"}] if "analytics" in agent_name else [],
+                routed_agents=routed,
+                tools_executed=tools,
                 total_tokens=tok_count,
                 prompt_tokens=int(tok_count * 0.35),
                 completion_tokens=int(tok_count * 0.65),
@@ -184,9 +397,6 @@ class TelemetryStore:
                 grounding_score=98.0 if not ("Grounding" in str(err_msg) or "Empty" in str(err_msg)) else 68.0,
                 tool_use_score=97.0 if not ("BigQuery" in str(err_msg)) else 62.0,
                 brand_voice_score=96.0 if not ("Channel" in str(err_msg) or "Compliance" in str(err_msg)) else 72.0,
-                spans=spans,
-            )
-
             self.sessions[sid] = ConversationSession(
                 session_id=sid,
                 tenant_id=tid,
@@ -406,8 +616,21 @@ class TelemetryStore:
                 for s_dict in cached_data:
                     turns = []
                     for t in s_dict["turns"]:
-                        spans = [SpanRecord(**sp) for sp in t.get("spans", [])]
                         t_data = dict(t)
+                        try:
+                            dt = datetime.datetime.fromisoformat(s_dict.get("started_at", "2026-08-26T10:00:00Z").replace("Z", "+00:00"))
+                            base_ms = int(dt.timestamp() * 1000)
+                        except Exception:
+                            base_ms = 1787738400000
+                        spans = self._build_waterfall_spans(
+                            base_ms=base_ms,
+                            latency=t.get("latency_ms", 1500),
+                            routed_agents=t.get("routed_agents", ["marketing_orchestrator", "analytics_agent"]),
+                            tools_executed=t.get("tools_executed", []),
+                            has_err=s_dict.get("has_errors", False),
+                            err_msg=s_dict.get("error_message"),
+                            sid=s_dict.get("session_id", "sess"),
+                        )
                         t_data["spans"] = spans
                         turns.append(ConversationTurn(**t_data))
                     sess_data = dict(s_dict)
@@ -495,18 +718,15 @@ class TelemetryStore:
                     grounding_score = round(95.0 + (((h >> 3) % 50) / 10.0), 1)
                     tool_use_score = round(94.0 + (((h >> 6) % 50) / 10.0), 1)
                     brand_voice_score = round(93.0 + (((h >> 9) % 55) / 10.0), 1)
-                    tool_duration = 450 + ((h >> 12) % 400)
-
-                    spans = [
-                        SpanRecord(span_id=f"span-root-{uid[:8]}", parent_span_id=None, name="invoke_workflow", agent_name="marketing_orchestrator", start_time_ms=base_ms, duration_ms=latency, status="OK", attributes={"gen_ai.workflow.name": "marketing_campaign", "gen_ai.system": "adk"}),
-                        SpanRecord(span_id=f"span-agent-{uid[:8]}", parent_span_id=f"span-root-{uid[:8]}", name="invoke_agent", agent_name=routed_agents[-1], start_time_ms=base_ms + 110, duration_ms=latency - 220, status="OK", attributes={"agent.name": routed_agents[-1]}),
-                        SpanRecord(span_id=f"span-llm-{uid[:8]}", parent_span_id=f"span-agent-{uid[:8]}", name="call_llm", agent_name=routed_agents[-1], start_time_ms=base_ms + 240, duration_ms=latency - 480, status="OK", attributes={"gen_ai.request.model": "gemini-3.6-flash"}),
-                    ]
-
-                    if tools_executed:
-                        spans.append(
-                            SpanRecord(span_id=f"span-tool-{uid[:8]}", parent_span_id=f"span-agent-{uid[:8]}", name="execute_tool", agent_name=routed_agents[-1], start_time_ms=base_ms + 420, duration_ms=tool_duration, status="OK", attributes={"tool.name": tools_executed[0]["tool"], "db.system": "bigquery"})
-                        )
+                    spans = self._build_waterfall_spans(
+                        base_ms=base_ms,
+                        latency=latency,
+                        routed_agents=routed_agents,
+                        tools_executed=tools_executed,
+                        has_err=False,
+                        err_msg=None,
+                        sid=uid,
+                    )
 
                     turn = ConversationTurn(
                         turn_id=f"turn-{uid[:8]}",
@@ -636,18 +856,15 @@ class TelemetryStore:
                     grounding_score = round(95.0 + (((h >> 3) % 50) / 10.0), 1)
                     tool_use_score = round(94.0 + (((h >> 6) % 50) / 10.0), 1)
                     brand_voice_score = round(93.0 + (((h >> 9) % 55) / 10.0), 1)
-                    tool_duration = 450 + ((h >> 12) % 400)
-
-                    spans = [
-                        SpanRecord(span_id=f"span-root-{uid[:8]}", parent_span_id=None, name="invoke_workflow", agent_name="marketing_orchestrator", start_time_ms=base_ms, duration_ms=latency, status="OK", attributes={"gen_ai.workflow.name": "marketing_campaign", "gen_ai.system": "adk"}),
-                        SpanRecord(span_id=f"span-agent-{uid[:8]}", parent_span_id=f"span-root-{uid[:8]}", name="invoke_agent", agent_name=routed_agents[-1], start_time_ms=base_ms + 110, duration_ms=latency - 220, status="OK", attributes={"agent.name": routed_agents[-1]}),
-                        SpanRecord(span_id=f"span-llm-{uid[:8]}", parent_span_id=f"span-agent-{uid[:8]}", name="call_llm", agent_name=routed_agents[-1], start_time_ms=base_ms + 240, duration_ms=latency - 480, status="OK", attributes={"gen_ai.request.model": "gemini-3.6-flash"}),
-                    ]
-
-                    if tools_executed:
-                        spans.append(
-                            SpanRecord(span_id=f"span-tool-{uid[:8]}", parent_span_id=f"span-agent-{uid[:8]}", name="execute_tool", agent_name=routed_agents[-1], start_time_ms=base_ms + 420, duration_ms=tool_duration, status="OK", attributes={"tool.name": tools_executed[0]["tool"], "db.system": "bigquery"})
-                        )
+                    spans = self._build_waterfall_spans(
+                        base_ms=base_ms,
+                        latency=latency,
+                        routed_agents=routed_agents,
+                        tools_executed=tools_executed,
+                        has_err=False,
+                        err_msg=None,
+                        sid=uid,
+                    )
 
                     turn = ConversationTurn(
                         turn_id=f"turn-{uid[:8]}",

@@ -59,8 +59,13 @@ export default function ConversationTraceWaterfall() {
       .catch(err => console.error(err));
   }, [selectedSessionId]);
 
+  const [selectedSpanId, setSelectedSpanId] = useState(null);
   const activeTurn = sessionDetail?.turns?.[selectedTurnIdx];
-  const maxSpanDuration = Math.max(...(activeTurn?.spans?.map(s => s.duration_ms) || [1000]));
+  const rawSpans = activeTurn?.spans || [];
+  const minTime = rawSpans.length > 0 ? Math.min(...rawSpans.map(s => s.start_time_ms)) : 0;
+  const maxTime = rawSpans.length > 0 ? Math.max(...rawSpans.map(s => s.start_time_ms + s.duration_ms)) : 1000;
+  const totalDuration = Math.max(1, maxTime - minTime);
+  const selectedSpan = rawSpans.find(s => s.span_id === selectedSpanId) || rawSpans[0] || null;
 
   const getAgentColor = (agentName) => {
     if (!agentName) return '#4f46e5';
@@ -375,77 +380,189 @@ export default function ConversationTraceWaterfall() {
               </div>
             </div>
 
-            {/* Gantt Waterfall Visualization */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {filteredSpans.map((span) => {
-                const widthPercent = Math.max(12, (span.duration_ms / maxSpanDuration) * 100);
-                const isTool = span.name === 'execute_tool';
-                const isLlm = span.name === 'call_llm';
-                const color = getAgentColor(span.agent_name);
+            {/* Traditional Cloud Trace & OpenTelemetry Gantt Waterfall */}
+            <div style={{ borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', overflow: 'hidden' }}>
+              
+              {/* Waterfall Timeline Header & Scale Bar */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 38%) 1fr', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)', padding: '0.6rem 1rem', alignItems: 'center' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.04em' }}>
+                  Span Operation & Agent Hierarchy
+                </div>
+                
+                {/* Time Axis Ticks */}
+                <div style={{ position: 'relative', width: '100%', height: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>
+                  <span>0 ms</span>
+                  <span style={{ position: 'absolute', left: '25%', transform: 'translateX(-50%)' }}>+{Math.round(totalDuration * 0.25)} ms</span>
+                  <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>+{Math.round(totalDuration * 0.50)} ms</span>
+                  <span style={{ position: 'absolute', left: '75%', transform: 'translateX(-50%)' }}>+{Math.round(totalDuration * 0.75)} ms</span>
+                  <span>+{totalDuration} ms</span>
+                </div>
+              </div>
 
-                return (
-                  <div
-                    key={span.span_id}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: '6px',
-                      background: 'var(--bg-secondary)',
-                      border: span.status === 'ERROR' ? '1px solid var(--accent-rose)' : '1px solid var(--border-color)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.4rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {isTool ? (
-                          <Database size={14} color="var(--accent-cyan)" />
-                        ) : isLlm ? (
-                          <Zap size={14} color="var(--accent-amber)" />
-                        ) : (
-                          <Bot size={14} color={color} />
-                        )}
-                        <span className="font-mono" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                          {span.name}
-                        </span>
-                        {span.agent_name && (
-                          <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '4px', background: color + '22', color: color, fontWeight: 700 }}>
-                            {span.agent_name}
+              {/* Span Rows with Contiguous Timing Flow */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {filteredSpans.map((span, idx) => {
+                  const startOffset = Math.max(0, span.start_time_ms - minTime);
+                  const leftPercent = Math.max(0, Math.min(99, (startOffset / totalDuration) * 100));
+                  const widthPercent = Math.max(2, Math.min(100 - leftPercent, (span.duration_ms / totalDuration) * 100));
+                  const isSelected = selectedSpan?.span_id === span.span_id;
+                  
+                  const isRoot = !span.parent_span_id;
+                  const isChild = span.parent_span_id && span.name === 'invoke_agent';
+                  const isGrandchild = span.parent_span_id && (span.name === 'call_llm' || span.name === 'execute_tool' || span.name.startsWith('format') || span.name.startsWith('validate'));
+                  
+                  const indentLevel = isRoot ? 0 : isChild ? 16 : isGrandchild ? 32 : 16;
+                  const color = getAgentColor(span.agent_name);
+                  const isTool = span.name === 'execute_tool';
+                  const isLlm = span.name === 'call_llm';
+                  const isArmor = span.name === 'check_prompt_guardrail' || span.agent_name === 'model_armor';
+
+                  return (
+                    <div
+                      key={span.span_id}
+                      onClick={() => setSelectedSpanId(span.span_id)}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(280px, 38%) 1fr',
+                        borderBottom: idx < filteredSpans.length - 1 ? '1px solid var(--border-color)' : 'none',
+                        background: isSelected ? 'var(--bg-card-hover)' : idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.015)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {/* Left Column: Tree, Agent Badge & Operation */}
+                      <div style={{ padding: '0.65rem 1rem', paddingLeft: `calc(1rem + ${indentLevel}px)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRight: '1px solid var(--border-color)', gap: '0.5rem', overflow: 'hidden' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, overflow: 'hidden' }}>
+                          {!isRoot && (
+                            <span style={{ color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                              {isGrandchild ? '└──' : '├──'}
+                            </span>
+                          )}
+                          {isArmor ? (
+                            <ShieldAlert size={14} color="var(--accent-rose)" />
+                          ) : isTool ? (
+                            <Database size={14} color="var(--accent-cyan)" />
+                          ) : isLlm ? (
+                            <Zap size={14} color="var(--accent-amber)" />
+                          ) : (
+                            <Bot size={14} color={color} />
+                          )}
+                          <span className="font-mono" style={{ fontSize: '0.78rem', fontWeight: 800, color: isSelected ? 'var(--accent-indigo)' : 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                            {span.name}
                           </span>
-                        )}
-                      </div>
-                      <span className="font-mono" style={{ fontSize: '0.75rem', fontWeight: 700, color: span.status === 'ERROR' ? 'var(--accent-rose)' : 'var(--text-muted)' }}>
-                        {span.duration_ms} ms {span.status === 'ERROR' && '⚠️ FAILED'}
-                      </span>
-                    </div>
+                          {span.agent_name && (
+                            <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '4px', background: color + '18', color: color, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              {getAgentShortName(span.agent_name)}
+                            </span>
+                          )}
+                        </div>
 
-                    {/* Gantt Bar */}
-                    <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          width: `${widthPercent}%`,
-                          height: '100%',
-                          background: span.status === 'ERROR' ? 'var(--accent-rose)' : isTool ? 'var(--accent-cyan)' : isLlm ? 'var(--accent-amber)' : color,
-                          borderRadius: '4px',
-                          transition: 'width 0.3s ease',
-                        }}
-                      />
-                    </div>
-
-                    {/* Span Attributes / SQL / Args */}
-                    {span.attributes && Object.keys(span.attributes).length > 0 && (
-                      <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.03)', padding: '0.3rem 0.5rem', borderRadius: '4px' }}>
-                        {Object.entries(span.attributes).map(([k, v]) => (
-                          <span key={k} style={{ marginRight: '0.75rem' }}>
-                            <strong style={{ color: 'var(--text-secondary)' }}>{k}:</strong> {String(v)}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                          <span className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                            {span.duration_ms} ms
                           </span>
-                        ))}
+                          {span.status === 'ERROR' && (
+                            <span style={{ fontSize: '0.65rem', color: 'var(--accent-rose)', fontWeight: 800 }}>⚠️</span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      {/* Right Column: Waterfall Flow Timeline Track */}
+                      <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '36px', display: 'flex', alignItems: 'center', padding: '0 0.5rem' }}>
+                        
+                        {/* Background Vertical Grid Reference Lines */}
+                        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                          <div style={{ position: 'absolute', left: '25%', top: 0, bottom: 0, borderLeft: '1px dashed rgba(148, 163, 184, 0.2)' }} />
+                          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, borderLeft: '1px dashed rgba(148, 163, 184, 0.2)' }} />
+                          <div style={{ position: 'absolute', left: '75%', top: 0, bottom: 0, borderLeft: '1px dashed rgba(148, 163, 184, 0.2)' }} />
+                        </div>
+
+                        {/* Gantt Timing Bar (Placed at Exact Flow Offset) */}
+                        <div
+                          title={`${span.name} (${span.agent_name})\nStart: +${startOffset} ms\nDuration: ${span.duration_ms} ms\nEnd: +${startOffset + span.duration_ms} ms`}
+                          style={{
+                            position: 'absolute',
+                            left: `${leftPercent}%`,
+                            width: `${widthPercent}%`,
+                            height: '18px',
+                            borderRadius: '4px',
+                            background: span.status === 'ERROR' 
+                              ? 'linear-gradient(90deg, #e11d48, #f43f5e)' 
+                              : isArmor 
+                              ? 'linear-gradient(90deg, #e11d48, #fb7185)'
+                              : isTool 
+                              ? 'linear-gradient(90deg, #0284c7, #38bdf8)' 
+                              : isLlm 
+                              ? 'linear-gradient(90deg, #d97706, #fbbf24)' 
+                              : color,
+                            boxShadow: isSelected ? `0 0 0 2px var(--bg-card), 0 0 0 4px ${color}` : 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0 0.35rem',
+                            color: '#ffffff',
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            fontFamily: 'JetBrains Mono, monospace',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.15s ease',
+                            zIndex: isSelected ? 2 : 1,
+                          }}
+                        >
+                          {widthPercent > 8 ? `${span.duration_ms}ms` : ''}
+                        </div>
+
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
             </div>
+
+            {/* Span Detail & OpenTelemetry Attributes Inspector */}
+            {selectedSpan && (
+              <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.6rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="font-mono" style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-indigo)' }}>
+                      {selectedSpan.span_id}
+                    </span>
+                    <span className="badge" style={{ background: getAgentColor(selectedSpan.agent_name) + '22', color: getAgentColor(selectedSpan.agent_name), fontWeight: 700 }}>
+                      {selectedSpan.agent_name}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      {selectedSpan.name}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', fontSize: '0.75rem', fontFamily: 'JetBrains Mono, monospace' }}>
+                    <span>Start: <strong>+{Math.max(0, selectedSpan.start_time_ms - minTime)} ms</strong></span>
+                    <span>Duration: <strong>{selectedSpan.duration_ms} ms</strong></span>
+                    <span style={{ padding: '0.15rem 0.4rem', borderRadius: '4px', background: selectedSpan.status === 'ERROR' ? 'rgba(225, 29, 72, 0.15)' : 'rgba(5, 150, 105, 0.15)', color: selectedSpan.status === 'ERROR' ? 'var(--accent-rose)' : 'var(--accent-emerald)', fontWeight: 800 }}>
+                      {selectedSpan.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Attributes Grid */}
+                {selectedSpan.attributes && Object.keys(selectedSpan.attributes).length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                      OpenTelemetry Span Attributes
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.4rem' }}>
+                      {Object.entries(selectedSpan.attributes).map(([key, val]) => (
+                        <div key={key} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', fontSize: '0.72rem', fontFamily: 'JetBrains Mono, monospace', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>{key}: </span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{String(val)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Executed Tools & SQL Payloads */}
             {activeTurn.tools_executed && activeTurn.tools_executed.length > 0 && (
@@ -458,7 +575,7 @@ export default function ConversationTraceWaterfall() {
                   {activeTurn.tools_executed.map((tool, idx) => (
                     <div key={idx} style={{ padding: '0.75rem 1rem', borderRadius: '6px', background: '#0f172a', color: '#f8fafc', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.75rem', overflowX: 'auto' }}>
                       <div style={{ color: 'var(--accent-cyan)', fontWeight: 700, marginBottom: '0.3rem' }}>
-                        ▶ Tool: {tool.tool || 'bigquery_execute_sql_readonly'}
+                        ▶ Tool: {tool.tool || 'query_customer_data'}
                       </div>
                       <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
                         {tool.arguments?.query || JSON.stringify(tool.arguments || tool, null, 2)}
