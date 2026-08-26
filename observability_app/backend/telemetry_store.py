@@ -704,7 +704,104 @@ class TelemetryStore:
                 "sla_status": "HEALTHY" if p90 < 3500 and err_rate < 5.0 else "WARNING",
             })
 
-        return metrics
+    def ingest_live_turn(
+        self,
+        session_id: str,
+        tenant_id: str,
+        client_name: str,
+        user_id: str,
+        user_prompt: str,
+        agent_response: str,
+        routed_agents: List[str],
+        tools_executed: List[Dict[str, Any]],
+        latency_ms: int,
+        has_errors: bool = False,
+        error_message: Optional[str] = None,
+        spans: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """Ingests a real-time live conversation turn from the application runtime."""
+        now = datetime.datetime.now(datetime.timezone.utc)
+        now_iso = now.isoformat()
+        base_ms = int(now.timestamp() * 1000)
+
+        # Build spans if not provided
+        span_records = []
+        if spans:
+            for sp in spans:
+                span_records.append(SpanRecord(**sp))
+        else:
+            primary_agent = routed_agents[-1] if routed_agents else "marketing_orchestrator"
+            span_records = [
+                SpanRecord(span_id=f"span-root-{session_id[:8]}", parent_span_id=None, name="invoke_workflow", agent_name="marketing_orchestrator", start_time_ms=base_ms, duration_ms=latency_ms, status="ERROR" if has_errors else "OK", attributes={"gen_ai.workflow.name": "live_chat"}),
+                SpanRecord(span_id=f"span-agent-{session_id[:8]}", parent_span_id=f"span-root-{session_id[:8]}", name="invoke_agent", agent_name=primary_agent, start_time_ms=base_ms + 100, duration_ms=max(100, latency_ms - 200), status="ERROR" if has_errors else "OK", attributes={"agent.name": primary_agent}),
+                SpanRecord(span_id=f"span-llm-{session_id[:8]}", parent_span_id=f"span-agent-{session_id[:8]}", name="call_llm", agent_name=primary_agent, start_time_ms=base_ms + 220, duration_ms=max(80, latency_ms - 400), status="OK", attributes={"gen_ai.request.model": "gemini-3.6-flash"}),
+            ]
+            if tools_executed:
+                span_records.append(
+                    SpanRecord(span_id=f"span-tool-{session_id[:8]}", parent_span_id=f"span-agent-{session_id[:8]}", name="execute_tool", agent_name=primary_agent, start_time_ms=base_ms + 350, duration_ms=min(650, max(100, latency_ms - 350)), status="ERROR" if has_errors and "SQL" in str(error_message) else "OK", attributes={"tool.name": tools_executed[0].get("tool", "execute_sql_readonly"), "db.system": "bigquery"})
+                )
+
+        prompt_tok = len(user_prompt) * 2 + 150
+        comp_tok = len(agent_response) * 2 + 200
+        tot_tok = prompt_tok + comp_tok
+
+        # Quality scoring
+        q_score = 98.0 if not has_errors else 78.0
+        grounding = 99.0 if not ("Grounding" in str(error_message)) else 65.0
+        tool_score = 98.0 if not ("SQL" in str(error_message)) else 60.0
+        voice_score = 97.0 if not ("Channel" in str(error_message) or "Compliance" in str(error_message)) else 70.0
+
+        existing_sess = self.sessions.get(session_id)
+        turn_num = len(existing_sess.turns) + 1 if existing_sess else 1
+
+        turn = ConversationTurn(
+            turn_id=f"turn-{session_id[:8]}-{turn_num}",
+            user_prompt=user_prompt,
+            agent_response=agent_response,
+            routed_agents=routed_agents,
+            tools_executed=tools_executed,
+            total_tokens=tot_tok,
+            prompt_tokens=prompt_tok,
+            completion_tokens=comp_tok,
+            latency_ms=latency_ms,
+            quality_score=q_score,
+            task_success=not has_errors,
+            grounding_score=grounding,
+            tool_use_score=tool_score,
+            brand_voice_score=voice_score,
+            spans=span_records,
+        )
+
+        if existing_sess:
+            existing_sess.turns.append(turn)
+            existing_sess.updated_at = now_iso
+            existing_sess.overall_quality_score = round(sum(t.quality_score for t in existing_sess.turns) / len(existing_sess.turns), 1)
+            existing_sess.has_errors = existing_sess.has_errors or has_errors
+            if error_message:
+                existing_sess.error_message = error_message
+            res = asdict(existing_sess)
+        else:
+            new_sess = ConversationSession(
+                session_id=session_id,
+                tenant_id=tenant_id,
+                client_name=client_name,
+                user_id=user_id,
+                started_at=now_iso,
+                updated_at=now_iso,
+                turns=[turn],
+                overall_quality_score=q_score,
+                has_errors=has_errors,
+                error_message=error_message,
+                tags=[tenant_id, "live-application-session", "active-traffic"],
+            )
+            self.sessions[session_id] = new_sess
+            res = asdict(new_sess)
+
+        if has_errors:
+            self._build_dynamic_error_clusters()
+
+        logger.info(f"Ingested live session turn for session '{session_id}' ({client_name}). Total sessions: {len(self.sessions)}")
+        return res
 
 
 telemetry_store = TelemetryStore()
