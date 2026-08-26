@@ -343,69 +343,6 @@ def get_bigquery_sample(table_name: str = "customer_rfm_summary", client_id: str
         "rows": sample_rows
     }
 
-def _emit_telemetry(
-    session_id: str | None,
-    client_id: str,
-    prompt: str,
-    response_data: dict[str, Any],
-    latency_ms: int,
-    user_id: str | None = None,
-):
-    """Asynchronously forwards live chat turn telemetry to Observability Platform (port 8081)."""
-    import threading
-    import time
-
-    import requests as http_requests
-
-    def _post():
-        try:
-            obs_port = int(os.getenv("OBSERVABILITY_PORT", "8081"))
-            url = f"http://127.0.0.1:{obs_port}/api/obs/ingest-session"
-
-            tenant_id = "ica_sweden" if "ica" in client_id.lower() else "crazy_fashion"
-            client_name = "ICA Sverige" if tenant_id == "ica_sweden" else "Crazy Fashion"
-
-            resp_text = response_data.get("orchestrator_analysis", "") or response_data.get("response", "") or "Execution completed."
-            sql_query = response_data.get("analytics", {}).get("sql_query", "") if isinstance(response_data.get("analytics"), dict) else ""
-            tools_executed = []
-            if sql_query:
-                tools_executed.append({"tool": "bigquery_execute_sql_readonly", "query": sql_query})
-
-            routed_agents = ["marketing_orchestrator"]
-            if response_data.get("analytics"):
-                routed_agents.append("analytics_agent")
-            if response_data.get("recommendations"):
-                routed_agents.append("recommendation_pipeline")
-            if response_data.get("a2ui"):
-                routed_agents.append("a2ui_pipeline")
-            if response_data.get("strategy"):
-                routed_agents.append("strategy_pipeline")
-            if response_data.get("content"):
-                routed_agents.append("content_pipeline")
-
-            has_errors = bool(response_data.get("error"))
-            err_msg = response_data.get("error")
-
-            payload = {
-                "session_id": session_id or f"sess-live-{int(time.time()*1000)}",
-                "tenant_id": tenant_id,
-                "client_name": client_name,
-                "user_id": user_id or "user-web",
-                "user_prompt": prompt,
-                "agent_response": resp_text[:1500],
-                "routed_agents": list(set(routed_agents)),
-                "tools_executed": tools_executed,
-                "latency_ms": latency_ms,
-                "has_errors": has_errors,
-                "error_message": err_msg,
-            }
-            http_requests.post(url, json=payload, timeout=2.0)
-        except Exception:
-            pass
-
-    threading.Thread(target=_post, daemon=True).start()
-
-
 @app.post("/api/chat")
 def process_chat(req: ChatRequest):
     """Processes user marketing prompts via Agent Gateway → Agent Runtime.
@@ -414,11 +351,9 @@ def process_chat(req: ChatRequest):
     Model Armor security screening is enforced at the Agent Gateway infrastructure level
     via the :streamQuery governed endpoint — no application-level pre-flight needed.
     """
-    import time
     active_cid = req.client_id or _active_client_id
     logger.info(f"Received chat request: '{req.prompt}' (client_id={active_cid}, session_id={req.session_id})")
 
-    t_start = time.time()
     result = runtime_client.query(
         prompt=req.prompt,
         target_segment=req.target_segment or "All Cohorts (Full Dataset)",
@@ -426,38 +361,22 @@ def process_chat(req: ChatRequest):
         user_id=req.user_id,
         client_id=active_cid,
     )
-    latency_ms = int((time.time() - t_start) * 1000)
-
     result["agent_gateway"] = {
         "resource": Config.AGENT_GATEWAY_URL,
         "governed_access_path": "CLIENT_TO_AGENT",
         "model_armor_enforcement": "AGENT_GATEWAY",
         "model_armor_floor_id": Config.MODEL_ARMOR_FLOOR_ID,
     }
-
-    # Emit telemetry to observability platform
-    _emit_telemetry(
-        session_id=req.session_id,
-        client_id=active_cid,
-        prompt=req.prompt,
-        response_data=result,
-        latency_ms=latency_ms,
-        user_id=req.user_id,
-    )
-
     return result
 
 
 @app.post("/api/chat/stream")
 def process_chat_stream(req: ChatRequest):
     """Streams real-time agent background execution steps, tool calls, and final response via SSE."""
-    import time
     active_cid = req.client_id or _active_client_id
     logger.info(f"Received streaming chat request: '{req.prompt}' (client_id={active_cid}, session_id={req.session_id})")
 
     def event_generator():
-        t_start = time.time()
-        final_chunk = {}
         for chunk in runtime_client.query_stream(
             prompt=req.prompt,
             target_segment=req.target_segment or "All Cohorts (Full Dataset)",
@@ -465,19 +384,7 @@ def process_chat_stream(req: ChatRequest):
             user_id=req.user_id,
             client_id=active_cid,
         ):
-            final_chunk = chunk
             yield f"data: {json.dumps(chunk)}\n\n"
-
-        latency_ms = int((time.time() - t_start) * 1000)
-        # Emit telemetry to observability platform
-        _emit_telemetry(
-            session_id=req.session_id,
-            client_id=active_cid,
-            prompt=req.prompt,
-            response_data=final_chunk,
-            latency_ms=latency_ms,
-            user_id=req.user_id,
-        )
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

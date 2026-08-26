@@ -47,43 +47,83 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', next);
   };
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncGCP = async () => {
+    setIsSyncing(true);
+    try {
+      await fetch('/api/obs/sync', { method: 'POST' });
+      await fetchData();
+    } catch (e) {
+      console.error('Failed to sync with GCP Agent Engine', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Top Navbar Header */}
-      <header
-        style={{
-          height: '64px',
-          padding: '0 2rem',
-          borderBottom: '1px solid var(--border-color)',
-          background: 'var(--bg-secondary)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #4f46e5, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 10px rgba(79, 70, 229, 0.4)' }}>
-              <Activity size={20} />
+      {/* Top Navbar */}
+      <header style={{
+        padding: '0.85rem 1.75rem',
+        borderBottom: '1px solid var(--border-color)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'var(--card-bg)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}>
+        {/* Brand */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #4f46e5, #06b6d4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.35)',
+          }}>
+            <Activity size={22} />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em' }}>
+                GCP Agent Platform
+              </span>
+              <span style={{
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                padding: '0.15rem 0.45rem',
+                borderRadius: '4px',
+                background: 'rgba(79, 70, 229, 0.15)',
+                color: 'var(--accent-indigo)',
+                border: '1px solid rgba(79, 70, 229, 0.3)',
+              }}>
+                OBSERVABILITY
+              </span>
             </div>
-            <div>
-              <h1 style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Agent Observability & Quality Platform</h1>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>GCP Reasoning Engines & OpenTelemetry Spans</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              Telemetry, Error Triage & LLM-as-a-Judge Quality Suite
             </div>
           </div>
-
-          <span style={{ padding: '0.2rem 0.6rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
-            Project: agent-demo-09
-          </span>
         </div>
 
-        {/* Center Tab Navigation */}
-        <nav style={{ display: 'flex', gap: '0.35rem', background: 'rgba(0,0,0,0.15)', padding: '0.3rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+        {/* Tab Navigation */}
+        <nav style={{
+          display: 'flex',
+          gap: '0.35rem',
+          background: 'var(--bg-secondary)',
+          padding: '0.25rem',
+          borderRadius: '10px',
+          border: '1px solid var(--border-color)',
+        }}>
           <button
             onClick={() => setActiveTab('overview')}
             style={{
@@ -101,7 +141,7 @@ export default function App() {
               transition: 'all 0.2s ease',
             }}
           >
-            <LayoutDashboard size={15} /> Fleet Overview
+            <Activity size={15} /> Fleet Overview
           </button>
 
           <button
@@ -188,18 +228,25 @@ export default function App() {
         {/* Right Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
-            onClick={fetchData}
-            title="Refresh Telemetry"
+            onClick={handleSyncGCP}
+            disabled={isSyncing}
+            title="Sync latest completion logs from GCP Agent Engine (gs://agent-demo-09-agent-platform-logs)"
             style={{
-              padding: '0.45rem',
+              padding: '0.45rem 0.85rem',
               borderRadius: '8px',
-              border: '1px solid var(--border-color)',
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
+              border: '1px solid rgba(79, 70, 229, 0.4)',
+              background: 'rgba(79, 70, 229, 0.1)',
+              color: 'var(--accent-indigo)',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              cursor: isSyncing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
             }}
           >
-            <RefreshCw size={16} />
+            <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+            {isSyncing ? 'Syncing GCP...' : 'Sync GCP Logs'}
           </button>
 
           <button

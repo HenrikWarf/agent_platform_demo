@@ -95,21 +95,6 @@ class BatchEvalRequest(BaseModel):
     tenant_id: str = "ica_sweden"
 
 
-class LiveSessionIngestRequest(BaseModel):
-    session_id: str
-    tenant_id: Optional[str] = "ica_sweden"
-    client_name: Optional[str] = "ICA Sverige"
-    user_id: Optional[str] = "live-user"
-    user_prompt: str
-    agent_response: str
-    routed_agents: Optional[List[str]] = None
-    tools_executed: Optional[List[Dict[str, Any]]] = None
-    latency_ms: Optional[int] = 1500
-    has_errors: Optional[bool] = False
-    error_message: Optional[str] = None
-    spans: Optional[List[Dict[str, Any]]] = None
-
-
 class ObsChatRequest(BaseModel):
     message: str
     conversation_history: Optional[List[Dict[str, str]]] = None
@@ -124,26 +109,10 @@ async def health_check() -> Dict[str, str]:
     return {"status": "ok", "service": "observability_backend", "version": "1.0.0"}
 
 
-@app.post("/api/obs/ingest-session")
-async def ingest_live_session(req: LiveSessionIngestRequest) -> Dict[str, Any]:
-    """Ingests a real-time live conversation turn from the main retail application."""
-    tenant = req.tenant_id or ("ica_sweden" if "ica" in (req.client_name or "").lower() else "crazy_fashion")
-    client_name = req.client_name or ("ICA Sverige" if tenant == "ica_sweden" else "Crazy Fashion")
-    
-    return telemetry_store.ingest_live_turn(
-        session_id=req.session_id,
-        tenant_id=tenant,
-        client_name=client_name,
-        user_id=req.user_id or f"usr-{req.session_id[-6:]}",
-        user_prompt=req.user_prompt,
-        agent_response=req.agent_response,
-        routed_agents=req.routed_agents or ["marketing_orchestrator"],
-        tools_executed=req.tools_executed or [],
-        latency_ms=req.latency_ms or 1500,
-        has_errors=req.has_errors or False,
-        error_message=req.error_message,
-        spans=req.spans,
-    )
+@app.post("/api/obs/sync")
+async def sync_gcp_telemetry() -> Dict[str, Any]:
+    """Triggers an on-demand sync with GCP Cloud Storage completions bucket."""
+    return telemetry_store.sync_live_gcs_completions()
 
 
 @app.get("/api/obs/overview")
