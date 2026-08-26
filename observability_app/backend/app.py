@@ -111,10 +111,11 @@ async def update_cluster_status(cluster_id: str, req: UpdateTriageRequest) -> Di
 @app.get("/api/obs/sessions")
 async def list_sessions(
     tenant_id: Optional[str] = Query(None, description="Filter by tenant: crazy_fashion, ica_sweden"),
-    limit: int = Query(50, ge=1, le=200),
+    agent_name: Optional[str] = Query(None, description="Filter by routed agent name"),
+    limit: int = Query(100, ge=1, le=200),
 ) -> List[Dict[str, Any]]:
-    """Lists conversation sessions with high-level quality scores and turn counts."""
-    return telemetry_store.get_sessions(tenant_id=tenant_id, limit=limit)
+    """Lists conversation sessions with high-level quality scores, turn counts, and routed agents."""
+    return telemetry_store.get_sessions(tenant_id=tenant_id, agent_name=agent_name, limit=limit)
 
 
 @app.get("/api/obs/sessions/{session_id}")

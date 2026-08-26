@@ -569,11 +569,13 @@ class TelemetryStore:
             cluster.notes.append({"author": author, "time": now_iso, "text": note})
         return asdict(cluster)
 
-    def get_sessions(self, tenant_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
-        """Lists sessions with summaries for conversation trace explorer."""
+    def get_sessions(self, tenant_id: Optional[str] = None, agent_name: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """Lists sessions with summaries and routed agents for conversation trace explorer."""
         sess_list = list(self.sessions.values())
-        if tenant_id:
+        if tenant_id and tenant_id != "ALL":
             sess_list = [s for s in sess_list if s.tenant_id == tenant_id]
+        if agent_name and agent_name != "ALL":
+            sess_list = [s for s in sess_list if any(agent_name in turn.routed_agents for turn in s.turns)]
         sess_list.sort(key=lambda s: s.started_at, reverse=True)
         return [
             {
@@ -587,6 +589,7 @@ class TelemetryStore:
                 "has_errors": s.has_errors,
                 "latest_prompt": s.turns[-1].user_prompt if s.turns else "",
                 "total_latency_ms": sum(t.latency_ms for t in s.turns),
+                "routed_agents": list(set(a for turn in s.turns for a in turn.routed_agents)),
             }
             for s in sess_list[:limit]
         ]
