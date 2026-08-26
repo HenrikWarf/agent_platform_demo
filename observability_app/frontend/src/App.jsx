@@ -13,7 +13,7 @@ import ObservabilityCopilotChat from './components/ObservabilityCopilotChat';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
   const [overviewData, setOverviewData] = useState(null);
   const [triageIssues, setTriageIssues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
