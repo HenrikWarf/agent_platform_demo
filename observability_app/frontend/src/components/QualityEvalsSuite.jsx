@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Sparkles, CheckCircle2, AlertCircle, Play, RefreshCw, 
   HelpCircle, Check, ArrowRight, ShieldCheck, Zap, Layers,
@@ -8,7 +8,7 @@ import {
 
 export default function QualityEvalsSuite() {
   const [tenant, setTenant] = useState('ica_sweden');
-  const [scenarioTheme, setScenarioTheme] = useState('nordic_compliance');
+  const [scenarioTheme, setScenarioTheme] = useState('bigquery_segment_analytics');
   const [questionCount, setQuestionCount] = useState(4);
   
   // Generation & Test Suite State
@@ -19,6 +19,7 @@ export default function QualityEvalsSuite() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [batchVerdict, setBatchVerdict] = useState(null);
   const [selectedTestCase, setSelectedTestCase] = useState(null);
+  const resultsRef = useRef(null);
 
   const scenarioOptions = [
     { id: 'bigquery_segment_analytics', name: '📊 BigQuery RFM & Cohort Spend Analytics', desc: 'NL2SQL cohort queries, regional store comparisons, and event funnel metrics.' },
@@ -84,6 +85,10 @@ export default function QualityEvalsSuite() {
       if (data.test_results?.length > 0) {
         setSelectedTestCase(data.test_results[0]);
       }
+      // Move user down smoothly to the evaluation verdict and results section
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (e) {
       console.error('Batch evaluation failed', e);
     } finally {
@@ -348,7 +353,7 @@ export default function QualityEvalsSuite() {
 
       {/* STEP 3 & 4: Batch LLM-as-a-Judge Verdicts & Deep-Dive Question Inspector */}
       {batchVerdict && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div ref={resultsRef} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', scrollMarginTop: '2rem' }}>
           
           {/* Executive Suite Verdict Banner */}
           <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%)', border: '1px solid var(--border-active)' }}>
