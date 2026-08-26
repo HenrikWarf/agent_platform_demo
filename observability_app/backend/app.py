@@ -84,6 +84,17 @@ class EvalRunRequest(BaseModel):
     tool_calls: Optional[List[Dict[str, Any]]] = None
 
 
+class GenerateSuiteRequest(BaseModel):
+    scenario_theme: str = "nordic_compliance"
+    tenant_id: str = "ica_sweden"
+    count: int = 4
+
+
+class BatchEvalRequest(BaseModel):
+    test_cases: List[Dict[str, Any]]
+    tenant_id: str = "ica_sweden"
+
+
 class ObsChatRequest(BaseModel):
     message: str
     conversation_history: Optional[List[Dict[str, str]]] = None
@@ -154,9 +165,28 @@ async def get_agent_metrics() -> List[Dict[str, Any]]:
     return telemetry_store.get_agent_fleet_metrics()
 
 
+@app.post("/api/obs/eval/generate-suite")
+async def generate_eval_suite(req: GenerateSuiteRequest) -> List[Dict[str, Any]]:
+    """Generates dynamic evaluation test scenarios with Gemini on Vertex AI."""
+    return eval_engine.generate_eval_suite(
+        scenario_theme=req.scenario_theme,
+        tenant_id=req.tenant_id,
+        count=req.count,
+    )
+
+
+@app.post("/api/obs/eval/run-batch")
+async def run_batch_eval(req: BatchEvalRequest) -> Dict[str, Any]:
+    """Runs batch LLM-as-a-judge evaluations over a set of selected test questions."""
+    return eval_engine.run_batch_eval_suite(
+        test_cases=req.test_cases,
+        tenant_id=req.tenant_id,
+    )
+
+
 @app.post("/api/obs/eval/run")
 async def run_quality_eval(req: EvalRunRequest) -> Dict[str, Any]:
-    """Executes automated LLM-as-a-judge quality rubrics on a prompt-response pair."""
+    """Executes automated LLM-as-a-judge quality rubrics on a single prompt-response pair."""
     return eval_engine.evaluate_turn(
         user_prompt=req.user_prompt,
         agent_response=req.agent_response,
