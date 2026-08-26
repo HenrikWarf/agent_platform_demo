@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   GitBranch, Clock, User, Bot, Database, Zap, 
   ChevronDown, ChevronRight, Terminal, Layers, ArrowRight,
-  Filter, Search, Sliders, Cpu, Sparkles, CheckCircle2, AlertTriangle
+  Filter, Search, Sliders, Cpu, Sparkles, CheckCircle2, AlertTriangle, ShieldAlert
 } from 'lucide-react';
 
 export default function ConversationTraceWaterfall() {
