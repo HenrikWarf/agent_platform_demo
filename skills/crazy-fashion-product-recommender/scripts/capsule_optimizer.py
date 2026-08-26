@@ -4,7 +4,6 @@ Capsule Wardrobe Completeness & Crazy Club Point Calculator for Crazy Fashion.
 Scores a 5-item fashion assortment for styling synergy and member point yields.
 """
 import json
-import sys
 
 
 def score_capsule(items: list) -> str:
@@ -18,7 +17,7 @@ def score_capsule(items: list) -> str:
     has_knit = any("knitwear" in c.lower() or "tops" in c.lower() for c in categories_present)
     has_bottom = any("bottoms" in c.lower() or "trousers" in c.lower() or "skirts" in c.lower() for c in categories_present)
 
-    completeness = "Complete 5-Piece Capsule (100%)" if (len(items) == 5 and has_outerwear and has_bottom) else "Incomplete (80%)"
+    completeness = "Complete 5-Piece Capsule (100%)" if (len(items) == 5 and has_outerwear and has_knit and has_bottom) else "Incomplete (80%)"
 
     return json.dumps(
         {
@@ -39,7 +38,7 @@ if __name__ == "__main__":
         {"name": "NOVA Oversized Wool Blazer", "category": "Womenswear / Tailoring", "price_eur": 129.99, "sustainability_certified": True},
         {"name": "Cashmere Crewneck Sweater", "category": "Womenswear / Knitwear", "price_eur": 89.99, "sustainability_certified": True},
         {"name": "Tailored Wide Trousers", "category": "Womenswear / Bottoms", "price_eur": 69.99, "sustainability_certified": True},
-        {"name": "Leather Chelsea Boots", "category": "Footwear", "price_eur": 149.99, "sustainability_certified": True},
-        {"name": "Recycled Wool Scarf", "category": "Accessories", "price_eur": 39.99, "sustainability_certified": True},
+        {"name": "Ribbed Cotton Longsleeve", "category": "Womenswear / Tops", "price_eur": 39.99, "sustainability_certified": True},
+        {"name": "Classic Wool Coat", "category": "Womenswear / Outerwear", "price_eur": 199.99, "sustainability_certified": True},
     ]
     print(score_capsule(sample))

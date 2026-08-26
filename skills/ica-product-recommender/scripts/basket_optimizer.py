@@ -4,7 +4,6 @@ Basket Balance & Stammis Loyalty Point Optimizer for ICA Sverige.
 Scores 5-product assortments to verify complete weekly meal coverage and point yields.
 """
 import json
-import sys
 
 ROLES = ["dinner_hero", "produce", "pantry_staple", "dairy_breakfast", "stammis_deal"]
 
