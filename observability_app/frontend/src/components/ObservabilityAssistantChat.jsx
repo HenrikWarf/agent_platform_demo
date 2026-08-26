@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   MessageSquare, X, Send, Bot, User, Sparkles, 
-  Terminal, ShieldCheck, RefreshCw, ChevronDown, Maximize2, Minimize2
+  Terminal, ShieldCheck, RefreshCw, ChevronDown, Maximize2, Minimize2,
+  Activity, Layers, Database, CheckCircle2, Cpu
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -12,17 +13,24 @@ export default function ObservabilityAssistantChat() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: '👋 Hello! I am your **AI Observability & Quality Assistant** deployed on Vertex AI Agent Engine. I have direct access to your fleet telemetry, OpenTelemetry waterfall traces, BigQuery error logs, and quality evaluations.\n\nHow can I assist you with quality triage or performance analysis today?',
+      content: '👋 Hello! I am your **AI Observability & Quality Assistant** running on Vertex AI Agent Engine.\n\nI have direct access to your fleet telemetry store, OpenTelemetry waterfall spans, 7-dimension error clusters, and automated quality rubrics.\n\nHow can I assist you with performance diagnosis or error triage today?',
       tools: [],
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const messagesEndRef = useRef(null);
 
+  const loadingSteps = [
+    'Analyzing prompt intent & loading telemetry-analysis skill...',
+    'Querying BigQuery traces & 7-dimension error clusters...',
+    'Evaluating agent latencies & synthesizing diagnostic report...',
+  ];
+
   const quickPrompts = [
-    'What is our global quality score and task success rate?',
-    'Show me the open BigQuery and schema error clusters.',
+    'What open problem clusters do we currently have?',
+    'What is our global fleet quality score and SLA latency?',
     'Which agent has the highest latency and why?',
     'How does Crazy Fashion compare with ICA Sverige?',
   ];
@@ -33,7 +41,19 @@ export default function ObservabilityAssistantChat() {
 
   useEffect(() => {
     if (isOpen) scrollToBottom();
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isLoading, loadingStep]);
+
+  // Loading animation step timer
+  useEffect(() => {
+    let interval;
+    if (isLoading) {
+      setLoadingStep(0);
+      interval = setInterval(() => {
+        setLoadingStep(prev => (prev + 1) % loadingSteps.length);
+      }, 1800);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleSend = async (textToSend) => {
     const query = textToSend || input;
@@ -53,7 +73,7 @@ export default function ObservabilityAssistantChat() {
       const data = await res.json();
       const assistantMsg = {
         role: 'assistant',
-        content: data.response || 'Telemetry query executed.',
+        content: data.response || 'Telemetry query completed.',
         tools: data.tools_called || [],
       };
       setMessages(prev => [...prev, assistantMsg]);
@@ -63,7 +83,7 @@ export default function ObservabilityAssistantChat() {
         ...prev,
         {
           role: 'assistant',
-          content: '⚠️ Failed to connect to the Observability Assistant backend.',
+          content: '⚠️ Failed to connect to the Observability Assistant backend. Please check server logs.',
           tools: [],
         }
       ]);
@@ -82,8 +102,8 @@ export default function ObservabilityAssistantChat() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.6rem',
-            padding: '0.85rem 1.25rem',
+            gap: '0.65rem',
+            padding: '0.85rem 1.35rem',
             borderRadius: '9999px',
             background: 'var(--accent-indigo)',
             color: '#ffffff',
@@ -97,7 +117,7 @@ export default function ObservabilityAssistantChat() {
         >
           <Bot size={20} />
           <span>Observability Assistant</span>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
         </button>
       )}
 
@@ -106,37 +126,40 @@ export default function ObservabilityAssistantChat() {
         <div
           className="glass-card"
           style={{
-            width: isExpanded ? '640px' : '380px',
-            height: isExpanded ? '650px' : '520px',
+            width: isExpanded ? '760px' : '440px',
+            height: isExpanded ? '700px' : '580px',
             borderRadius: '16px',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 20px 30px -10px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1)',
             border: '1px solid var(--border-active)',
             transition: 'width 0.25s ease, height 0.25s ease',
+            background: 'var(--bg-secondary)',
           }}
         >
           {/* Header */}
           <div
             style={{
               padding: '0.85rem 1.25rem',
-              background: 'var(--bg-secondary)',
+              background: 'var(--bg-primary)',
               borderBottom: '1px solid var(--border-color)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(79, 70, 229, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-indigo)' }}>
-                <Bot size={18} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(79, 70, 229, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-indigo)' }}>
+                <Bot size={20} />
               </div>
               <div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>Observability Assistant</div>
-                <div style={{ fontSize: '0.7rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                  ADK Agent Live
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Observability Assistant
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                  ADK Runtime & Telemetry Tools Active
                 </div>
               </div>
             </div>
@@ -144,14 +167,14 @@ export default function ObservabilityAssistantChat() {
             <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.3rem' }}
-                title={isExpanded ? 'Minimize' : 'Expand'}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.35rem', borderRadius: '4px' }}
+                title={isExpanded ? 'Collapse' : 'Expand width for data tables'}
               >
                 {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.3rem' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.35rem', borderRadius: '4px' }}
                 title="Close"
               >
                 <X size={18} />
@@ -159,16 +182,17 @@ export default function ObservabilityAssistantChat() {
             </div>
           </div>
 
-          {/* Messages Area */}
+          {/* Messages Scroll Area */}
           <div
             style={{
               flex: 1,
-              padding: '1rem',
+              padding: '1.25rem',
               overflowY: 'auto',
+              overflowX: 'hidden',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1rem',
-              fontSize: '0.85rem',
+              gap: '1.25rem',
+              background: 'var(--bg-secondary)',
             }}
           >
             {messages.map((m, idx) => {
@@ -180,46 +204,53 @@ export default function ObservabilityAssistantChat() {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: isUser ? 'flex-end' : 'flex-start',
-                    gap: '0.3rem',
+                    width: '100%',
                   }}
                 >
                   <div
                     style={{
-                      maxWidth: '88%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: isUser ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                      background: isUser ? 'var(--accent-indigo)' : 'var(--bg-secondary)',
+                      maxWidth: isUser ? '85%' : '96%',
+                      width: 'fit-content',
+                      padding: '0.85rem 1.15rem',
+                      borderRadius: isUser ? '16px 16px 3px 16px' : '16px 16px 16px 3px',
+                      background: isUser ? 'var(--accent-indigo)' : 'var(--bg-card)',
                       color: isUser ? '#ffffff' : 'var(--text-primary)',
                       border: isUser ? 'none' : '1px solid var(--border-color)',
-                      lineHeight: 1.45,
+                      boxShadow: 'var(--shadow-sm)',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'anywhere',
                     }}
                   >
                     {isUser ? (
-                      <div>{m.content}</div>
-                    ) : (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <div style={{ fontSize: '0.85rem', lineHeight: 1.45, fontWeight: 500 }}>
                         {m.content}
-                      </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div className="chat-markdown">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {m.content}
+                        </ReactMarkdown>
+                      </div>
                     )}
                   </div>
 
                   {/* Tool Call Badges */}
                   {!isUser && m.tools && m.tools.length > 0 && (
-                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.4rem', paddingLeft: '0.25rem' }}>
                       {m.tools.map((tool, tIdx) => (
                         <span
                           key={tIdx}
                           style={{
                             fontSize: '0.65rem',
                             fontWeight: 700,
-                            padding: '0.15rem 0.4rem',
+                            padding: '0.15rem 0.45rem',
                             borderRadius: '4px',
                             background: 'rgba(2, 132, 199, 0.12)',
                             color: 'var(--accent-cyan)',
                             border: '1px solid rgba(2, 132, 199, 0.25)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.25rem',
+                            gap: '0.3rem',
                           }}
                         >
                           <Terminal size={10} />
@@ -232,29 +263,61 @@ export default function ObservabilityAssistantChat() {
               );
             })}
 
+            {/* True Animated Multi-Step Loading State */}
             {isLoading && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                <RefreshCw size={14} className="animate-spin" />
-                <span>Assistant querying telemetry store...</span>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem',
+                  padding: '0.85rem 1.15rem',
+                  borderRadius: '16px 16px 16px 3px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  width: 'fit-content',
+                  maxWidth: '92%',
+                  boxShadow: 'var(--shadow-sm)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(79, 70, 229, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-indigo)' }}>
+                    <RefreshCw size={13} className="animate-spin" />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Assistant Thinking
+                    </span>
+                    <div style={{ display: 'flex', gap: '3px', marginLeft: '4px' }}>
+                      <span className="dot-1" style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-indigo)', display: 'inline-block' }} />
+                      <span className="dot-2" style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-indigo)', display: 'inline-block' }} />
+                      <span className="dot-3" style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-indigo)', display: 'inline-block' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', paddingLeft: '0.2rem' }}>
+                  <Activity size={12} color="var(--accent-cyan)" />
+                  <span>{loadingSteps[loadingStep]}</span>
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Prompts Rail */}
+          {/* Quick Suggested Inquiries Rail */}
           {messages.length === 1 && (
-            <div style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', borderTop: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                Suggested Inquiries
+            <div style={{ padding: '0.6rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: '1px solid var(--border-color)', background: 'var(--bg-primary)' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Suggested Diagnostic Queries
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isExpanded ? '1fr 1fr' : '1fr', gap: '0.4rem' }}>
                 {quickPrompts.slice(0, isExpanded ? 4 : 2).map((p, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSend(p)}
                     style={{
                       textAlign: 'left',
-                      padding: '0.4rem 0.6rem',
+                      padding: '0.45rem 0.65rem',
                       borderRadius: '6px',
                       background: 'var(--bg-secondary)',
                       border: '1px solid var(--border-color)',
@@ -264,6 +327,7 @@ export default function ObservabilityAssistantChat() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.4rem',
+                      transition: 'all 0.15s ease',
                     }}
                   >
                     <Sparkles size={12} color="var(--accent-indigo)" />
@@ -274,28 +338,29 @@ export default function ObservabilityAssistantChat() {
             </div>
           )}
 
-          {/* Input Box */}
+          {/* Prompt Input Box */}
           <div
             style={{
-              padding: '0.75rem 1rem',
-              background: 'var(--bg-secondary)',
+              padding: '0.85rem 1.25rem',
+              background: 'var(--bg-primary)',
               borderTop: '1px solid var(--border-color)',
               display: 'flex',
-              gap: '0.5rem',
+              gap: '0.6rem',
+              alignItems: 'center',
             }}
           >
             <input
               type="text"
-              placeholder="Ask Assistant about traces, errors, or evals..."
+              placeholder="Ask Assistant about traces, 7-dimension clusters, or SLA latencies..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               style={{
                 flex: 1,
-                padding: '0.5rem 0.8rem',
+                padding: '0.6rem 0.9rem',
                 borderRadius: '8px',
                 border: '1px solid var(--border-color)',
-                background: 'var(--bg-primary)',
+                background: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
                 fontSize: '0.85rem',
                 outline: 'none',
@@ -305,7 +370,7 @@ export default function ObservabilityAssistantChat() {
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
               style={{
-                padding: '0.5rem 0.85rem',
+                padding: '0.6rem 1rem',
                 borderRadius: '8px',
                 background: 'var(--accent-indigo)',
                 color: '#ffffff',
@@ -315,6 +380,8 @@ export default function ObservabilityAssistantChat() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                opacity: (!input.trim() || isLoading) ? 0.6 : 1,
+                transition: 'opacity 0.15s ease',
               }}
             >
               <Send size={16} />
