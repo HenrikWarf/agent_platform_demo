@@ -84,25 +84,27 @@ async def get_overview() -> Dict[str, Any]:
 
 
 @app.get("/api/obs/triage")
-async def list_triage_issues(
+@app.get("/api/obs/clusters")
+async def list_error_clusters(
     status: Optional[str] = Query(None, description="Filter by status: OPEN, INVESTIGATING, RESOLVED"),
-    severity: Optional[str] = Query(None, description="Filter by severity: CRITICAL, HIGH, MEDIUM, LOW"),
+    category: Optional[str] = Query(None, description="Filter by category: SQL_SYNTAX_OR_EXECUTION, SCHEMA_VALIDATION, etc."),
 ) -> List[Dict[str, Any]]:
-    """Returns error triage issues and diagnostic root-cause reports."""
-    return telemetry_store.get_triage_issues(status=status, severity=severity)
+    """Returns grouped error clusters with affected session lists, signatures, and root causes."""
+    return telemetry_store.get_error_clusters(status=status, category=category)
 
 
-@app.post("/api/obs/triage/{issue_id}/status")
-async def update_issue_status(issue_id: str, req: UpdateTriageRequest) -> Dict[str, Any]:
-    """Updates status and appends audit note for a triage issue."""
-    updated = telemetry_store.update_triage_status(
-        issue_id=issue_id,
+@app.post("/api/obs/triage/{cluster_id}/status")
+@app.post("/api/obs/clusters/{cluster_id}/status")
+async def update_cluster_status(cluster_id: str, req: UpdateTriageRequest) -> Dict[str, Any]:
+    """Updates status and appends audit note for an error cluster."""
+    updated = telemetry_store.update_cluster_status(
+        cluster_id=cluster_id,
         new_status=req.status,
         author=req.author or "User",
         note=req.note,
     )
     if not updated:
-        raise HTTPException(status_code=404, detail=f"Triage issue '{issue_id}' not found.")
+        raise HTTPException(status_code=404, detail=f"Error cluster '{cluster_id}' not found.")
     return updated
 
 
