@@ -33,11 +33,6 @@ export default function QualityEvalsSuite() {
   const [selectedTestCase, setSelectedTestCase] = useState(null);
   const resultsRef = useRef(null);
 
-  // Generate initial test suite on initial mount only
-  useEffect(() => {
-    handleGenerateSuite();
-  }, []);
-
   const handleGenerateNewScenarios = async () => {
     setIsGeneratingScenarios(true);
     try {
@@ -295,6 +290,18 @@ export default function QualityEvalsSuite() {
       </div>
 
       {/* STEP 2: Preview & Select AI-Generated Questions */}
+      {testCases.length === 0 && !isGenerating && (
+        <div className="glass-card" style={{ padding: '2.5rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', border: '1px dashed var(--border-color)' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(79, 70, 229, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-indigo)' }}>
+            <Sparkles size={24} />
+          </div>
+          <div style={{ fontSize: '1.05rem', fontWeight: 800 }}>Ready to Generate Test Questions</div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '520px', lineHeight: 1.5 }}>
+            Select any enterprise scenario in Step 1 above, then click <strong>"Generate Test Scenarios"</strong> to synthesize realistic, domain-grounded evaluation questions with Gemini on Vertex AI.
+          </p>
+        </div>
+      )}
+
       {testCases.length > 0 && (
         <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
